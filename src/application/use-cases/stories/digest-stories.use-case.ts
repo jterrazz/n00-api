@@ -8,6 +8,7 @@ import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { InterestTier } from '../../../domain/value-objects/story/interest-tier.vo.js';
 
+import { type StoryDeduplicationAgentPort } from '../../ports/outbound/agents/story-deduplication.agent.js';
 import { type StoryDigestAgentPort } from '../../ports/outbound/agents/story-digest.agent.js';
 import { type StoryRepositoryPort } from '../../ports/outbound/persistence/story-repository.port.js';
 import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.js';
@@ -18,6 +19,7 @@ import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.
 export class DigestStoriesUseCase {
     constructor(
         private readonly storyDigestAgent: StoryDigestAgentPort,
+        private readonly storyDeduplicationAgent: StoryDeduplicationAgentPort,
         private readonly logger: LoggerPort,
         private readonly newsProvider: NewsProviderPort,
         private readonly storyRepository: StoryRepositoryPort,
@@ -33,16 +35,18 @@ export class DigestStoriesUseCase {
                 language: language.toString(),
             });
 
-            // Get existing source references for deduplication
-            const existingSourceReferences =
-                await this.storyRepository.getAllSourceReferences(country);
-            this.logger.info('Retrieved existing source references for deduplication', {
-                count: existingSourceReferences.length,
-                country: country.toString(),
-                language: language.toString(),
-            });
+            // Step 1: Get recent stories and existing source IDs for deduplication
+            const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 3); // 3 days ago
+            const [recentStories, existingSourceReferences] = await Promise.all([
+                this.storyRepository.findRecentSynopses({ country, language, since }),
+                this.storyRepository.getAllSourceReferences(country),
+            ]);
 
-            // Fetch news from external providers
+            this.logger.info(
+                `Found ${recentStories.length} recent stories and ${existingSourceReferences.length} source references to check for duplicates.`,
+            );
+
+            // Step 2: Fetch news from external providers
             const newsStories = await this.newsProvider.fetchNews({
                 country,
                 language,
@@ -55,124 +59,104 @@ export class DigestStoriesUseCase {
                 });
                 return [];
             }
+            this.logger.info(`Retrieved ${newsStories.length} news stories from providers.`);
 
-            this.logger.info('Retrieved news stories from providers', {
-                count: newsStories.length,
-                country: country.toString(),
-                language: language.toString(),
-            });
-
-            // Filter out stories with articles that have already been processed
-            const newNewsStories = newsStories.filter((story) => {
-                const hasProcessedArticle = story.articles.some((article) =>
-                    existingSourceReferences.includes(article.id),
-                );
-                return !hasProcessedArticle;
-            });
-
-            this.logger.info('Filtered out already processed stories', {
-                country: country.toString(),
-                filteredOut: newsStories.length - newNewsStories.length,
-                language: language.toString(),
-                newCount: newNewsStories.length,
-                originalCount: newsStories.length,
-            });
+            // Step 3: Filter out stories that have already been processed by source ID
+            const newNewsStories = newsStories.filter(
+                (story) =>
+                    !story.articles.some((article) =>
+                        existingSourceReferences.includes(article.id),
+                    ),
+            );
 
             if (newNewsStories.length === 0) {
-                this.logger.info('No new stories to process after deduplication', {
-                    country: country.toString(),
-                    language: language.toString(),
-                });
+                this.logger.info('No new stories to process after source ID deduplication.');
                 return [];
             }
+            this.logger.info(`Found ${newNewsStories.length} new stories after source ID filter.`);
 
-            // Filter and validate news stories
+            // Step 4: Filter out stories with insufficient articles
             const validNewsStories = newNewsStories.filter((story) => story.articles.length >= 2);
 
             if (validNewsStories.length === 0) {
-                this.logger.warn('No valid news stories after filtering', {
-                    country: country.toString(),
-                    language: language.toString(),
-                    originalCount: newNewsStories.length,
-                });
+                this.logger.warn('No valid news stories after article count filtering.');
                 return [];
             }
 
-            // Process each news story individually through the AI agent
+            // Step 5: Process each valid news story
             const digestedStories: Story[] = [];
+            // Track all stories for deduplication (existing + newly processed in this batch)
+            const allStoriesForDeduplication = [...recentStories];
 
             for (const newsStory of validNewsStories) {
                 try {
-                    // Send individual news story to AI agent to digest into structured story
-                    const digestResult = await this.storyDigestAgent.run({
-                        newsStory,
+                    // Step 5.1: Check for semantic duplicates (including newly processed stories)
+                    const deduplicationResult = await this.storyDeduplicationAgent.run({
+                        existingStories: allStoriesForDeduplication,
+                        newStory: newsStory,
                     });
 
+                    if (deduplicationResult?.duplicateOfStoryId) {
+                        this.logger.info(
+                            `Found semantic duplicate. Merging into story ${deduplicationResult.duplicateOfStoryId}.`,
+                        );
+                        await this.storyRepository.addSourceReferences(
+                            deduplicationResult.duplicateOfStoryId,
+                            newsStory.articles.map((a) => a.id),
+                        );
+                        continue; // Skip to the next story
+                    }
+
+                    // Step 5.2: Digest the unique story
+                    const digestResult = await this.storyDigestAgent.run({ newsStory });
                     if (!digestResult) {
-                        this.logger.warn('AI agent returned null story', {
-                            country: country.toString(),
-                            language: language.toString(),
-                            newsStoryArticleCount: newsStory.articles.length,
+                        this.logger.warn('AI digest agent returned null.', {
+                            newsStoryArticles: newsStory.articles.length,
                         });
                         continue;
                     }
 
-                    // Generate story metadata that we handle in the use case
                     const storyId = randomUUID();
                     const now = new Date();
+                    const perspectives = digestResult.perspectives.map(
+                        (p) =>
+                            new Perspective({
+                                ...p,
+                                createdAt: now,
+                                id: randomUUID(),
+                                storyId,
+                                updatedAt: now,
+                            }),
+                    );
 
-                    // Create perspectives from the raw perspective data
-                    const perspectives = digestResult.perspectives.map((perspectiveData) => {
-                        return new Perspective({
-                            createdAt: now,
-                            holisticDigest: perspectiveData.holisticDigest,
-                            id: randomUUID(),
-                            storyId,
-                            tags: perspectiveData.tags,
-                            updatedAt: now,
-                        });
-                    });
-
-                    // Create the complete story with use case-managed fields
                     const story = new StoryEntity({
                         category: digestResult.category,
-                        country: country, // Use the country from the use case context
+                        country,
                         createdAt: now,
-                        dateline: newsStory.publishedAt, // Use the news story's published date
+                        dateline: newsStory.publishedAt,
                         id: storyId,
                         interestTier: new InterestTier('PENDING_REVIEW'),
-                        perspectives: perspectives,
-                        sourceReferences: newsStory.articles.map((article) => article.id),
+                        perspectives,
+                        sourceReferences: newsStory.articles.map((a) => a.id),
                         synopsis: digestResult.synopsis,
                         updatedAt: now,
                     });
 
-                    // Store the digested story in the database
                     const savedStory = await this.storyRepository.create(story);
-
-                    this.logger.info(`Saving story for ${country}/${language}`, {
-                        storySynopsis: savedStory.synopsis,
-                    });
-
                     digestedStories.push(savedStory);
+                    // Add the newly created story to deduplication tracking for subsequent stories
+                    allStoriesForDeduplication.push(savedStory);
+                    this.logger.info(`Successfully digested and saved new story ${savedStory.id}.`);
                 } catch (storyError) {
-                    this.logger.warn('Failed to digest individual story', {
-                        country: country.toString(),
+                    this.logger.warn('Failed to process individual news story.', {
                         error: storyError,
-                        language: language.toString(),
-                        newsStoryArticleCount: newsStory.articles.length,
                     });
-                    // Continue processing other stories even if one fails
                 }
             }
 
             return digestedStories;
         } catch (error) {
-            this.logger.error('Failed to digest stories', {
-                country: country.toString(),
-                error,
-                language: language.toString(),
-            });
+            this.logger.error('Failed to complete story digestion process.', { error });
             throw error;
         }
     }

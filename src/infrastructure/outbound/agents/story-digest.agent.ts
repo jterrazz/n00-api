@@ -26,8 +26,6 @@ import {
 } from '../../../domain/value-objects/perspective/perspective-tags.vo.js';
 
 export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
-    static readonly NAME = 'StoryDigestAgent';
-
     static readonly SCHEMA = z.object({
         category: categorySchema,
         perspectives: z
@@ -58,13 +56,15 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
         PROMPT_LIBRARY.VERBOSITY.DETAILED,
     );
 
+    public readonly name = 'StoryDigestAgent';
+
     private readonly agent: BasicAgentAdapter<z.infer<typeof StoryDigestAgentAdapter.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
         private readonly logger: LoggerPort,
     ) {
-        this.agent = new BasicAgentAdapter(StoryDigestAgentAdapter.NAME, {
+        this.agent = new BasicAgentAdapter(this.name, {
             logger: this.logger,
             model: this.model,
             schema: StoryDigestAgentAdapter.SCHEMA,
@@ -118,7 +118,7 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
     async run(params: { newsStory: NewsStory }): Promise<null | StoryDigestResult> {
         try {
             this.logger.info(
-                `[${StoryDigestAgentAdapter.NAME}] Digesting story with ${params.newsStory.articles.length} articles`,
+                `[${this.name}] Digesting story with ${params.newsStory.articles.length} articles`,
             );
 
             const result = await this.agent.run(
@@ -126,13 +126,13 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
             );
 
             if (!result) {
-                this.logger.warn(`[${StoryDigestAgentAdapter.NAME}] No result from AI model`);
+                this.logger.warn(`[${this.name}] No result from AI model`);
                 return null;
             }
 
             // Log successful parsing for debugging
             this.logger.info(
-                `[${StoryDigestAgentAdapter.NAME}] Successfully parsed AI response with ${result.perspectives.length} perspectives`,
+                `[${this.name}] Successfully parsed AI response with ${result.perspectives.length} perspectives`,
                 {
                     category: result.category,
                     perspectiveTypes: result.perspectives.map((p) => p.tags.discourse_type),
@@ -158,12 +158,12 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
             };
 
             this.logger.info(
-                `[${StoryDigestAgentAdapter.NAME}] Successfully digested story: ${digestResult.synopsis.substring(0, 100)}... with ${digestResult.perspectives.length} perspectives`,
+                `[${this.name}] Successfully digested story: ${digestResult.synopsis.substring(0, 100)}... with ${digestResult.perspectives.length} perspectives`,
             );
 
             return digestResult;
         } catch (error) {
-            this.logger.error(`[${StoryDigestAgentAdapter.NAME}] Failed to digest story`, {
+            this.logger.error(`[${this.name}] Failed to digest story`, {
                 articleCount: params.newsStory.articles.length,
                 error,
             });

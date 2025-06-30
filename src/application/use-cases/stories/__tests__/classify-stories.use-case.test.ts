@@ -19,7 +19,10 @@ import { type StoryRepositoryPort } from '../../../ports/outbound/persistence/st
 
 import { ClassifyStoriesUseCase } from '../classify-stories.use-case.js';
 
-const createMockStory = (id: string, tier: 'NICHE' | 'PENDING_REVIEW' | 'STANDARD' = 'PENDING_REVIEW'): Story => {
+const createMockStory = (
+    id: string,
+    tier: 'NICHE' | 'PENDING_REVIEW' | 'STANDARD' = 'PENDING_REVIEW',
+): Story => {
     const storyId = id;
     return new Story({
         category: new Category('technology'),
@@ -41,7 +44,8 @@ const createMockStory = (id: string, tier: 'NICHE' | 'PENDING_REVIEW' | 'STANDAR
             }),
         ],
         sourceReferences: ['source-1'],
-        synopsis: 'This is a valid story synopsis that is definitely long enough for testing purposes. It details the event and provides context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
+        synopsis:
+            'This is a valid story synopsis that is definitely long enough for testing purposes. It details the event and provides context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
         updatedAt: new Date(),
     });
 };
@@ -57,11 +61,11 @@ describe('ClassifyStoriesUseCase', () => {
 
     beforeEach(() => {
         storyToReview = createMockStory(randomUUID());
-        
+
         mockStoryClassifierAgent = mock<StoryClassifierAgentPort>();
         mockStoryRepository = mock<StoryRepositoryPort>();
         mockLogger = mockOf<LoggerPort>();
-        
+
         useCase = new ClassifyStoriesUseCase(
             mockStoryClassifierAgent,
             mockStoryRepository,
@@ -122,7 +126,7 @@ describe('ClassifyStoriesUseCase', () => {
             const story1 = createMockStory(randomUUID());
             const story2 = createMockStory(randomUUID());
             mockStoryRepository.findMany.mockResolvedValue([story1, story2]);
-            
+
             mockStoryClassifierAgent.run
                 .mockResolvedValueOnce({
                     interestTier: 'NICHE',
@@ -138,7 +142,10 @@ describe('ClassifyStoriesUseCase', () => {
             expect(mockStoryRepository.update).toHaveBeenCalledWith(story1.id, {
                 interestTier: 'NICHE',
             });
-            expect(mockStoryRepository.update).not.toHaveBeenCalledWith(story2.id, expect.any(Object));
+            expect(mockStoryRepository.update).not.toHaveBeenCalledWith(
+                story2.id,
+                expect.any(Object),
+            );
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 `Failed to classify story ${story2.id}: AI agent returned null.`,
             );

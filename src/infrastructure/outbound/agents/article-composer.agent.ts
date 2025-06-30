@@ -18,8 +18,6 @@ import { bodySchema } from '../../../domain/value-objects/article/body.vo.js';
 import { headlineSchema } from '../../../domain/value-objects/article/headline.vo.js';
 
 export class ArticleComposerAgentAdapter implements ArticleComposerAgentPort {
-    static readonly NAME = 'ArticleComposerAgent';
-
     static readonly SCHEMA = z.object({
         body: bodySchema,
         // Main article (neutral, factual)
@@ -44,13 +42,15 @@ export class ArticleComposerAgentAdapter implements ArticleComposerAgentPort {
         PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
     );
 
+    public readonly name = 'ArticleComposerAgent';
+
     private readonly agent: BasicAgentAdapter<z.infer<typeof ArticleComposerAgentAdapter.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
         private readonly logger: LoggerPort,
     ) {
-        this.agent = new BasicAgentAdapter(ArticleComposerAgentAdapter.NAME, {
+        this.agent = new BasicAgentAdapter(this.name, {
             logger: this.logger,
             model: this.model,
             schema: ArticleComposerAgentAdapter.SCHEMA,
@@ -111,7 +111,7 @@ export class ArticleComposerAgentAdapter implements ArticleComposerAgentPort {
     async run(input: ArticleCompositionInput): Promise<ArticleCompositionResult | null> {
         try {
             this.logger.info(
-                `[${ArticleComposerAgentAdapter.NAME}] Composing article for story with ${input.story.perspectives.length} perspectives`,
+                `[${this.name}] Composing article for story with ${input.story.perspectives.length} perspectives`,
                 {
                     country: input.targetCountry.toString(),
                     language: input.targetLanguage.toString(),
@@ -122,27 +122,24 @@ export class ArticleComposerAgentAdapter implements ArticleComposerAgentPort {
             const result = await this.agent.run(ArticleComposerAgentAdapter.USER_PROMPT(input));
 
             if (!result) {
-                this.logger.warn(`[${ArticleComposerAgentAdapter.NAME}] No result from AI model`);
+                this.logger.warn(`[${this.name}] No result from AI model`);
                 return null;
             }
 
             // Validate that we have the correct number of variants
             if (result.variants.length !== input.story.perspectives.length) {
                 this.logger.warn(
-                    `[${ArticleComposerAgentAdapter.NAME}] AI returned ${result.variants.length} variants but expected ${input.story.perspectives.length} (one per perspective)`,
+                    `[${this.name}] AI returned ${result.variants.length} variants but expected ${input.story.perspectives.length} (one per perspective)`,
                 );
                 return null;
             }
 
             // Log successful composition for debugging
-            this.logger.info(
-                `[${ArticleComposerAgentAdapter.NAME}] Successfully composed article with variants`,
-                {
-                    bodyLength: result.body.length,
-                    headlineLength: result.headline.length,
-                    variantsCount: result.variants.length,
-                },
-            );
+            this.logger.info(`[${this.name}] Successfully composed article with variants`, {
+                bodyLength: result.body.length,
+                headlineLength: result.headline.length,
+                variantsCount: result.variants.length,
+            });
 
             const compositionResult: ArticleCompositionResult = {
                 body: result.body,
@@ -159,12 +156,12 @@ export class ArticleComposerAgentAdapter implements ArticleComposerAgentPort {
             };
 
             this.logger.info(
-                `[${ArticleComposerAgentAdapter.NAME}] Successfully composed article: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.variants.length} variants`,
+                `[${this.name}] Successfully composed article: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.variants.length} variants`,
             );
 
             return compositionResult;
         } catch (error) {
-            this.logger.error(`[${ArticleComposerAgentAdapter.NAME}] Failed to compose article`, {
+            this.logger.error(`[${this.name}] Failed to compose article`, {
                 error,
                 storyId: input.story.id,
                 targetCountry: input.targetCountry.toString(),

@@ -1,7 +1,10 @@
+import { type LoggerPort } from '@jterrazz/logger';
+
 import { type StoryRepositoryPort } from '../../../application/ports/outbound/persistence/story-repository.port.js';
 
 import { type Story } from '../../../domain/entities/story.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
+import { type Language } from '../../../domain/value-objects/language.vo.js';
 
 import { type PrismaAdapter } from './prisma.adapter.js';
 import { StoryMapper } from './prisma-story.mapper.js';
@@ -9,8 +12,33 @@ import { StoryMapper } from './prisma-story.mapper.js';
 export class PrismaStoryRepository implements StoryRepositoryPort {
     private readonly mapper: StoryMapper;
 
-    constructor(private readonly prisma: PrismaAdapter) {
+    constructor(
+        private readonly prisma: PrismaAdapter,
+        private readonly logger: LoggerPort,
+    ) {
         this.mapper = new StoryMapper();
+    }
+
+    async addSourceReferences(storyId: string, sourceIds: string[]): Promise<void> {
+        const story = await this.prisma.getPrismaClient().story.findUnique({
+            select: { sourceReferences: true },
+            where: { id: storyId },
+        });
+
+        if (!story) {
+            this.logger.warn(`Story with id ${storyId} not found. Cannot add source references.`);
+            return;
+        }
+
+        const existingSources = (story.sourceReferences as string[]) || [];
+        const updatedSources = Array.from(new Set([...existingSources, ...sourceIds]));
+
+        await this.prisma.getPrismaClient().story.update({
+            data: {
+                sourceReferences: updatedSources,
+            },
+            where: { id: storyId },
+        });
     }
 
     async create(story: Story): Promise<Story> {
@@ -106,6 +134,30 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
         });
 
         return stories.map((story) => this.mapper.toDomain(story));
+    }
+
+    async findRecentSynopses(options: {
+        country: Country;
+        language: Language;
+        since: Date;
+    }): Promise<Array<{ id: string; synopsis: string }>> {
+        const stories = await this.prisma.getPrismaClient().story.findMany({
+            orderBy: {
+                createdAt: 'desc',
+            },
+            select: {
+                id: true,
+                synopsis: true,
+            },
+            take: 100, // Limit to a reasonable number for performance
+            where: {
+                country: this.mapper.mapCountryToPrisma(options.country),
+                createdAt: {
+                    gte: options.since,
+                },
+            },
+        });
+        return stories;
     }
 
     async findStoriesWithoutArticles(criteria?: {

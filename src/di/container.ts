@@ -15,6 +15,7 @@ import { type TaskPort } from '../application/ports/inbound/executor.port.js';
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
 import { type ArticleComposerAgentPort } from '../application/ports/outbound/agents/article-composer.agent.js';
 import { type StoryClassifierAgentPort } from '../application/ports/outbound/agents/story-classifier.agent.js';
+import { type StoryDeduplicationAgentPort } from '../application/ports/outbound/agents/story-deduplication.agent.js';
 import { type StoryDigestAgentPort } from '../application/ports/outbound/agents/story-digest.agent.js';
 import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article-repository.port.js';
 import { type StoryRepositoryPort } from '../application/ports/outbound/persistence/story-repository.port.js';
@@ -31,6 +32,7 @@ import { GetArticlesController } from '../infrastructure/inbound/server/articles
 import { HonoServerAdapter } from '../infrastructure/inbound/server/hono.adapter.js';
 import { ArticleComposerAgentAdapter } from '../infrastructure/outbound/agents/article-composer.agent.js';
 import { StoryClassifierAgentAdapter } from '../infrastructure/outbound/agents/story-classifier.agent.js';
+import { StoryDeduplicationAgentAdapter } from '../infrastructure/outbound/agents/story-deduplication.agent.js';
 import { StoryDigestAgentAdapter } from '../infrastructure/outbound/agents/story-digest.agent.js';
 import { PrismaAdapter } from '../infrastructure/outbound/persistence/prisma.adapter.js';
 import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/prisma-article.adapter.js';
@@ -121,6 +123,12 @@ const storyClassifierAgentFactory = Injectable(
     (model: ModelPort, logger: LoggerPort) => new StoryClassifierAgentAdapter(model, logger),
 );
 
+const storyDeduplicationAgentFactory = Injectable(
+    'StoryDeduplicationAgent',
+    ['Model', 'Logger'] as const,
+    (model: ModelPort, logger: LoggerPort) => new StoryDeduplicationAgentAdapter(model, logger),
+);
+
 /**
  * Repository adapters
  */
@@ -139,7 +147,7 @@ const storyRepositoryFactory = Injectable(
     ['Database', 'Logger'] as const,
     (db: PrismaAdapter, logger: LoggerPort) => {
         logger.info('Initializing Prisma story repository');
-        const storyRepository = new PrismaStoryRepository(db);
+        const storyRepository = new PrismaStoryRepository(db, logger);
         return storyRepository;
     },
 );
@@ -155,13 +163,21 @@ const getArticlesUseCaseFactory = Injectable(
 
 const digestStoriesUseCaseFactory = Injectable(
     'DigestStories',
-    ['StoryDigestAgent', 'Logger', 'News', 'StoryRepository'] as const,
+    ['StoryDigestAgent', 'StoryDeduplicationAgent', 'Logger', 'News', 'StoryRepository'] as const,
     (
         storyDigestAgent: StoryDigestAgentPort,
+        storyDeduplicationAgent: StoryDeduplicationAgentPort,
         logger: LoggerPort,
         newsService: NewsProviderPort,
         storyRepository: StoryRepositoryPort,
-    ) => new DigestStoriesUseCase(storyDigestAgent, logger, newsService, storyRepository),
+    ) =>
+        new DigestStoriesUseCase(
+            storyDigestAgent,
+            storyDeduplicationAgent,
+            logger,
+            newsService,
+            storyRepository,
+        ),
 );
 
 const generateArticlesFromStoriesUseCaseFactory = Injectable(
@@ -304,6 +320,7 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(storyDigestAgentFactory)
         .provides(articleComposerAgentFactory)
         .provides(storyClassifierAgentFactory)
+        .provides(storyDeduplicationAgentFactory)
         // Repositories
         .provides(articleRepositoryFactory)
         .provides(storyRepositoryFactory)

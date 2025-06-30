@@ -17,8 +17,6 @@ import {
 } from '../../../application/ports/outbound/agents/story-classifier.agent.js';
 
 export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
-    static readonly NAME = 'StoryClassifierAgent';
-
     static readonly SCHEMA = z.object({
         interestTier: interestTierSchema,
         reason: z.string().describe('A brief, clear justification for your tier selection.'),
@@ -31,13 +29,15 @@ export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
         PROMPT_LIBRARY.TONES.NEUTRAL,
     );
 
+    public readonly name = 'StoryClassifierAgent';
+
     private readonly agent: BasicAgentAdapter<z.infer<typeof StoryClassifierAgentAdapter.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
         private readonly logger: LoggerPort,
     ) {
-        this.agent = new BasicAgentAdapter(StoryClassifierAgentAdapter.NAME, {
+        this.agent = new BasicAgentAdapter(this.name, {
             logger: this.logger,
             model: this.model,
             schema: StoryClassifierAgentAdapter.SCHEMA,
@@ -87,45 +87,35 @@ export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
 
     async run(input: StoryClassifierInput): Promise<null | StoryClassifierResult> {
         try {
-            this.logger.info(`[${StoryClassifierAgentAdapter.NAME}] Classifying story...`, {
+            this.logger.info(`[${this.name}] Classifying story...`, {
                 storyId: input.story.id,
             });
 
             const result = await this.agent.run(StoryClassifierAgentAdapter.USER_PROMPT(input));
 
             if (!result) {
-                this.logger.warn(
-                    `[${StoryClassifierAgentAdapter.NAME}] Classification failed. No result from AI model.`,
-                    {
-                        storyId: input.story.id,
-                    },
-                );
+                this.logger.warn(`[${this.name}] Classification failed. No result from AI model.`, {
+                    storyId: input.story.id,
+                });
                 return null;
             }
 
-            this.logger.info(
-                `[${StoryClassifierAgentAdapter.NAME}] Story classified successfully.`,
-                {
-                    interestTier: result.interestTier,
-                    reason: result.reason,
-                    storyId: input.story.id,
-                },
-            );
+            this.logger.info(`[${this.name}] Story classified successfully.`, {
+                interestTier: result.interestTier,
+                reason: result.reason,
+                storyId: input.story.id,
+            });
 
             return {
                 interestTier: result.interestTier as InterestTier,
                 reason: result.reason,
             };
         } catch (error) {
-            this.logger.error(
-                `[${StoryClassifierAgentAdapter.NAME}] An error occurred during classification.`,
-                {
-                    error,
-                    storyId: input.story.id,
-                },
-            );
+            this.logger.error(`[${this.name}] An error occurred during classification.`, {
+                error,
+                storyId: input.story.id,
+            });
             return null;
         }
     }
 }
- 
