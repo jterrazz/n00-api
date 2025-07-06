@@ -1,11 +1,12 @@
 import { z } from 'zod/v4';
 
 import { PerspectiveCorpus } from './perspective-corpus.vo.js';
-import { PerspectiveTags } from './perspective-tags.vo.js';
+import { discourseTypeSchema, stanceSchema } from './perspective-tags.vo.js';
 
 export const storyPerspectiveSchema = z.object({
+    discourse: discourseTypeSchema,
     perspectiveCorpus: z.instanceof(PerspectiveCorpus),
-    tags: z.instanceof(PerspectiveTags),
+    stance: stanceSchema,
 });
 
 export type StoryPerspectiveData = z.input<typeof storyPerspectiveSchema>;
@@ -17,8 +18,9 @@ export type StoryPerspectiveData = z.input<typeof storyPerspectiveSchema>;
  * with the same digest & tags are considered equal.
  */
 export class StoryPerspective {
+    public readonly discourse: z.infer<typeof discourseTypeSchema>;
     public readonly perspectiveCorpus: PerspectiveCorpus;
-    public readonly tags: PerspectiveTags;
+    public readonly stance: z.infer<typeof stanceSchema>;
 
     constructor(data: StoryPerspectiveData) {
         const result = storyPerspectiveSchema.safeParse(data);
@@ -29,6 +31,7 @@ export class StoryPerspective {
 
         const validated = result.data;
         this.perspectiveCorpus = validated.perspectiveCorpus;
-        this.tags = validated.tags;
+        this.stance = validated.stance;
+        this.discourse = validated.discourse;
     }
 }

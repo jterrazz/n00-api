@@ -13,7 +13,6 @@ import { Category } from '../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../domain/value-objects/country.vo.js';
 import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 import { PerspectiveCorpus } from '../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
-import { PerspectiveTags } from '../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
 import { StoryPerspective } from '../../../domain/value-objects/story/perspective/story-perspective.vo.js';
 
 export class StoryMapper {
@@ -42,9 +41,9 @@ export class StoryMapper {
         storyId: string,
     ): Omit<PrismaStoryPerspective, 'createdAt' | 'id' | 'updatedAt'> {
         return {
-            discourse: this.mapDiscourseToPrisma(perspective.tags.tags.discourse_type),
+            discourse: this.mapDiscourseToPrisma(perspective.discourse),
             holisticDigest: perspective.perspectiveCorpus.toString(),
-            stance: this.mapStanceToPrisma(perspective.tags.tags.stance),
+            stance: this.mapStanceToPrisma(perspective.stance),
             storyId,
         };
     }
@@ -57,11 +56,9 @@ export class StoryMapper {
         const perspectives = prisma.perspectives.map(
             (p) =>
                 new StoryPerspective({
+                    discourse: p.discourse as PrismaDiscourse,
                     perspectiveCorpus: new PerspectiveCorpus(p.holisticDigest),
-                    tags: new PerspectiveTags({
-                        discourse_type: p.discourse as PrismaDiscourse,
-                        stance: p.stance as PrismaStance,
-                    }),
+                    stance: p.stance as PrismaStance,
                 }),
         );
 

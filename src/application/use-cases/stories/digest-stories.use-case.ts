@@ -122,8 +122,20 @@ export class DigestStoriesUseCase {
                     const perspectives = ingestionResult.perspectives.map(
                         (p) =>
                             new StoryPerspective({
+                                discourse: p.discourse as
+                                    | 'alternative'
+                                    | 'dubious'
+                                    | 'mainstream'
+                                    | 'underreported',
                                 perspectiveCorpus: p.perspectiveCorpus,
-                                tags: p.tags,
+                                stance: p.stance as
+                                    | 'concerned'
+                                    | 'critical'
+                                    | 'mixed'
+                                    | 'neutral'
+                                    | 'optimistic'
+                                    | 'skeptical'
+                                    | 'supportive',
                             }),
                     );
 

@@ -68,8 +68,9 @@ describe('DigestStoriesUseCase', () => {
         mockIngestionResult = {
             category: mockStory.category,
             perspectives: mockStory.perspectives.map((p) => ({
+                discourse: p.discourse,
                 perspectiveCorpus: p.perspectiveCorpus,
-                tags: p.tags,
+                stance: p.stance,
             })),
             synopsis: mockStory.synopsis,
         };

@@ -20,8 +20,9 @@ export interface StoryIngestionAgentPort {
 export interface StoryIngestionResult {
     category: Category;
     perspectives: Array<{
+        discourse: PerspectiveTags['tags']['discourse_type'];
         perspectiveCorpus: PerspectiveCorpus;
-        tags: PerspectiveTags;
+        stance: PerspectiveTags['tags']['stance'];
     }>;
     synopsis: string;
 }

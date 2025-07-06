@@ -21,7 +21,6 @@ import { PerspectiveCorpus } from '../../../domain/value-objects/story/perspecti
 import { perspectiveCorpusSchema } from '../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
 import {
     discourseTypeSchema,
-    PerspectiveTags,
     stanceSchema,
 } from '../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
 
@@ -145,11 +144,9 @@ export class StoryIngestionAgentAdapter implements StoryIngestionAgentPort {
 
             // Create perspective data from AI response (without creating full Perspective entities)
             const perspectives = result.perspectives.map((perspectiveData) => ({
+                discourse: perspectiveData.tags.discourse_type,
                 perspectiveCorpus: new PerspectiveCorpus(perspectiveData.perspectiveCorpus),
-                tags: new PerspectiveTags({
-                    discourse_type: perspectiveData.tags.discourse_type,
-                    stance: perspectiveData.tags.stance,
-                }),
+                stance: perspectiveData.tags.stance,
             }));
 
             const ingestionResult: StoryIngestionResult = {
