@@ -2,19 +2,19 @@ import {
     type Category as PrismaCategory,
     type Country as PrismaCountry,
     type Discourse as PrismaDiscourse,
-    type Perspective as PrismaPerspective,
     type Prisma,
     type Stance as PrismaStance,
     type Story as PrismaStory,
+    type StoryPerspective as PrismaStoryPerspective,
 } from '@prisma/client';
 
-import { Perspective } from '../../../domain/entities/perspective.entity.js';
 import { Story } from '../../../domain/entities/story.entity.js';
 import { Category } from '../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../domain/value-objects/country.vo.js';
-import { HolisticDigest } from '../../../domain/value-objects/perspective/holistic-digest.vo.js';
-import { PerspectiveTags } from '../../../domain/value-objects/perspective/perspective-tags.vo.js';
 import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
+import { PerspectiveCorpus } from '../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
+import { PerspectiveTags } from '../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
+import { StoryPerspective } from '../../../domain/value-objects/story/perspective/story-perspective.vo.js';
 
 export class StoryMapper {
     mapCategoryToPrisma(category: Category): PrismaCategory {
@@ -38,34 +38,30 @@ export class StoryMapper {
     }
 
     perspectiveToPrisma(
-        perspective: Perspective,
-    ): Omit<PrismaPerspective, 'createdAt' | 'updatedAt'> {
+        perspective: StoryPerspective,
+        storyId: string,
+    ): Omit<PrismaStoryPerspective, 'createdAt' | 'id' | 'updatedAt'> {
         return {
             discourse: this.mapDiscourseToPrisma(perspective.tags.tags.discourse_type),
-            holisticDigest: perspective.holisticDigest.toString(),
-            id: perspective.id,
+            holisticDigest: perspective.perspectiveCorpus.toString(),
             stance: this.mapStanceToPrisma(perspective.tags.tags.stance),
-            storyId: perspective.storyId,
+            storyId,
         };
     }
 
     toDomain(
         prisma: PrismaStory & {
-            perspectives: PrismaPerspective[];
+            perspectives: PrismaStoryPerspective[];
         },
     ): Story {
         const perspectives = prisma.perspectives.map(
             (p) =>
-                new Perspective({
-                    createdAt: p.createdAt,
-                    holisticDigest: new HolisticDigest(p.holisticDigest),
-                    id: p.id,
-                    storyId: p.storyId,
+                new StoryPerspective({
+                    perspectiveCorpus: new PerspectiveCorpus(p.holisticDigest),
                     tags: new PerspectiveTags({
                         discourse_type: p.discourse as PrismaDiscourse,
                         stance: p.stance as PrismaStance,
                     }),
-                    updatedAt: p.updatedAt,
                 }),
         );
 

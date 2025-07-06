@@ -97,7 +97,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                 {
                     dateline: input.story.dateline.toISOString(),
                     perspectives: input.story.perspectives.map((perspective) => ({
-                        digest: perspective.holisticDigest.value,
+                        digest: perspective.perspectiveCorpus.value,
                         discourse: perspective.tags.tags.discourse_type,
                         stance: perspective.tags.tags.stance,
                     })),

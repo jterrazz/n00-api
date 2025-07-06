@@ -17,13 +17,13 @@ import { type NewsStory } from '../../../application/ports/outbound/providers/ne
 import { synopsisSchema } from '../../../domain/entities/story.entity.js';
 import { Category } from '../../../domain/value-objects/category.vo.js';
 import { categorySchema } from '../../../domain/value-objects/category.vo.js';
-import { HolisticDigest } from '../../../domain/value-objects/perspective/holistic-digest.vo.js';
-import { holisticDigestSchema } from '../../../domain/value-objects/perspective/holistic-digest.vo.js';
+import { PerspectiveCorpus } from '../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
+import { perspectiveCorpusSchema } from '../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
 import {
     discourseTypeSchema,
     PerspectiveTags,
     stanceSchema,
-} from '../../../domain/value-objects/perspective/perspective-tags.vo.js';
+} from '../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
 
 export class StoryIngestionAgentAdapter implements StoryIngestionAgentPort {
     static readonly SCHEMA = z.object({
@@ -31,7 +31,7 @@ export class StoryIngestionAgentAdapter implements StoryIngestionAgentPort {
         perspectives: z
             .array(
                 z.object({
-                    holisticDigest: holisticDigestSchema.describe(
+                    perspectiveCorpus: perspectiveCorpusSchema.describe(
                         'A complete compilation of all information for this viewpoint, NOT a summary. It must be focused on the news event itself and include every argument, fact, and piece of evidence presented for this side. It MUST NOT contain information about the news source.',
                     ),
                     tags: z.object({
@@ -82,7 +82,7 @@ export class StoryIngestionAgentAdapter implements StoryIngestionAgentPort {
             'Your output MUST contain two parts:',
             '1.  **Synopsis:** A comprehensive, neutral summary of the core facts. What happened, who was involved, where, and when. Prioritize factual completeness.',
             '2.  **Perspectives:** Identify the 1 or 2 most dominant perspectives presented in the articles. For each perspective, provide:',
-            '    a.  **holisticDigest:** This is NOT a summary. It must be a **complete compilation of all information** for that specific viewpoint, focused *only on the news event*. Gather every argument, fact, and piece of evidence presented *for that side*. It MUST NOT contain information about the news source itself.',
+            '    a.  **perspectiveCorpus:** This is NOT a summary. It must be a **complete compilation of all information** for that specific viewpoint, focused *only on the news event*. Gather every argument, fact, and piece of evidence presented *for that side*. It MUST NOT contain information about the news source itself.',
             "    b.  **tags:** Classify the perspective's `stance` and `discourse_type`.",
             '',
 
@@ -145,7 +145,7 @@ export class StoryIngestionAgentAdapter implements StoryIngestionAgentPort {
 
             // Create perspective data from AI response (without creating full Perspective entities)
             const perspectives = result.perspectives.map((perspectiveData) => ({
-                holisticDigest: new HolisticDigest(perspectiveData.holisticDigest),
+                perspectiveCorpus: new PerspectiveCorpus(perspectiveData.perspectiveCorpus),
                 tags: new PerspectiveTags({
                     discourse_type: perspectiveData.tags.discourse_type,
                     stance: perspectiveData.tags.stance,

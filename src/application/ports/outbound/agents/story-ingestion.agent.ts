@@ -1,6 +1,6 @@
 import { type Category } from '../../../../domain/value-objects/category.vo.js';
-import { type HolisticDigest } from '../../../../domain/value-objects/perspective/holistic-digest.vo.js';
-import { type PerspectiveTags } from '../../../../domain/value-objects/perspective/perspective-tags.vo.js';
+import { type PerspectiveCorpus } from '../../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
+import { type PerspectiveTags } from '../../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
 
 import { type NewsStory } from '../providers/news.port.js';
 
@@ -20,7 +20,7 @@ export interface StoryIngestionAgentPort {
 export interface StoryIngestionResult {
     category: Category;
     perspectives: Array<{
-        holisticDigest: HolisticDigest;
+        perspectiveCorpus: PerspectiveCorpus;
         tags: PerspectiveTags;
     }>;
     synopsis: string;

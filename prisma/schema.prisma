@@ -56,9 +56,9 @@ enum Discourse {
 }
 
 model Story {
-  id           String       @id @default(uuid())
-  synopsis     String
-  category     Category
+  id             String         @id @default(uuid())
+  synopsis       String
+  category       Category
   classification Classification @default(PENDING_CLASSIFICATION)
 
   // Geographic and temporal context
@@ -69,8 +69,8 @@ model Story {
   sourceReferences Json
 
   // Relations
-  perspectives Perspective[]
-  articles     Article[]     @relation("StoryArticles")
+  perspectives StoryPerspective[]
+  articles     Article[]          @relation("StoryArticles")
 
   // Metadata
   createdAt DateTime @default(now())
@@ -82,7 +82,7 @@ model Story {
   @@index([createdAt])
 }
 
-model Perspective {
+model StoryPerspective {
   id             String     @id @default(uuid())
   holisticDigest String
   stance         Stance?

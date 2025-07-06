@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { Category } from '../../value-objects/category.vo.js';
 import { Country } from '../../value-objects/country.vo.js';
 import { Classification } from '../../value-objects/story/classification.vo.js';
-import { type Perspective } from '../perspective.entity.js';
+import { type StoryPerspective } from '../../value-objects/story/perspective/story-perspective.vo.js';
 import { Story } from '../story.entity.js';
 
 import { mockPerspectives } from './mock-of-perspectives.js';
@@ -19,7 +19,7 @@ export function getMockStory(options?: {
     category?: Category;
     country?: Country;
     id?: string;
-    perspectives?: Perspective[];
+    perspectives?: StoryPerspective[];
 }): Story {
     const storyId = options?.id || randomUUID();
     return new Story({
@@ -29,7 +29,7 @@ export function getMockStory(options?: {
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
-        perspectives: options?.perspectives || mockPerspectives(1, storyId),
+        perspectives: options?.perspectives || mockPerspectives(1),
         sourceReferences: ['worldnewsapi:mock-article-1', 'worldnewsapi:mock-article-2'],
         synopsis:
             'Mock Story Synopsis: A comprehensive analysis of current political developments across multiple regions, examining the various perspectives and stakeholder positions that shape public discourse on this evolving situation.',
@@ -47,7 +47,7 @@ function createMockStory(index: number): Story {
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
-        perspectives: mockPerspectives(2, storyId),
+        perspectives: mockPerspectives(2),
         sourceReferences: [`source-ref-${index}`],
         synopsis: `This is a mock synopsis for story ${index}. It is about ${category.toString()} and provides a comprehensive overview of the key facts and events. This text is intentionally long enough to pass validation.`,
         updatedAt: new Date(),

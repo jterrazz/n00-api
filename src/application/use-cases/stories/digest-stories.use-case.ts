@@ -1,11 +1,11 @@
 import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
-import { Perspective } from '../../../domain/entities/perspective.entity.js';
 import { Story } from '../../../domain/entities/story.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
+import { StoryPerspective } from '../../../domain/value-objects/story/perspective/story-perspective.vo.js';
 
 import { type StoryDeduplicationAgentPort } from '../../ports/outbound/agents/story-deduplication.agent.js';
 import { type StoryIngestionAgentPort } from '../../ports/outbound/agents/story-ingestion.agent.js';
@@ -121,12 +121,9 @@ export class DigestStoriesUseCase {
                     const now = new Date();
                     const perspectives = ingestionResult.perspectives.map(
                         (p) =>
-                            new Perspective({
-                                ...p,
-                                createdAt: now,
-                                id: randomUUID(),
-                                storyId,
-                                updatedAt: now,
+                            new StoryPerspective({
+                                perspectiveCorpus: p.perspectiveCorpus,
+                                tags: p.tags,
                             }),
                     );
 

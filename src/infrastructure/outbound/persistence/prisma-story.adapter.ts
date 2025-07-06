@@ -53,8 +53,8 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
 
             // Create perspectives
             for (const perspective of story.perspectives) {
-                await tx.perspective.create({
-                    data: this.mapper.perspectiveToPrisma(perspective),
+                await tx.storyPerspective.create({
+                    data: this.mapper.perspectiveToPrisma(perspective, createdStory.id),
                 });
             }
 

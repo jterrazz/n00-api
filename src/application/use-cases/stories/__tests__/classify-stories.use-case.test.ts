@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, test } from '@jterrazz/test';
 import { randomUUID } from 'crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
-import { Perspective } from '../../../../domain/entities/perspective.entity.js';
 import { Story } from '../../../../domain/entities/story.entity.js';
 import { Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { HolisticDigest } from '../../../../domain/value-objects/perspective/holistic-digest.vo.js';
-import { PerspectiveTags } from '../../../../domain/value-objects/perspective/perspective-tags.vo.js';
 import { Classification } from '../../../../domain/value-objects/story/classification.vo.js';
+import { PerspectiveCorpus } from '../../../../domain/value-objects/story/perspective/perspective-corpus.vo.js';
+import { PerspectiveTags } from '../../../../domain/value-objects/story/perspective/perspective-tags.vo.js';
+import { StoryPerspective } from '../../../../domain/value-objects/story/perspective/story-perspective.vo.js';
 
 import {
     type StoryClassificationAgentPort,
@@ -32,15 +32,11 @@ const createMockStory = (
         dateline: new Date(),
         id: storyId,
         perspectives: [
-            new Perspective({
-                createdAt: new Date(),
-                holisticDigest: new HolisticDigest(
+            new StoryPerspective({
+                perspectiveCorpus: new PerspectiveCorpus(
                     'This is a very long and detailed holistic digest for the mock perspective, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
                 ),
-                id: randomUUID(),
-                storyId,
                 tags: new PerspectiveTags({ discourse_type: 'mainstream', stance: 'neutral' }),
-                updatedAt: new Date(),
             }),
         ],
         sourceReferences: ['source-1'],

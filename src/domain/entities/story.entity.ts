@@ -3,8 +3,7 @@ import { z } from 'zod/v4';
 import { Category } from '../value-objects/category.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Classification } from '../value-objects/story/classification.vo.js';
-
-import { Perspective } from './perspective.entity.js';
+import { StoryPerspective } from '../value-objects/story/perspective/story-perspective.vo.js';
 
 export const synopsisSchema = z
     .string()
@@ -22,7 +21,7 @@ export const storySchema = z.object({
         .describe('The publication date of the story, typically based on the source articles.'),
     id: z.uuid().describe('The unique identifier for the story.'),
     perspectives: z
-        .array(z.instanceof(Perspective))
+        .array(z.instanceof(StoryPerspective))
         .min(1, 'At least one perspective is required')
         .describe('A list of different viewpoints or angles on the story.'),
     sourceReferences: z
@@ -45,7 +44,7 @@ export class Story {
     public readonly createdAt: Date;
     public readonly dateline: Date;
     public readonly id: string;
-    public readonly perspectives: Perspective[];
+    public readonly perspectives: StoryPerspective[];
     public readonly sourceReferences: string[];
     public readonly synopsis: string;
     public readonly updatedAt: Date;
