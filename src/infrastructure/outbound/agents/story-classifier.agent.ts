@@ -9,8 +9,8 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
 import {
-    type InterestTier,
-    interestTierSchema,
+    type Classification,
+    classificationSchema,
     type StoryClassifierAgentPort,
     type StoryClassifierInput,
     type StoryClassifierResult,
@@ -18,8 +18,10 @@ import {
 
 export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
     static readonly SCHEMA = z.object({
-        interestTier: interestTierSchema,
-        reason: z.string().describe('A brief, clear justification for your tier selection.'),
+        classification: classificationSchema,
+        reason: z
+            .string()
+            .describe('A brief, clear justification for your classification selection.'),
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
@@ -62,7 +64,7 @@ export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
             'You are a Senior Editor. Your role is to determine if a story has broad, general appeal, is suited for a niche audience, or should be archived entirely. Trust your editorial judgment to ensure our main feed is engaging for everyone, while still serving dedicated fans and filtering out irrelevant content.',
             '',
 
-            // The Tiers - Your Guiding Principles
+            // The Classifications - Your Guiding Principles
             'Use these principles to guide your decision:',
             '•   **STANDARD:** For stories with broad, mainstream appeal. This is for content that a general audience would find interesting or important. **Example:** a major championship final, a significant political election, or major international news.',
             '•   **NICHE:** For high-quality stories that primarily serve a specific community or interest group. Use this for content that is not of broad interest. **Example:** a regular-season match between less popular teams, specific celebrity news, or updates on a niche hobby.',
@@ -70,12 +72,12 @@ export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
             '',
 
             // Your Task
-            "Your task is to weigh the story's topic against these principles and use your editorial 'feel' to assign the most appropriate tier. The primary factor is the story's audience and where it should be placed.",
+            "Your task is to weigh the story's topic against these principles and use your editorial 'feel' to assign the most appropriate classification. The primary factor is the story's audience and where it should be placed.",
             '',
 
             // Critical Rules
             'CRITICAL RULES:',
-            '•   You **MUST** select one of the three tiers: `STANDARD`, `NICHE`, or `ARCHIVED`.',
+            '•   You **MUST** select one of the three classifications: `STANDARD`, `NICHE`, or `ARCHIVED`.',
             '•   You **MUST** provide a brief, clear `reason` justifying your editorial decision.',
             '',
 
@@ -101,13 +103,13 @@ export class StoryClassifierAgentAdapter implements StoryClassifierAgentPort {
             }
 
             this.logger.info(`[${this.name}] Story classified successfully.`, {
-                interestTier: result.interestTier,
+                classification: result.classification,
                 reason: result.reason,
                 storyId: input.story.id,
             });
 
             return {
-                interestTier: result.interestTier as InterestTier,
+                classification: result.classification as Classification,
                 reason: result.reason,
             };
         } catch (error) {

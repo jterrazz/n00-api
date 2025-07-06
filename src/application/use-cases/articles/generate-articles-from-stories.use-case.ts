@@ -43,8 +43,8 @@ export class GenerateArticlesFromStoriesUseCase {
 
             // Find stories that are ready for article generation
             const storiesToProcess = await this.storyRepository.findStoriesWithoutArticles({
+                classification: ['STANDARD', 'NICHE'],
                 country: country.toString(),
-                interestTier: ['STANDARD', 'NICHE'],
                 limit: 20, // Process in batches to avoid overwhelming the AI agent
             });
 

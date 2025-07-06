@@ -93,7 +93,7 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
         offset?: number;
         startDate?: Date;
         where?: {
-            interestTier?: 'PENDING_REVIEW';
+            classification?: 'PENDING_CLASSIFICATION';
         };
     }): Promise<Story[]> {
         const where: Record<string, unknown> = {};
@@ -116,9 +116,9 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
             };
         }
 
-        // Interest Tier filter
-        if (criteria.where?.interestTier) {
-            where.interestTier = criteria.where.interestTier;
+        // Classification filter
+        if (criteria.where?.classification) {
+            where.classification = criteria.where.classification;
         }
 
         const stories = await this.prisma.getPrismaClient().story.findMany({
@@ -162,8 +162,8 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
 
     async findStoriesWithoutArticles(criteria?: {
         category?: string;
+        classification?: Array<'NICHE' | 'PENDING_CLASSIFICATION' | 'STANDARD'>;
         country?: string;
-        interestTier?: Array<'NICHE' | 'PENDING_REVIEW' | 'STANDARD'>;
         limit?: number;
     }): Promise<Story[]> {
         const where: Record<string, unknown> = {
@@ -182,9 +182,9 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
             where.country = criteria.country;
         }
 
-        // Interest Tier filter
-        if (criteria?.interestTier && criteria.interestTier.length > 0) {
-            where.interestTier = { in: criteria.interestTier };
+        // Classification filter
+        if (criteria?.classification && criteria.classification.length > 0) {
+            where.classification = { in: criteria.classification };
         }
 
         const stories = await this.prisma.getPrismaClient().story.findMany({
@@ -221,15 +221,21 @@ export class PrismaStoryRepository implements StoryRepositoryPort {
         return sourceReferences;
     }
 
-    async update(
-        id: string,
-        data: { interestTier: 'ARCHIVED' | 'NICHE' | 'STANDARD' },
-    ): Promise<void> {
-        await this.prisma.getPrismaClient().story.update({
-            data: {
-                interestTier: data.interestTier,
+    async update(id: string, data: Partial<Story>): Promise<Story> {
+        const updateData: Record<string, unknown> = {};
+
+        if (data.classification) {
+            updateData.classification = data.classification.toString();
+        }
+
+        const updatedStory = await this.prisma.getPrismaClient().story.update({
+            data: updateData,
+            include: {
+                perspectives: true,
             },
             where: { id },
         });
+
+        return this.mapper.toDomain(updatedStory);
     }
 }

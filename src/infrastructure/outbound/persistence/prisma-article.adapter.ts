@@ -90,11 +90,11 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     lt: options.cursor,
                 },
             }),
-            ...(options.interestTier && {
+            ...(options.classification && {
                 stories: {
                     some: {
-                        interestTier: {
-                            in: options.interestTier,
+                        classification: {
+                            in: options.classification,
                         },
                     },
                 },
@@ -105,10 +105,10 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
             include: {
                 stories: {
                     select: {
+                        classification: true,
                         id: true,
-                        interestTier: true,
                     },
-                    take: 1, // We only need the tier from one story
+                    take: 1, // We only need the classification from one story
                 },
                 variants: true,
             },

@@ -34,7 +34,7 @@ export interface StoryRepositoryPort {
         offset?: number;
         startDate?: Date;
         where?: {
-            interestTier?: 'PENDING_REVIEW';
+            classification?: 'PENDING_CLASSIFICATION';
         };
     }): Promise<Story[]>;
 
@@ -54,8 +54,8 @@ export interface StoryRepositoryPort {
      */
     findStoriesWithoutArticles(criteria?: {
         category?: string;
+        classification?: Array<'NICHE' | 'PENDING_CLASSIFICATION' | 'STANDARD'>;
         country?: string;
-        interestTier?: Array<'NICHE' | 'PENDING_REVIEW' | 'STANDARD'>;
         limit?: number;
     }): Promise<Story[]>;
 
@@ -68,5 +68,5 @@ export interface StoryRepositoryPort {
     /**
      * Update a story's interest tier
      */
-    update(id: string, data: { interestTier: 'ARCHIVED' | 'NICHE' | 'STANDARD' }): Promise<void>;
+    update(id: string, data: Partial<Story>): Promise<Story>;
 }

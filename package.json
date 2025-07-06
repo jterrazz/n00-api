@@ -23,7 +23,7 @@
   "dependencies": {
     "@date-fns/tz": "^1.2.0",
     "@hono/node-server": "^1.13.7",
-    "@jterrazz/intelligence": "^1.4.3",
+    "@jterrazz/intelligence": "^1.5.0",
     "@jterrazz/logger": "^1.3.4",
     "@jterrazz/monitoring": "^1.0.0",
     "@prisma/client": "^6.10.1",

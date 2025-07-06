@@ -46,9 +46,9 @@ export interface FindHeadlinesAndSummariesOptions {
 
 export interface FindManyOptions {
     category?: Category;
+    classification?: Array<'NICHE' | 'STANDARD'>;
     country?: Country;
     cursor?: Date;
-    interestTier?: Array<'NICHE' | 'STANDARD'>;
     language?: Language;
     limit: number;
 }

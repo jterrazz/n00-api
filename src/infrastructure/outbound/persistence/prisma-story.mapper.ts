@@ -14,7 +14,7 @@ import { Category } from '../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../domain/value-objects/country.vo.js';
 import { HolisticDigest } from '../../../domain/value-objects/perspective/holistic-digest.vo.js';
 import { PerspectiveTags } from '../../../domain/value-objects/perspective/perspective-tags.vo.js';
-import { InterestTier } from '../../../domain/value-objects/story/interest-tier.vo.js';
+import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 
 export class StoryMapper {
     mapCategoryToPrisma(category: Category): PrismaCategory {
@@ -71,13 +71,17 @@ export class StoryMapper {
 
         return new Story({
             category: new Category(prisma.category),
+            classification: new Classification(
+                prisma.classification as
+                    | 'ARCHIVED'
+                    | 'NICHE'
+                    | 'PENDING_CLASSIFICATION'
+                    | 'STANDARD',
+            ),
             country: new Country(prisma.country),
             createdAt: prisma.createdAt,
             dateline: prisma.dateline,
             id: prisma.id,
-            interestTier: new InterestTier(
-                prisma.interestTier as 'ARCHIVED' | 'NICHE' | 'PENDING_REVIEW' | 'STANDARD',
-            ),
             perspectives,
             sourceReferences: Array.isArray(prisma.sourceReferences)
                 ? (prisma.sourceReferences as string[])
@@ -90,6 +94,11 @@ export class StoryMapper {
     toPrisma(story: Story): Prisma.StoryCreateInput {
         return {
             category: this.mapCategoryToPrisma(story.category),
+            classification: story.classification.toString() as
+                | 'ARCHIVED'
+                | 'NICHE'
+                | 'PENDING_CLASSIFICATION'
+                | 'STANDARD',
             country: this.mapCountryToPrisma(story.country),
             dateline: story.dateline,
             id: story.id,

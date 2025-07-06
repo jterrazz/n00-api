@@ -41,10 +41,10 @@ enum Stance {
   skeptical
 }
 
-enum InterestTier {
+enum Classification {
   STANDARD
   NICHE
-  PENDING_REVIEW
+  PENDING_CLASSIFICATION
   ARCHIVED
 }
 
@@ -59,7 +59,7 @@ model Story {
   id           String       @id @default(uuid())
   synopsis     String
   category     Category
-  interestTier InterestTier @default(PENDING_REVIEW)
+  classification Classification @default(PENDING_CLASSIFICATION)
 
   // Geographic and temporal context
   country  Country

@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 
 import { Category } from '../value-objects/category.vo.js';
 import { Country } from '../value-objects/country.vo.js';
-import { InterestTier } from '../value-objects/story/interest-tier.vo.js';
+import { Classification } from '../value-objects/story/classification.vo.js';
 
 import { Perspective } from './perspective.entity.js';
 
@@ -14,13 +14,13 @@ export const synopsisSchema = z
 
 export const storySchema = z.object({
     category: z.instanceof(Category).describe('The primary category classification of the story.'),
+    classification: z.instanceof(Classification),
     country: z.instanceof(Country).describe('The country where the story is relevant.'),
     createdAt: z.date().describe('The timestamp when the story was first created in the system.'),
     dateline: z
         .date()
         .describe('The publication date of the story, typically based on the source articles.'),
     id: z.uuid().describe('The unique identifier for the story.'),
-    interestTier: z.instanceof(InterestTier),
     perspectives: z
         .array(z.instanceof(Perspective))
         .min(1, 'At least one perspective is required')
@@ -40,11 +40,11 @@ export type StoryProps = z.input<typeof storySchema>;
  */
 export class Story {
     public readonly category: Category;
+    public readonly classification: Classification;
     public readonly country: Country;
     public readonly createdAt: Date;
     public readonly dateline: Date;
     public readonly id: string;
-    public readonly interestTier: InterestTier;
     public readonly perspectives: Perspective[];
     public readonly sourceReferences: string[];
     public readonly synopsis: string;
@@ -67,7 +67,7 @@ export class Story {
         this.createdAt = validatedData.createdAt;
         this.updatedAt = validatedData.updatedAt;
         this.country = validatedData.country;
-        this.interestTier = validatedData.interestTier;
+        this.classification = validatedData.classification;
     }
 
     public getCountryCodes(): string[] {

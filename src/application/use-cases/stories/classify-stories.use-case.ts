@@ -1,13 +1,15 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
+import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
+
 import { type StoryClassifierAgentPort } from '../../ports/outbound/agents/story-classifier.agent.js';
 import { type StoryRepositoryPort } from '../../ports/outbound/persistence/story-repository.port.js';
 
 /**
  * @description
  * This use case is responsible for classifying stories that are in the
- * 'PENDING_REVIEW' state. It uses an AI agent to analyze each story
- * and assign it a final interest tier (`STANDARD`, `NICHE`, or `ARCHIVED`).
+ * 'PENDING_CLASSIFICATION' state. It uses an AI agent to analyze each story
+ * and assign it a final classification (`STANDARD`, `NICHE`, or `ARCHIVED`).
  */
 export class ClassifyStoriesUseCase {
     constructor(
@@ -24,11 +26,11 @@ export class ClassifyStoriesUseCase {
         try {
             const storiesToReview = await this.storyRepository.findMany({
                 limit: 50,
-                where: { interestTier: 'PENDING_REVIEW' },
+                where: { classification: 'PENDING_CLASSIFICATION' },
             });
 
             if (storiesToReview.length === 0) {
-                this.logger.info('No stories found pending review.');
+                this.logger.info('No stories found pending classification.');
                 return;
             }
 
@@ -40,10 +42,10 @@ export class ClassifyStoriesUseCase {
 
                     if (result) {
                         await this.storyRepository.update(story.id, {
-                            interestTier: result.interestTier,
+                            classification: new Classification(result.classification),
                         });
                         this.logger.info(
-                            `Story ${story.id} classified as ${result.interestTier}: ${result.reason}`,
+                            `Story ${story.id} classified as ${result.classification}: ${result.reason}`,
                         );
                         classifiedCount++;
                     } else {

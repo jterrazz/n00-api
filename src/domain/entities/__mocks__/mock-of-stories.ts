@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { Category } from '../../value-objects/category.vo.js';
 import { Country } from '../../value-objects/country.vo.js';
-import { InterestTier } from '../../value-objects/story/interest-tier.vo.js';
+import { Classification } from '../../value-objects/story/classification.vo.js';
 import { type Perspective } from '../perspective.entity.js';
 import { Story } from '../story.entity.js';
 
@@ -24,11 +24,11 @@ export function getMockStory(options?: {
     const storyId = options?.id || randomUUID();
     return new Story({
         category: options?.category || new Category('politics'),
+        classification: new Classification('PENDING_CLASSIFICATION'),
         country: options?.country || new Country('us'),
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
-        interestTier: new InterestTier('PENDING_REVIEW'),
         perspectives: options?.perspectives || mockPerspectives(1, storyId),
         sourceReferences: ['worldnewsapi:mock-article-1', 'worldnewsapi:mock-article-2'],
         synopsis:
@@ -42,11 +42,11 @@ function createMockStory(index: number): Story {
     const storyId = randomUUID();
     return new Story({
         category,
+        classification: new Classification('PENDING_CLASSIFICATION'),
         country: new Country('us'),
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
-        interestTier: new InterestTier('PENDING_REVIEW'),
         perspectives: mockPerspectives(2, storyId),
         sourceReferences: [`source-ref-${index}`],
         synopsis: `This is a mock synopsis for story ${index}. It is about ${category.toString()} and provides a comprehensive overview of the key facts and events. This text is intentionally long enough to pass validation.`,

@@ -9,7 +9,7 @@ import { Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { HolisticDigest } from '../../../../domain/value-objects/perspective/holistic-digest.vo.js';
 import { PerspectiveTags } from '../../../../domain/value-objects/perspective/perspective-tags.vo.js';
-import { InterestTier } from '../../../../domain/value-objects/story/interest-tier.vo.js';
+import { Classification } from '../../../../domain/value-objects/story/classification.vo.js';
 
 import {
     type StoryClassifierAgentPort,
@@ -21,16 +21,16 @@ import { ClassifyStoriesUseCase } from '../classify-stories.use-case.js';
 
 const createMockStory = (
     id: string,
-    tier: 'NICHE' | 'PENDING_REVIEW' | 'STANDARD' = 'PENDING_REVIEW',
+    tier: 'NICHE' | 'PENDING_CLASSIFICATION' | 'STANDARD' = 'PENDING_CLASSIFICATION',
 ): Story => {
     const storyId = id;
     return new Story({
         category: new Category('technology'),
+        classification: new Classification(tier),
         country: new Country('us'),
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
-        interestTier: new InterestTier(tier),
         perspectives: [
             new Perspective({
                 createdAt: new Date(),
@@ -74,14 +74,14 @@ describe('ClassifyStoriesUseCase', () => {
 
         // Default mock implementations
         mockStoryRepository.findMany.mockResolvedValue([storyToReview]);
-        mockStoryRepository.update.mockResolvedValue();
+        mockStoryRepository.update.mockResolvedValue(storyToReview);
     });
 
     describe('execute', () => {
         test('should classify stories pending review and update their status', async () => {
             // Given
             const classificationResult: StoryClassifierResult = {
-                interestTier: 'STANDARD',
+                classification: 'STANDARD',
                 reason: 'A solid, well-written story with broad appeal.',
             };
             mockStoryClassifierAgent.run.mockResolvedValue(classificationResult);
@@ -92,11 +92,11 @@ describe('ClassifyStoriesUseCase', () => {
             // Then
             expect(mockStoryRepository.findMany).toHaveBeenCalledWith({
                 limit: 50,
-                where: { interestTier: 'PENDING_REVIEW' },
+                where: { classification: 'PENDING_CLASSIFICATION' },
             });
             expect(mockStoryClassifierAgent.run).toHaveBeenCalledWith({ story: storyToReview });
             expect(mockStoryRepository.update).toHaveBeenCalledWith(storyToReview.id, {
-                interestTier: 'STANDARD',
+                classification: classificationResult.classification,
             });
             expect(mockLogger.info).toHaveBeenCalledWith(
                 `Story ${storyToReview.id} classified as STANDARD: ${classificationResult.reason}`,
@@ -129,7 +129,7 @@ describe('ClassifyStoriesUseCase', () => {
 
             mockStoryClassifierAgent.run
                 .mockResolvedValueOnce({
-                    interestTier: 'NICHE',
+                    classification: 'NICHE',
                     reason: 'Interesting but for a specific audience.',
                 })
                 .mockResolvedValueOnce(null); // Second story fails
@@ -140,7 +140,7 @@ describe('ClassifyStoriesUseCase', () => {
             // Then
             expect(mockStoryClassifierAgent.run).toHaveBeenCalledTimes(2);
             expect(mockStoryRepository.update).toHaveBeenCalledWith(story1.id, {
-                interestTier: 'NICHE',
+                classification: 'NICHE',
             });
             expect(mockStoryRepository.update).not.toHaveBeenCalledWith(
                 story2.id,

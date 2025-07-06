@@ -6,7 +6,7 @@ import { type Story } from '../../../domain/entities/story.entity.js';
 import { Story as StoryEntity } from '../../../domain/entities/story.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
-import { InterestTier } from '../../../domain/value-objects/story/interest-tier.vo.js';
+import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 
 import { type StoryDeduplicationAgentPort } from '../../ports/outbound/agents/story-deduplication.agent.js';
 import { type StoryDigestAgentPort } from '../../ports/outbound/agents/story-digest.agent.js';
@@ -47,10 +47,12 @@ export class DigestStoriesUseCase {
             );
 
             // Step 2: Fetch news from external providers
-            const newsStories = await this.newsProvider.fetchNews({
+            let newsStories = await this.newsProvider.fetchNews({
                 country,
                 language,
             });
+
+            newsStories = newsStories.slice(0, 3);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news stories found', {
@@ -131,11 +133,11 @@ export class DigestStoriesUseCase {
 
                     const story = new StoryEntity({
                         category: digestResult.category,
+                        classification: new Classification('PENDING_CLASSIFICATION'),
                         country,
                         createdAt: now,
                         dateline: newsStory.publishedAt,
                         id: storyId,
-                        interestTier: new InterestTier('PENDING_REVIEW'),
                         perspectives,
                         sourceReferences: newsStory.articles.map((a) => a.id),
                         synopsis: digestResult.synopsis,

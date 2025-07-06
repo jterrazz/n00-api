@@ -4,14 +4,14 @@ import { z } from 'zod/v4';
 import { type Story } from '../../../../domain/entities/story.entity.js';
 
 /**
- * The possible interest tiers that the agent can assign.
- * These are string literals that correspond to the `InterestTier` enum in the schema.
+ * The possible classifications that the agent can assign.
+ * These are string literals that correspond to the `Classification` enum in the schema.
  */
-export type InterestTier = 'ARCHIVED' | 'NICHE' | 'STANDARD';
+export type Classification = 'ARCHIVED' | 'NICHE' | 'STANDARD';
 
 /**
  * Defines the contract for the Story Classifier Agent.
- * This agent is responsible for analyzing a story and assigning it an interest tier.
+ * This agent is responsible for analyzing a story and assigning it a classification.
  */
 export type StoryClassifierAgentPort = AgentPort<
     StoryClassifierInput,
@@ -27,16 +27,16 @@ export type StoryClassifierInput = {
 };
 
 /**
- * Zod schema for the InterestTier string literals.
+ * Zod schema for the Classification string literals.
  * This is used for validating the AI's output.
  */
-export const interestTierSchema = z.enum(['STANDARD', 'NICHE', 'ARCHIVED']);
+export const classificationSchema = z.enum(['STANDARD', 'NICHE', 'ARCHIVED']);
 
 /**
  * The output of the Story Classifier Agent, containing the assigned
- * interest tier and a brief justification for the decision.
+ * classification and a brief justification for the decision.
  */
 export type StoryClassifierResult = {
-    interestTier: InterestTier;
+    classification: Classification;
     reason: string;
 };

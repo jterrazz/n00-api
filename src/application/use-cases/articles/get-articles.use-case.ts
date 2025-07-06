@@ -31,9 +31,9 @@ export class GetArticlesUseCase {
         const [articles, total] = await Promise.all([
             this.articleRepository.findMany({
                 category,
+                classification: ['STANDARD', 'NICHE'],
                 country,
                 cursor,
-                interestTier: ['STANDARD', 'NICHE'],
                 language,
                 limit: limit + 1,
             }),

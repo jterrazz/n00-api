@@ -32,7 +32,7 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
             .array(
                 z.object({
                     holisticDigest: holisticDigestSchema.describe(
-                        'A complete compilation of all information for this viewpoint, NOT a summary. Must include every argument, fact, and piece of evidence presented for this side.',
+                        'A complete compilation of all information for this viewpoint, NOT a summary. It must be focused on the news event itself and include every argument, fact, and piece of evidence presented for this side. It MUST NOT contain information about the news source.',
                     ),
                     tags: z.object({
                         discourse_type: discourseTypeSchema,
@@ -82,7 +82,7 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
             'Your output MUST contain two parts:',
             '1.  **Synopsis:** A comprehensive, neutral summary of the core facts. What happened, who was involved, where, and when. Prioritize factual completeness.',
             '2.  **Perspectives:** Identify the 1 or 2 most dominant perspectives presented in the articles. For each perspective, provide:',
-            '    a.  **holisticDigest:** This is NOT a summary. It must be a **complete compilation of all information** for that specific viewpoint. Gather every argument, fact, and piece of evidence presented *for that side*.',
+            '    a.  **holisticDigest:** This is NOT a summary. It must be a **complete compilation of all information** for that specific viewpoint, focused *only on the news event*. Gather every argument, fact, and piece of evidence presented *for that side*. It MUST NOT contain information about the news source itself.',
             "    b.  **tags:** Classify the perspective's `stance` and `discourse_type`.",
             '',
 
@@ -98,6 +98,7 @@ export class StoryDigestAgentAdapter implements StoryDigestAgentPort {
 
             // Critical Rules
             'CRITICAL RULES:',
+            '•   **Focus on the Story:** Perspectives MUST be about the central news event. Do not create perspectives about the news publications, their missions, or their general stances. The analysis must be about the story, not the storyteller.',
             '•   Base your entire analysis **only** on the provided articles. Do not add external information.',
             '•   Identify a **maximum of 2** perspectives. Only create a perspective if it is genuinely distinct from the other.',
             '•   **No Redundant Perspectives:** If multiple sources make the same core argument, treat them as ONE perspective. Do not create separate perspectives for sources that are on the same "side" or from the same "camp".',
