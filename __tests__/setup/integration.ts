@@ -7,20 +7,17 @@ import { setupServer, type SetupServerApi } from 'msw/node';
 import os from 'os';
 import { resolve } from 'path';
 
-import {
-    type ExecutorPort,
-    type TaskPort,
-} from '../../src/application/ports/inbound/executor.port.js';
 import { type ServerPort } from '../../src/application/ports/inbound/server.port.js';
+import { type TaskPort, type WorkerPort } from '../../src/application/ports/inbound/worker.port.js';
 
 import { createContainer } from '../../src/di/container.js';
 
 export type IntegrationTestContext = {
     _internal: { databasePath: string };
     gateways: {
-        executor: ExecutorPort;
         httpServer: ServerPort;
         tasks: TaskPort[];
+        worker: WorkerPort;
     };
     msw: SetupServerApi;
     prisma: PrismaClient;
@@ -36,7 +33,7 @@ export async function cleanupDatabase(prisma: PrismaClient): Promise<void> {
 }
 
 export async function cleanupIntegrationTest(context: IntegrationTestContext): Promise<void> {
-    await context.gateways.executor.stop();
+    await context.gateways.worker.stop();
     await context.gateways.httpServer.stop();
     await context.prisma.$disconnect();
     context.msw.close();
@@ -62,7 +59,7 @@ export async function setupIntegrationTest(
     });
 
     const server = testContainer.get('Server');
-    const executor = testContainer.get('Executor');
+    const worker = testContainer.get('Worker');
     const tasks = testContainer.get('Tasks');
     const msw = setupServer(...handlers);
     const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
@@ -71,7 +68,7 @@ export async function setupIntegrationTest(
 
     return {
         _internal: { databasePath },
-        gateways: { executor: executor, httpServer: server, tasks: tasks },
+        gateways: { httpServer: server, tasks: tasks, worker: worker },
         msw,
         prisma,
     };

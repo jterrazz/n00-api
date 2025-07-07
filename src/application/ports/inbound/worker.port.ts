@@ -1,19 +1,4 @@
 /**
- * Executor port - defines how background tasks can be scheduled and managed
- */
-export interface ExecutorPort {
-    /**
-     * Initialize the executor and start all registered tasks
-     */
-    initialize(): Promise<void>;
-
-    /**
-     * Stop all scheduled tasks
-     */
-    stop(): Promise<void>;
-}
-
-/**
  * Represents a task that can be scheduled and executed
  */
 export interface TaskPort {
@@ -37,4 +22,19 @@ export interface TaskPort {
      * Cron expression defining when the task should run
      */
     schedule: string;
+}
+
+/**
+ * Worker port - defines how background tasks can be scheduled and managed
+ */
+export interface WorkerPort {
+    /**
+     * Initialize the worker and start all registered tasks
+     */
+    initialize(): Promise<void>;
+
+    /**
+     * Stop all scheduled tasks
+     */
+    stop(): Promise<void>;
 }

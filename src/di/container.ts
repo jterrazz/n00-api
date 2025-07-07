@@ -10,9 +10,9 @@ import { default as nodeConfiguration } from 'config';
 
 import type { ConfigurationPort } from '../application/ports/inbound/configuration.port.js';
 
-import type { ExecutorPort } from '../application/ports/inbound/executor.port.js';
-import { type TaskPort } from '../application/ports/inbound/executor.port.js';
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
+import type { TaskPort } from '../application/ports/inbound/worker.port.js';
+import type { WorkerPort } from '../application/ports/inbound/worker.port.js';
 import { type ArticleCompositionAgentPort } from '../application/ports/outbound/agents/article-composition.agent.js';
 import { type StoryClassificationAgentPort } from '../application/ports/outbound/agents/story-classification.agent.js';
 import { type StoryDeduplicationAgentPort } from '../application/ports/outbound/agents/story-deduplication.agent.js';
@@ -26,10 +26,10 @@ import { ClassifyStoriesUseCase } from '../application/use-cases/stories/classif
 import { DigestStoriesUseCase } from '../application/use-cases/stories/digest-stories.use-case.js';
 
 import { NodeConfigAdapter } from '../infrastructure/inbound/configuration/node-config.adapter.js';
-import { NodeCronAdapter } from '../infrastructure/inbound/executor/node-cron.adapter.js';
-import { StoryPipelineTask } from '../infrastructure/inbound/executor/stories/story-pipeline.task.js';
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
 import { HonoServerAdapter } from '../infrastructure/inbound/server/hono.adapter.js';
+import { NodeCronAdapter } from '../infrastructure/inbound/worker/node-cron.adapter.js';
+import { StoryPipelineTask } from '../infrastructure/inbound/worker/stories/story-pipeline.task.js';
 import { ArticleCompositionAgentAdapter } from '../infrastructure/outbound/agents/article-composition.agent.js';
 import { StoryClassificationAgentAdapter } from '../infrastructure/outbound/agents/story-classification.agent.js';
 import { StoryDeduplicationAgentAdapter } from '../infrastructure/outbound/agents/story-deduplication.agent.js';
@@ -297,13 +297,13 @@ const serverFactory = Injectable(
     },
 );
 
-const executorFactory = Injectable(
-    'Executor',
+const workerFactory = Injectable(
+    'Worker',
     ['Logger', 'Tasks'] as const,
-    (logger: LoggerPort, tasks: TaskPort[]): ExecutorPort => {
-        logger.info('Initializing NodeCron executor');
-        const executor = new NodeCronAdapter(logger, tasks);
-        return executor;
+    (logger: LoggerPort, tasks: TaskPort[]): WorkerPort => {
+        logger.info('Initializing NodeCron worker');
+        const worker = new NodeCronAdapter(logger, tasks);
+        return worker;
     },
 );
 
@@ -340,4 +340,4 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(tasksFactory)
         // Inbound adapters
         .provides(serverFactory)
-        .provides(executorFactory);
+        .provides(workerFactory);

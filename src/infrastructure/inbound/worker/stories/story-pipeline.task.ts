@@ -2,7 +2,7 @@ import { type LoggerPort } from '@jterrazz/logger';
 
 import { type StoryPipelineTaskConfig } from '../../../../application/ports/inbound/configuration.port.js';
 
-import { type TaskPort } from '../../../../application/ports/inbound/executor.port.js';
+import { type TaskPort } from '../../../../application/ports/inbound/worker.port.js';
 import { type GenerateArticlesFromStoriesUseCase } from '../../../../application/use-cases/articles/generate-articles-from-stories.use-case.js';
 import { type ClassifyStoriesUseCase } from '../../../../application/use-cases/stories/classify-stories.use-case.js';
 import { type DigestStoriesUseCase } from '../../../../application/use-cases/stories/digest-stories.use-case.js';
