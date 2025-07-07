@@ -1,30 +1,41 @@
 import { randomUUID } from 'crypto';
 
-import { Category } from '../../value-objects/category.vo.js';
-import { Country } from '../../value-objects/country.vo.js';
-import { Classification } from '../../value-objects/story/classification.vo.js';
-import { mockPerspectives } from '../../value-objects/story/perspective/__mocks__/mock-perspectives.js';
+import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
+import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
+import { getClassification } from '../../value-objects/story/__mocks__/classifications.mock.js';
+import { mockStoryPerspectives as mockPerspectives } from '../../value-objects/story/perspective/__mocks__/story-perspectives.mock.js';
 import { type StoryPerspective } from '../../value-objects/story/perspective/story-perspective.vo.js';
 import { Story } from '../story.entity.js';
 
 /**
- * Creates an array of mock stories for testing purposes
+ * Generates an array of mock `Story` entities.
  */
 export function getMockStories(count: number): Story[] {
     return Array.from({ length: count }, (_, index) => createMockStory(index));
 }
 
+/**
+ * Generates a single mock `Story` with optional overrides.
+ */
 export function getMockStory(options?: {
-    category?: Category;
-    country?: Country;
+    categoryIndex?: number;
+    classificationIndex?: number;
+    countryIndex?: number;
     id?: string;
     perspectives?: StoryPerspective[];
 }): Story {
     const storyId = options?.id || randomUUID();
     return new Story({
-        category: options?.category || new Category('politics'),
-        classification: new Classification('PENDING_CLASSIFICATION'),
-        country: options?.country || new Country('us'),
+        category:
+            options?.categoryIndex !== undefined
+                ? getCategory(options.categoryIndex)
+                : getCategory(0),
+        classification:
+            options?.classificationIndex !== undefined
+                ? getClassification(options.classificationIndex)
+                : getClassification(2),
+        country:
+            options?.countryIndex !== undefined ? getCountry(options.countryIndex) : getCountry(0),
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
@@ -37,12 +48,13 @@ export function getMockStory(options?: {
 }
 
 function createMockStory(index: number): Story {
-    const category = getMockStoryCategory(index);
+    const category = getCategory(index);
+    const classification = getClassification(index + 1);
     const storyId = randomUUID();
     return new Story({
         category,
-        classification: new Classification('PENDING_CLASSIFICATION'),
-        country: new Country('us'),
+        classification,
+        country: getCountry(index + 1),
         createdAt: new Date(),
         dateline: new Date(),
         id: storyId,
@@ -51,11 +63,4 @@ function createMockStory(index: number): Story {
         synopsis: `This is a mock synopsis for story ${index}. It is about ${category.toString()} and provides a comprehensive overview of the key facts and events. This text is intentionally long enough to pass validation.`,
         updatedAt: new Date(),
     });
-}
-
-/**
- * Determines the category for a story based on its index
- */
-function getMockStoryCategory(index: number): Category {
-    return new Category(index % 2 === 0 ? 'politics' : 'technology');
 }
