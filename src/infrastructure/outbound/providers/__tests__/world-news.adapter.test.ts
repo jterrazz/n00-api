@@ -171,10 +171,15 @@ describe('WorldNewsAdapter', () => {
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('API request failed:', {
+        expect(mockLogger.error).toHaveBeenCalledWith('news:api:error', {
             status: 500,
             statusText: 'Internal Server Error',
             url: expect.stringContaining('https://api.worldnewsapi.com/top-news'),
+        });
+        expect(mockLogger.error).toHaveBeenCalledWith('news:fetch:error', {
+            country: 'US',
+            error: expect.any(Error),
+            language: 'EN',
         });
     });
 
@@ -191,10 +196,15 @@ describe('WorldNewsAdapter', () => {
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('API request failed:', {
+        expect(mockLogger.error).toHaveBeenCalledWith('news:api:error', {
             status: 401,
             statusText: 'Unauthorized',
             url: expect.stringContaining('https://api.worldnewsapi.com/top-news'),
+        });
+        expect(mockLogger.error).toHaveBeenCalledWith('news:fetch:error', {
+            country: 'US',
+            error: expect.any(Error),
+            language: 'EN',
         });
     });
 
@@ -211,7 +221,7 @@ describe('WorldNewsAdapter', () => {
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch EN news:', {
+        expect(mockLogger.error).toHaveBeenCalledWith('news:fetch:error', {
             country: 'US',
             error: expect.any(ZodError),
             language: 'EN',

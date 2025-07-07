@@ -64,7 +64,7 @@ const newsFactory = Injectable(
     'News',
     ['Configuration', 'Logger', 'NewRelic'] as const,
     (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
-        logger.info('Initializing WorldNews adapter');
+        logger.info('adapter:init', { component: 'WorldNews' });
         const newsAdapter = new WorldNewsAdapter(
             {
                 apiKey: config.getOutboundConfiguration().worldNews.apiKey,
@@ -75,7 +75,6 @@ const newsFactory = Injectable(
         const useCache = config.getOutboundConfiguration().worldNews.useCache;
 
         if (useCache) {
-            logger.info('Initializing CachedNews adapter');
             const cachedNewsAdapter = new CachedNewsAdapter(
                 newsAdapter,
                 logger,
@@ -136,7 +135,7 @@ const articleRepositoryFactory = Injectable(
     'ArticleRepository',
     ['Database', 'Logger'] as const,
     (db: PrismaAdapter, logger: LoggerPort) => {
-        logger.info('Initializing Prisma article repository');
+        logger.info('repository:init', { component: 'PrismaArticle' });
         const articleRepository = new PrismaArticleRepository(db);
         return articleRepository;
     },
@@ -146,7 +145,7 @@ const storyRepositoryFactory = Injectable(
     'StoryRepository',
     ['Database', 'Logger'] as const,
     (db: PrismaAdapter, logger: LoggerPort) => {
-        logger.info('Initializing Prisma story repository');
+        logger.info('repository:init', { component: 'PrismaStory' });
         const storyRepository = new PrismaStoryRepository(db, logger);
         return storyRepository;
     },
@@ -216,10 +215,12 @@ const classifyStoriesUseCaseFactory = Injectable(
 /**
  * Controller factories
  */
-const getArticlesControllerFactory = Injectable(
-    'GetArticlesController',
+const controllersFactory = Injectable(
+    'Controllers',
     ['GetArticles'] as const,
-    (getArticles: GetArticlesUseCase) => new GetArticlesController(getArticles),
+    (getArticles: GetArticlesUseCase) => ({
+        getArticles: new GetArticlesController(getArticles),
+    }),
 );
 
 /**
@@ -272,7 +273,7 @@ const newRelicFactory = Injectable(
             return new NoopMonitoringAdapter(logger);
         }
 
-        logger.info('Initializing NewRelic adapter');
+        logger.info('adapter:init', { component: 'NewRelic' });
         return new NewRelicMonitoringAdapter({
             environment: config.getInboundConfiguration().env,
             licenseKey: outboundConfig.newRelic.licenseKey,
@@ -289,10 +290,10 @@ const configurationFactory = (overrides?: ContainerOverrides) =>
 
 const serverFactory = Injectable(
     'Server',
-    ['Logger', 'GetArticlesController'] as const,
-    (logger: LoggerPort, getArticlesController: GetArticlesController): ServerPort => {
-        logger.info('Initializing Hono server');
-        const server = new HonoServerAdapter(logger, getArticlesController);
+    ['Logger', 'Controllers'] as const,
+    (logger: LoggerPort, controllers: { getArticles: GetArticlesController }): ServerPort => {
+        logger.info('server:init', { component: 'Server', implementation: 'Hono' });
+        const server = new HonoServerAdapter(logger, controllers.getArticles);
         return server;
     },
 );
@@ -301,7 +302,7 @@ const workerFactory = Injectable(
     'Worker',
     ['Logger', 'Tasks'] as const,
     (logger: LoggerPort, tasks: TaskPort[]): WorkerPort => {
-        logger.info('Initializing NodeCron worker');
+        logger.info('worker:init', { component: 'Worker', implementation: 'NodeCron' });
         const worker = new NodeCronAdapter(logger, tasks);
         return worker;
     },
@@ -336,7 +337,7 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(generateArticlesFromStoriesUseCaseFactory)
         .provides(classifyStoriesUseCaseFactory)
         // Controllers and tasks
-        .provides(getArticlesControllerFactory)
+        .provides(controllersFactory)
         .provides(tasksFactory)
         // Inbound adapters
         .provides(serverFactory)

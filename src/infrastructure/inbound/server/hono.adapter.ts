@@ -9,8 +9,9 @@ import {
 
 import { createArticlesRouter } from './articles/articles.routes.js';
 import { type GetArticlesController } from './articles/get-articles.controller.js';
-import { createErrorHandlerMiddleware } from './common/error-handler.middleware.js';
 import { createHealthRouter } from './health/health.routes.js';
+
+import { createErrorHandlerMiddleware } from './error-handler.middleware.js';
 
 export class HonoServerAdapter implements ServerPort {
     private app: Hono;
@@ -26,7 +27,7 @@ export class HonoServerAdapter implements ServerPort {
     }
 
     public async request(
-        path: `/${string}`,
+        path: string,
         options?: { body?: object | string; headers?: Record<string, string>; method?: string },
     ): Promise<Response> {
         const init: RequestInit = {
@@ -39,19 +40,22 @@ export class HonoServerAdapter implements ServerPort {
 
     public async start(config: ServerConfiguration): Promise<void> {
         return new Promise((resolve) => {
+            this.logger.debug('server:start', { host: config.host, port: config.port });
+
             this.server = serve(this.app, (info) => {
-                this.logger.info(`Server is listening on ${config.host}:${info.port}`);
+                this.logger.debug('server:listening', { host: config.host, port: info.port });
                 resolve();
             });
         });
     }
 
     public async stop(): Promise<void> {
-        if (this.server) {
-            await this.server.close();
-            this.server = null;
-            this.logger.info('Server stopped');
-        }
+        if (!this.server) return;
+
+        this.logger.info('server:stopping');
+        await this.server.close();
+        this.server = null;
+        this.logger.info('server:stopped');
     }
 
     private registerRoutes(): void {

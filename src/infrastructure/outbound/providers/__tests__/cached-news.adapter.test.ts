@@ -62,7 +62,7 @@ describe('CachedNewsAdapter', () => {
             // Then - it should return the cached data
             expect(result).toEqual([mockStory]);
             expect(mockNewsSource.fetchNews).not.toHaveBeenCalled();
-            expect(mockLogger.info).toHaveBeenCalledWith('Cache hit - using cached news data', {
+            expect(mockLogger.info).toHaveBeenCalledWith('cache:hit', {
                 cacheAge: expect.any(Number),
                 language: 'EN',
                 storyCount: 1,
@@ -85,7 +85,8 @@ describe('CachedNewsAdapter', () => {
             // Then - it should fetch fresh data and update the cache
             expect(result).toEqual([mockStory]);
             expect(mockNewsSource.fetchNews).toHaveBeenCalledWith(options);
-            expect(mockLogger.info).toHaveBeenCalledWith('Cache miss - fetching fresh news data', {
+            expect(mockLogger.info).toHaveBeenCalledWith('cache:expired', {
+                cachePath: expect.stringContaining(`${cacheDirectory}/stories/EN.json`),
                 language: 'EN',
             });
             expect(writeFileSync).toHaveBeenCalledWith(
@@ -105,7 +106,7 @@ describe('CachedNewsAdapter', () => {
             // Then - it should fetch fresh data and return it
             expect(result).toEqual([mockStory]);
             expect(mockNewsSource.fetchNews).toHaveBeenCalledWith(options);
-            expect(mockLogger.info).toHaveBeenCalledWith('Cache miss - fetching fresh news data', {
+            expect(mockLogger.info).toHaveBeenCalledWith('cache:miss', {
                 language: 'EN',
             });
         });
@@ -124,14 +125,11 @@ describe('CachedNewsAdapter', () => {
 
                 // Then - it should fetch fresh data and log the cache read error
                 expect(result).toEqual([mockStory]);
-                expect(mockLogger.error).toHaveBeenCalledWith(
-                    'Failed to read news cache, removing corrupted cache',
-                    {
-                        cachePath: expect.stringContaining(`${cacheDirectory}/stories/EN.json`),
-                        error: expect.any(Error),
-                        language: 'EN',
-                    },
-                );
+                expect(mockLogger.error).toHaveBeenCalledWith('cache:read:error', {
+                    cachePath: expect.stringContaining(`${cacheDirectory}/stories/EN.json`),
+                    error: expect.any(Error),
+                    language: 'EN',
+                });
                 expect(mockNewsSource.fetchNews).toHaveBeenCalledWith(options);
             });
 
@@ -148,7 +146,7 @@ describe('CachedNewsAdapter', () => {
 
                 // Then - it should return the data and log the cache write error
                 expect(result).toEqual([mockStory]);
-                expect(mockLogger.error).toHaveBeenCalledWith('Failed to write news cache', {
+                expect(mockLogger.error).toHaveBeenCalledWith('cache:write:error', {
                     error: expect.any(Error),
                     language: 'EN',
                 });

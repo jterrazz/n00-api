@@ -68,7 +68,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
 
         return this.monitoring.monitorSegment('Api/WorldNews/FetchNews', async () => {
             try {
-                this.logger.info('Starting news fetch:', {
+                this.logger.debug('news:fetch:start', {
                     country: country.toString(),
                     language: language.toString(),
                 });
@@ -78,7 +78,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
                 const response = await this.makeApiRequest(url);
                 const stories = await this.processApiResponse(response);
 
-                this.logger.info('Successfully retrieved news stories:', {
+                this.logger.info('news:fetch:success', {
                     country: country.toString(),
                     language: language.toString(),
                     storyCount: stories.length,
@@ -86,7 +86,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
                 return stories;
             } catch (error) {
                 this.monitoring.recordCount('WorldNews', 'Errors');
-                this.logger.error(`Failed to fetch ${language} news:`, {
+                this.logger.error('news:fetch:error', {
                     country: country.toString(),
                     error,
                     language: language.toString(),
@@ -106,7 +106,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
         url.searchParams.append('language', language.toString());
         url.searchParams.append('date', countryDate);
 
-        this.logger.info('Built API URL with date', {
+        this.logger.debug('news:api:url', {
             country: country.toString(),
             countryDate,
         });
@@ -132,7 +132,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
 
         if (!response.ok) {
             this.monitoring.recordCount('WorldNews', 'Errors');
-            this.logger.error('API request failed:', {
+            this.logger.error('news:api:error', {
                 status: response.status,
                 statusText: response.statusText,
                 url: url.toString(),

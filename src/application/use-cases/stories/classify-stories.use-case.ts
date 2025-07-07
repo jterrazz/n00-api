@@ -19,7 +19,7 @@ export class ClassifyStoriesUseCase {
      * @description Finds stories pending classification and processes them through the AI agent
      */
     public async execute(): Promise<void> {
-        this.logger.info('Starting story classification process...');
+        this.logger.info('story:classify:start');
 
         let successfulClassifications = 0;
         let failedClassifications = 0;
@@ -32,11 +32,11 @@ export class ClassifyStoriesUseCase {
             });
 
             if (storiesToReview.length === 0) {
-                this.logger.info('No stories found pending classification.');
+                this.logger.info('story:classify:none');
                 return;
             }
 
-            this.logger.info(`Found ${storiesToReview.length} stories to classify.`);
+            this.logger.info('story:classify:found', { count: storiesToReview.length });
 
             // Process each story through the classification agent
             for (const story of storiesToReview) {
@@ -48,29 +48,29 @@ export class ClassifyStoriesUseCase {
                             classification: result.classification,
                         });
 
-                        this.logger.info(
-                            `Story ${story.id} classified as ${result.classification}: ${result.reason}`,
-                        );
+                        this.logger.info('story:classify:classified', {
+                            classification: result.classification,
+                            reason: result.reason,
+                            storyId: story.id,
+                        });
                         successfulClassifications++;
                     } else {
-                        this.logger.warn(
-                            `Failed to classify story ${story.id}: AI agent returned null.`,
-                        );
+                        this.logger.warn('story:classify:agent-null', { storyId: story.id });
                         failedClassifications++;
                     }
                 } catch (error) {
-                    this.logger.error(`Error classifying story ${story.id}`, { error });
+                    this.logger.error('story:classify:error', { error, storyId: story.id });
                     failedClassifications++;
                 }
             }
         } catch (error) {
-            this.logger.error('Story classification process failed with an unhandled error.', {
+            this.logger.error('story:classify:unhandled-error', {
                 error,
             });
             throw error;
         }
 
-        this.logger.info('Story classification process finished.', {
+        this.logger.info('story:classify:done', {
             failed: failedClassifications,
             successful: successfulClassifications,
             totalReviewed: successfulClassifications + failedClassifications,

@@ -9,7 +9,7 @@ const start = async () => {
     const worker = container.get('Worker');
 
     try {
-        logger.info('Starting application');
+        logger.info('app:start', { env: config.getInboundConfiguration().env });
 
         const { host, port } = config.getInboundConfiguration().http;
 
@@ -20,9 +20,9 @@ const start = async () => {
             port,
         });
 
-        logger.info('Application started successfully ✓');
+        logger.info('app:ready', { host, port });
     } catch (error) {
-        logger.error('Failed to start application ✗', { error });
+        logger.error('app:error', { error });
         process.exit(1);
     }
 };

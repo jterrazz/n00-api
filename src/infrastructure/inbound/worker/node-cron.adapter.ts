@@ -4,68 +4,70 @@ import cron, { type ScheduledTask } from 'node-cron';
 import { type TaskPort, type WorkerPort } from '../../../application/ports/inbound/worker.port.js';
 
 export class NodeCronAdapter implements WorkerPort {
-    private readonly logger: LoggerPort;
     private readonly scheduledTasks: ScheduledTask[] = [];
-    private readonly tasks: TaskPort[];
 
-    constructor(logger: LoggerPort, tasks: TaskPort[]) {
-        this.logger = logger;
-        this.tasks = tasks;
-    }
+    constructor(
+        private readonly logger: LoggerPort,
+        private readonly tasks: TaskPort[],
+    ) {}
 
     async initialize(): Promise<void> {
-        this.logger.info(`Initializing ${this.tasks.length} tasks`);
+        this.logger.debug('worker:start', { taskCount: this.tasks.length });
 
         for (const task of this.tasks) {
-            this.logger.info(`Scheduling task: ${task.name} with schedule: ${task.schedule}`);
-
-            const safeExecute = async (): Promise<void> => {
-                this.logger.info(`Executing task: ${task.name}`);
-                try {
-                    await task.execute();
-                    this.logger.info(`Task completed successfully: ${task.name}`);
-                } catch (error) {
-                    this.logger.error(`Task failed: ${task.name}`, { error });
-                }
-            };
-
-            // Schedule the task. We intentionally "fire-and-forget" the promise returned
-            // by `task.execute()` to avoid blocking the event loop or overlapping
-            // with other scheduled jobs.
-            const cronTask = cron.schedule(task.schedule, () => {
-                void safeExecute();
-            });
-
-            this.scheduledTasks.push(cronTask);
-
-            if (task.executeOnStartup) {
-                this.logger.info(`Executing task on startup: ${task.name}`);
-                void safeExecute();
-            }
-
-            cronTask.start();
-
-            // Allow the process to exit gracefully even if only cron timers remain.
-            // `node-cron` exposes the underlying timer via the private `timer` property
-            // in recent versions. We defensively check for the standard `unref` API.
-
-            const timerHandle = (cronTask as unknown as { timer?: NodeJS.Timeout }).timer;
-            if (timerHandle?.unref) {
-                timerHandle.unref();
-            }
+            this.scheduleTask(task);
         }
 
-        this.logger.info('All tasks initialized and started');
+        this.logger.debug('worker:ready');
     }
 
     async stop(): Promise<void> {
-        this.logger.info('Stopping all scheduled tasks');
+        this.logger.info('worker:stop', { runningTasks: this.scheduledTasks.length });
 
         for (const task of this.scheduledTasks) {
             task.stop();
         }
 
         this.scheduledTasks.length = 0;
-        this.logger.info('All tasks stopped');
+        this.logger.info('worker:stopped');
+    }
+
+    /**
+     * Schedules an individual cron task and wires up logging + graceful shutdown handling.
+     */
+    private scheduleTask(task: TaskPort): void {
+        this.logger.debug('worker:schedule', { cron: task.schedule, name: task.name });
+
+        const executeSafely = async (): Promise<void> => {
+            const start = Date.now();
+            this.logger.debug('task:start', { name: task.name });
+
+            try {
+                await task.execute();
+                this.logger.info('task:success', {
+                    durationMs: Date.now() - start,
+                    name: task.name,
+                });
+            } catch (error) {
+                this.logger.error('task:error', { error, name: task.name });
+            }
+        };
+
+        const cronTask = cron.schedule(task.schedule, () => {
+            void executeSafely();
+        });
+
+        this.scheduledTasks.push(cronTask);
+
+        if (task.executeOnStartup) {
+            this.logger.debug('task:startup', { name: task.name });
+            void executeSafely();
+        }
+
+        cronTask.start();
+
+        // Allow process to exit if cron timers are the only event-loop handles.
+        const timerHandle = (cronTask as unknown as { timer?: NodeJS.Timeout }).timer;
+        timerHandle?.unref?.();
     }
 }

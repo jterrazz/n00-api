@@ -38,7 +38,7 @@ export class GenerateArticlesFromStoriesUseCase {
      */
     public async execute(language: Language, country: Country): Promise<Article[]> {
         try {
-            this.logger.info('Starting article composition from stories', {
+            this.logger.info('article:generate:start', {
                 country: country.toString(),
                 language: language.toString(),
             });
@@ -51,14 +51,14 @@ export class GenerateArticlesFromStoriesUseCase {
             });
 
             if (storiesToProcess.length === 0) {
-                this.logger.info('No stories found ready for article generation.', {
+                this.logger.info('article:generate:none', {
                     country: country.toString(),
                     language: language.toString(),
                 });
                 return [];
             }
 
-            this.logger.info(`Found ${storiesToProcess.length} stories to process.`);
+            this.logger.info('article:generate:found', { count: storiesToProcess.length });
 
             // Generate articles for each story
             const generatedArticles: Article[] = [];
@@ -76,7 +76,7 @@ export class GenerateArticlesFromStoriesUseCase {
                         await this.articleCompositionAgent.run(compositionInput);
 
                     if (!compositionResult) {
-                        this.logger.warn('AI agent returned null for story', {
+                        this.logger.warn('article:generate:agent-null', {
                             country: country.toString(),
                             language: language.toString(),
                             storyId: story.id,
@@ -112,7 +112,7 @@ export class GenerateArticlesFromStoriesUseCase {
                     // Save the article
                     await this.articleRepository.createMany([article]);
 
-                    this.logger.info('Composed article from story', {
+                    this.logger.info('article:generate:composed', {
                         articleId: article.id,
                         country: country.toString(),
                         headline: article.headline.value,
@@ -123,7 +123,7 @@ export class GenerateArticlesFromStoriesUseCase {
 
                     generatedArticles.push(article);
                 } catch (articleError) {
-                    this.logger.warn('Failed to compose article for story', {
+                    this.logger.warn('article:generate:error', {
                         country: country.toString(),
                         error: articleError,
                         language: language.toString(),
@@ -133,7 +133,7 @@ export class GenerateArticlesFromStoriesUseCase {
                 }
             }
 
-            this.logger.info('Article composition completed', {
+            this.logger.info('article:generate:done', {
                 country: country.toString(),
                 generatedCount: generatedArticles.length,
                 language: language.toString(),
@@ -142,7 +142,7 @@ export class GenerateArticlesFromStoriesUseCase {
 
             return generatedArticles;
         } catch (error) {
-            this.logger.error('Failed to compose articles from stories', {
+            this.logger.error('article:generate:error', {
                 country: country.toString(),
                 error,
                 language: language.toString(),

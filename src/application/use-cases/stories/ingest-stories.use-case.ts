@@ -32,7 +32,7 @@ export class IngestStoriesUseCase {
      */
     public async execute(language: Language, country: Country): Promise<Story[]> {
         try {
-            this.logger.info('Starting story digestion', {
+            this.logger.info('story:ingest:start', {
                 country: country.toString(),
                 language: language.toString(),
             });
@@ -44,9 +44,10 @@ export class IngestStoriesUseCase {
                 this.storyRepository.getAllSourceReferences(country),
             ]);
 
-            this.logger.info(
-                `Found ${recentStories.length} recent stories and ${existingSourceReferences.length} source references to check for duplicates.`,
-            );
+            this.logger.info('story:ingest:stats', {
+                recentStories: recentStories.length,
+                sourceReferences: existingSourceReferences.length,
+            });
 
             // Step 2: Fetch news from external providers
             let newsStories = await this.newsProvider.fetchNews({
@@ -57,13 +58,13 @@ export class IngestStoriesUseCase {
             newsStories = newsStories.slice(0, 3);
 
             if (newsStories.length === 0) {
-                this.logger.warn('No news stories found', {
+                this.logger.warn('story:ingest:news:none', {
                     country: country.toString(),
                     language: language.toString(),
                 });
                 return [];
             }
-            this.logger.info(`Retrieved ${newsStories.length} news stories from providers.`);
+            this.logger.info('story:ingest:news:fetched', { count: newsStories.length });
 
             // Step 3: Filter out stories that have already been processed by source ID
             const newNewsStories = newsStories.filter(
@@ -74,16 +75,16 @@ export class IngestStoriesUseCase {
             );
 
             if (newNewsStories.length === 0) {
-                this.logger.info('No new stories to process after source ID deduplication.');
+                this.logger.info('story:ingest:duplicates:none');
                 return [];
             }
-            this.logger.info(`Found ${newNewsStories.length} new stories after source ID filter.`);
+            this.logger.info('story:ingest:duplicates:filtered', { count: newNewsStories.length });
 
             // Step 4: Filter out stories with insufficient articles
             const validNewsStories = newNewsStories.filter((story) => story.articles.length >= 2);
 
             if (validNewsStories.length === 0) {
-                this.logger.warn('No valid news stories after article count filtering.');
+                this.logger.warn('story:ingest:invalid:none');
                 return [];
             }
 
@@ -101,9 +102,9 @@ export class IngestStoriesUseCase {
                     });
 
                     if (deduplicationResult?.duplicateOfStoryId) {
-                        this.logger.info(
-                            `Found semantic duplicate. Merging into story ${deduplicationResult.duplicateOfStoryId}.`,
-                        );
+                        this.logger.info('story:deduplicated', {
+                            duplicateOf: deduplicationResult.duplicateOfStoryId,
+                        });
                         await this.storyRepository.addSourceReferences(
                             deduplicationResult.duplicateOfStoryId,
                             newsStory.articles.map((a) => a.id),
@@ -111,10 +112,12 @@ export class IngestStoriesUseCase {
                         continue; // Skip to the next story
                     }
 
+                    // End deduplication check
+
                     // Step 5.2: Ingest the unique story
                     const ingestionResult = await this.storyIngestionAgent.run({ newsStory });
                     if (!ingestionResult) {
-                        this.logger.warn('AI ingestion agent returned null.', {
+                        this.logger.warn('story:ingest:agent-null', {
                             newsStoryArticles: newsStory.articles.length,
                         });
                         continue;
@@ -148,9 +151,9 @@ export class IngestStoriesUseCase {
                     digestedStories.push(savedStory);
                     // Add the newly created story to deduplication tracking for subsequent stories
                     allStoriesForDeduplication.push(savedStory);
-                    this.logger.info(`Successfully ingested and saved new story ${savedStory.id}.`);
+                    this.logger.info('story:ingest:ingested', { storyId: savedStory.id });
                 } catch (storyError) {
-                    this.logger.warn('Failed to process individual news story.', {
+                    this.logger.warn('story:ingest:story:error', {
                         error: storyError,
                     });
                 }
@@ -158,7 +161,7 @@ export class IngestStoriesUseCase {
 
             return digestedStories;
         } catch (error) {
-            this.logger.error('Failed to complete story digestion process.', { error });
+            this.logger.error('story:ingest:error', { error });
             throw error;
         }
     }

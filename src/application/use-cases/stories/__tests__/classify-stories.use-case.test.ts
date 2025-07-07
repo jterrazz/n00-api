@@ -95,10 +95,12 @@ describe('ClassifyStoriesUseCase', () => {
             expect(mockStoryRepository.update).toHaveBeenCalledWith(storyToReview.id, {
                 classification: expect.any(Object),
             });
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                `Story ${storyToReview.id} classified as STANDARD: ${classificationResult.reason}`,
-            );
-            expect(mockLogger.info).toHaveBeenCalledWith('Story classification process finished.', {
+            expect(mockLogger.info).toHaveBeenCalledWith('story:classify:classified', {
+                classification: expect.any(Object),
+                reason: classificationResult.reason,
+                storyId: storyToReview.id,
+            });
+            expect(mockLogger.info).toHaveBeenCalledWith('story:classify:done', {
                 failed: 0,
                 successful: 1,
                 totalReviewed: 1,
@@ -115,9 +117,7 @@ describe('ClassifyStoriesUseCase', () => {
             // Then
             expect(mockStoryClassificationAgent.run).not.toHaveBeenCalled();
             expect(mockStoryRepository.update).not.toHaveBeenCalled();
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                'No stories found pending classification.',
-            );
+            expect(mockLogger.info).toHaveBeenCalledWith('story:classify:none');
         });
 
         test('should continue processing even if one story fails classification', async () => {
@@ -145,10 +145,10 @@ describe('ClassifyStoriesUseCase', () => {
                 story2.id,
                 expect.any(Object),
             );
-            expect(mockLogger.warn).toHaveBeenCalledWith(
-                `Failed to classify story ${story2.id}: AI agent returned null.`,
-            );
-            expect(mockLogger.info).toHaveBeenCalledWith('Story classification process finished.', {
+            expect(mockLogger.warn).toHaveBeenCalledWith('story:classify:agent-null', {
+                storyId: story2.id,
+            });
+            expect(mockLogger.info).toHaveBeenCalledWith('story:classify:done', {
                 failed: 1,
                 successful: 1,
                 totalReviewed: 2,
@@ -165,11 +165,11 @@ describe('ClassifyStoriesUseCase', () => {
 
             // Then
             expect(mockStoryRepository.update).not.toHaveBeenCalled();
-            expect(mockLogger.error).toHaveBeenCalledWith(
-                `Error classifying story ${storyToReview.id}`,
-                { error: agentError },
-            );
-            expect(mockLogger.info).toHaveBeenCalledWith('Story classification process finished.', {
+            expect(mockLogger.error).toHaveBeenCalledWith('story:classify:error', {
+                error: agentError,
+                storyId: storyToReview.id,
+            });
+            expect(mockLogger.info).toHaveBeenCalledWith('story:classify:done', {
                 failed: 1,
                 successful: 0,
                 totalReviewed: 1,
@@ -183,10 +183,9 @@ describe('ClassifyStoriesUseCase', () => {
 
             // When / Then
             await expect(useCase.execute()).rejects.toThrow(repositoryError);
-            expect(mockLogger.error).toHaveBeenCalledWith(
-                'Story classification process failed with an unhandled error.',
-                { error: repositoryError },
-            );
+            expect(mockLogger.error).toHaveBeenCalledWith('story:classify:unhandled-error', {
+                error: repositoryError,
+            });
         });
     });
 });

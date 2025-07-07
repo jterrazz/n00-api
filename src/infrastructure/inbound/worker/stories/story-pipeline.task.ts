@@ -24,10 +24,10 @@ export class StoryPipelineTask implements TaskPort {
     ) {}
 
     async execute(): Promise<void> {
-        this.logger.info('Starting story digest task');
+        this.logger.info('task:story-pipeline:start');
 
         try {
-            this.logger.info('Story digest configurations loaded', {
+            this.logger.info('task:story-pipeline:config', {
                 taskCount: this.taskConfigs.length,
                 tasks: this.taskConfigs,
             });
@@ -37,10 +37,10 @@ export class StoryPipelineTask implements TaskPort {
                 language: new Language(config.language),
             }));
 
-            // Step 1: Digest stories
+            // Step 1: Ingest stories
             await Promise.all(
                 languages.map(async ({ country, language }) => {
-                    this.logger.info('Digesting stories', {
+                    this.logger.info('task:story-pipeline:ingest', {
                         country: country.toString(),
                         language: language.toString(),
                     });
@@ -48,17 +48,17 @@ export class StoryPipelineTask implements TaskPort {
                 }),
             );
 
-            this.logger.info('Story digest completed, starting story classification');
+            this.logger.info('task:story-pipeline:ingest:done');
 
-            // Step 2: Classify newly digested stories
+            // Step 2: Classify newly ingested stories
             await this.classifyStories.execute();
 
-            this.logger.info('Story classification completed, starting article generation');
+            this.logger.info('task:story-pipeline:classify:done');
 
             // Step 3: Generate articles from stories that have been classified
             await Promise.all(
                 languages.map(async ({ country, language }) => {
-                    this.logger.info('Generating articles from stories', {
+                    this.logger.info('task:story-pipeline:generate', {
                         country: country.toString(),
                         language: language.toString(),
                     });
@@ -66,11 +66,9 @@ export class StoryPipelineTask implements TaskPort {
                 }),
             );
 
-            this.logger.info(
-                'Story digest, classification, and article generation task completed successfully',
-            );
+            this.logger.info('task:story-pipeline:done');
         } catch (error) {
-            this.logger.error('Story digest task failed', { error });
+            this.logger.error('task:story-pipeline:error', { error });
             throw error;
         }
     }
