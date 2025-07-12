@@ -20,8 +20,7 @@ import { headlineSchema } from '../../../domain/value-objects/article/headline.v
 export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPort {
     static readonly SCHEMA = z.object({
         body: bodySchema,
-        headline: headlineSchema,
-        variants: z
+        frames: z
             .array(
                 z.object({
                     body: bodySchema,
@@ -29,12 +28,13 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                 }),
             )
             .describe(
-                'You MUST return one variant for EACH angle in the input. The length of this array MUST match the number of angles provided.',
+                'You MUST return one frame for EACH angle in the input. The length of this array MUST match the number of angles provided.',
             ),
+        headline: headlineSchema,
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
-        'You are an expert content composer and journalistic writer. Your mission is to transform structured report data into compelling articles: a neutral main article presenting only facts, plus variants representing different viewpoints.',
+        'You are an expert content composer and journalistic writer. Your mission is to transform structured report data into compelling articles: a neutral main article presenting only facts, plus frames representing different viewpoints.',
         'Adopt the style of a quality newspaper: professional and authoritative, yet written in clear, simple words for a broad audience. Your tone should be neutral and objective.',
         PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
     );
@@ -58,7 +58,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
     }
 
     static readonly USER_PROMPT = (input: ArticleCompositionInput) => {
-        const expectedVariantCount = input.report.angles.length;
+        const expectedFrameCount = input.report.angles.length;
 
         return new UserPromptAdapter(
             // Hard constraint
@@ -72,7 +72,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
             // The Hierarchical Content Model (The "What")
             'You will create two types of content that are **complementary and do not repeat information**:',
             '1.  **Main Article (The Foundation):** A neutral summary of the core, undisputed facts. This is the baseline "what happened" that is shown first. It contains information all sides agree on.',
-            `2.  **Variants (The Angles):** Create **exactly ${expectedVariantCount}** complementary articles, one for each angle. These must **build upon** the main article's facts, not repeat them. Your goal here is to explain **how that angle interprets or emphasizes those facts**. Focus on the "why" behind their viewpoint.`,
+            `2.  **Frames (The Angles):** Create **exactly ${expectedFrameCount}** complementary articles, one for each angle. These must **build upon** the main article's facts, not repeat them. Your goal here is to make each frame reflect its angle's perspective.`,
             '',
 
             // Your Role as an Editor (The "How")
@@ -80,14 +80,14 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
             "•   **Curate, Don't Transcribe:** Use your editorial judgment to select only the **most pertinent and interesting** information. Omit minor details.",
             '•   **Clarity is Paramount:** Write in simple, crystal-clear language. Use well-articulated phrases that are easy for anyone to understand. Avoid all jargon.',
             '•   **Engage with Key Phrases:** Craft compelling headlines and use strong key phrases to make the content engaging and memorable.',
-            '•   **Pacing and Length:** The goal is a total read time of about **one minute**. Aim for a concise Main Article (~60-80 words) and brief, impactful Variants (~30-50 words each). These are flexible targets; prioritize clarity and pertinence over sticking to exact word counts.',
+            '•   **Pacing and Length:** The goal is a total read time of about **one minute**. Aim for a concise Main Article (~60-80 words) and brief, impactful Frames (~30-50 words each). These are flexible targets; prioritize clarity and pertinence over sticking to exact word counts.',
             '',
 
             // Critical Rules
             'CRITICAL RULES:',
-            `•   You **MUST** create **exactly ${expectedVariantCount}** variants, one for each angle in the input. Do not combine or omit any.`,
+            `•   You **MUST** create **exactly ${expectedFrameCount}** frames, one for each angle in the input. Do not combine or omit any.`,
             '•   Base all content **only** on the provided report data.',
-            '•   **NO REPETITION:** The Main Article contains the core facts. The Variants provide the interpretation. Do not repeat information between them. The user reads them together.',
+            '•   **NO REPETITION:** The Main Article contains the core facts. The Frames provide the interpretation. Do not repeat information between them. The user reads them together.',
             '',
 
             // Report data input
@@ -125,37 +125,37 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                 return null;
             }
 
-            // Validate that we have the correct number of variants
-            if (result.variants.length !== input.report.angles.length) {
+            // Validate that we have the correct number of frames
+            if (result.frames.length !== input.report.angles.length) {
                 this.logger.warn(
-                    `[${this.name}] AI returned ${result.variants.length} variants but expected ${input.report.angles.length} (one per angle)`,
+                    `[${this.name}] AI returned ${result.frames.length} frames but expected ${input.report.angles.length} (one per angle)`,
                 );
                 return null;
             }
 
             // Log successful composition for debugging
-            this.logger.info(`[${this.name}] Successfully composed article with variants`, {
+            this.logger.info(`[${this.name}] Successfully composed article with frames`, {
                 bodyLength: result.body.length,
+                framesCount: result.frames.length,
                 headlineLength: result.headline.length,
-                variantsCount: result.variants.length,
             });
 
             const compositionResult: ArticleCompositionResult = {
                 body: result.body,
-                headline: result.headline,
-                variants: result.variants.map((variant, index) => {
+                frames: result.frames.map((frame, index) => {
                     const angle = input.report.angles[index];
                     return {
-                        body: variant.body,
+                        body: frame.body,
                         discourse: angle.discourse.value || 'MAINSTREAM',
-                        headline: variant.headline,
+                        headline: frame.headline,
                         stance: angle.stance.value || 'NEUTRAL',
                     };
                 }),
+                headline: result.headline,
             };
 
             this.logger.info(
-                `[${this.name}] Successfully composed article: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.variants.length} variants`,
+                `[${this.name}] Successfully composed article: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.frames.length} frames`,
             );
 
             return compositionResult;

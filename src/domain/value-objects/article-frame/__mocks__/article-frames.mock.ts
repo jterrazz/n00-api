@@ -22,6 +22,3 @@ export function createMockArticleFrame(index: number): ArticleFrame {
 export function mockArticleFrames(count: number): ArticleFrame[] {
     return Array.from({ length: count }, (_, index) => createMockArticleFrame(index));
 }
-
-// Legacy export for backward compatibility during migration
-export const mockArticleVariants = mockArticleFrames;

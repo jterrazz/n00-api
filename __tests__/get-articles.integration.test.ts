@@ -124,7 +124,7 @@ describe('HTTP - Get Articles - Integration Tests', () => {
             expect(data.nextCursor).toBeNull();
         });
 
-        it('should return complete article structure with variants schema', async () => {
+        it('should return complete article structure with frames schema', async () => {
             // Given
             const testBody =
                 'Scientists at leading universities have announced a %%[(REVOLUTIONARY)]( groundbreaking advancement in artificial intelligence.)%% The research shows significant progress in machine learning capabilities.';
@@ -173,7 +173,7 @@ describe('HTTP - Get Articles - Integration Tests', () => {
             });
         });
 
-        it('should handle legitimate articles with variants schema correctly', async () => {
+        it('should handle legitimate articles with frames schema correctly', async () => {
             // Given
             const testBody =
                 'This is a %%[(legitimate)]( news article with proper sourcing)%% and verified information.';

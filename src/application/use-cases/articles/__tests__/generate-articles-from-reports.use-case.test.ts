@@ -60,15 +60,15 @@ describe('GenerateArticlesFromReportsUseCase', () => {
         mockCompositionResults = testReports.map((report, index) => ({
             body: `Composed article body for report ${index + 1} with neutral presentation of facts from all angles.`,
             category: report.category,
-            headline: `Composed Article ${index + 1}`,
-            variants: [
+            frames: [
                 {
-                    body: `Variant article body for report ${index + 1} presenting a specific viewpoint on the matter.`,
+                    body: `Frame article body for report ${index + 1} presenting a specific viewpoint on the matter.`,
                     discourse: 'MAINSTREAM',
                     headline: `${report.category.toString()} Angle: ${index + 1}`,
                     stance: 'NEUTRAL',
                 },
             ],
+            headline: `Composed Article ${index + 1}`,
         }));
 
         // Default mock responses

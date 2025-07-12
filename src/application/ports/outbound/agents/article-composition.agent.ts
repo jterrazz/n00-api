@@ -26,18 +26,11 @@ export interface ArticleCompositionInput {
  */
 export interface ArticleCompositionResult {
     body: string;
-    headline: string;
-    variants: Array<{
+    frames: Array<{
         body: string;
-        discourse: 'ALTERNATIVE' | 'DUBIOUS' | 'MAINSTREAM' | 'UNDERREPORTED';
+        discourse: string;
         headline: string;
-        stance:
-            | 'CONCERNED'
-            | 'CRITICAL'
-            | 'MIXED'
-            | 'NEUTRAL'
-            | 'OPTIMISTIC'
-            | 'SKEPTICAL'
-            | 'SUPPORTIVE';
+        stance: string;
     }>;
+    headline: string;
 }

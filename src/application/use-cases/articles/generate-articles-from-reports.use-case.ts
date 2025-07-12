@@ -86,13 +86,13 @@ export class GenerateArticlesFromReportsUseCase {
                             continue;
                         }
 
-                        const frames = compositionResult.variants.map(
-                            (variantData) =>
+                        const frames = compositionResult.frames.map(
+                            (frameData) =>
                                 new ArticleFrame({
-                                    body: new Body(variantData.body),
-                                    discourse: new Discourse(variantData.discourse),
-                                    headline: new Headline(variantData.headline),
-                                    stance: new Stance(variantData.stance),
+                                    body: new Body(frameData.body),
+                                    discourse: new Discourse(frameData.discourse),
+                                    headline: new Headline(frameData.headline),
+                                    stance: new Stance(frameData.stance),
                                 }),
                         );
 
@@ -127,7 +127,15 @@ export class GenerateArticlesFromReportsUseCase {
 
             // Persist all newly generated articles in a single batch
             if (generatedArticles.length > 0) {
-                await this.articleRepository.createMany(generatedArticles);
+                try {
+                    await this.articleRepository.createMany(generatedArticles);
+                } catch (persistError) {
+                    this.logger.warn('article:generate:persist-error', {
+                        country: country.toString(),
+                        error: persistError,
+                        language: language.toString(),
+                    });
+                }
             }
 
             this.logger.info('article:generate:done', {
