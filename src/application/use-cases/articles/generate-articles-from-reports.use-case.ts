@@ -15,6 +15,7 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionInput,
 } from '../../ports/outbound/agents/article-composition.agent.js';
+import { type ArticleFakerAgentPort } from '../../ports/outbound/agents/article-faker.agent.js';
 import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 
@@ -25,16 +26,18 @@ import { type ReportRepositoryPort } from '../../ports/outbound/persistence/repo
 export class GenerateArticlesFromReportsUseCase {
     constructor(
         private readonly articleCompositionAgent: ArticleCompositionAgentPort,
+        private readonly articleFakerAgent: ArticleFakerAgentPort,
         private readonly logger: LoggerPort,
         private readonly reportRepository: ReportRepositoryPort,
         private readonly articleRepository: ArticleRepositoryPort,
     ) {}
 
     /**
-     * Generate articles from reports that don't have articles yet
+     * Generate articles from reports that don't have articles yet,
+     * plus a limited number of fake articles for the game
      * @param language - Target language for article composition
      * @param country - Target country for article composition
-     * @returns Array of generated articles
+     * @returns Array of generated articles (mix of real and fake)
      */
     public async execute(language: Language, country: Country): Promise<Article[]> {
         try {
@@ -55,95 +58,85 @@ export class GenerateArticlesFromReportsUseCase {
                     country: country.toString(),
                     language: language.toString(),
                 });
-                return [];
             }
 
             this.logger.info('article:generate:found', { count: reportsToProcess.length });
 
-            // Generate articles for each report
             const generatedArticles: Article[] = [];
 
-            for (const report of reportsToProcess) {
-                try {
-                    const compositionInput: ArticleCompositionInput = {
-                        report: report,
-                        targetCountry: country,
-                        targetLanguage: language,
-                    };
+            // 1) Generate REAL articles (if there are reports)
+            if (reportsToProcess.length > 0) {
+                for (const report of reportsToProcess) {
+                    try {
+                        const compositionInput: ArticleCompositionInput = {
+                            report,
+                            targetCountry: country,
+                            targetLanguage: language,
+                        };
 
-                    // Generate article using AI agent
-                    const compositionResult =
-                        await this.articleCompositionAgent.run(compositionInput);
+                        const compositionResult =
+                            await this.articleCompositionAgent.run(compositionInput);
 
-                    if (!compositionResult) {
-                        this.logger.warn('article:generate:agent-null', {
+                        if (!compositionResult) {
+                            this.logger.warn('article:generate:agent-null', {
+                                country: country.toString(),
+                                language: language.toString(),
+                                reportId: report.id,
+                            });
+                            continue;
+                        }
+
+                        const frames = compositionResult.variants.map(
+                            (variantData) =>
+                                new ArticleFrame({
+                                    body: new Body(variantData.body),
+                                    discourse: new Discourse(variantData.discourse),
+                                    headline: new Headline(variantData.headline),
+                                    stance: new Stance(variantData.stance),
+                                }),
+                        );
+
+                        const article = new Article({
+                            authenticity: new Authenticity(false),
+                            body: new Body(compositionResult.body),
+                            category: report.category,
+                            country,
+                            frames,
+                            headline: new Headline(compositionResult.headline),
+                            id: randomUUID(),
+                            language,
+                            publishedAt: report.dateline,
+                            reportIds: [report.id],
+                        });
+
+                        generatedArticles.push(article);
+                    } catch (articleError) {
+                        this.logger.warn('article:generate:error', {
                             country: country.toString(),
+                            error: articleError,
                             language: language.toString(),
                             reportId: report.id,
                         });
-                        continue;
                     }
-
-                    // Create article frames from composition result
-                    const frames = compositionResult.variants.map(
-                        (variantData) =>
-                            new ArticleFrame({
-                                body: new Body(variantData.body),
-                                discourse: new Discourse(variantData.discourse),
-                                headline: new Headline(variantData.headline),
-                                stance: new Stance(variantData.stance),
-                            }),
-                    );
-
-                    // Create article domain entity
-                    const article = new Article({
-                        authenticity: new Authenticity(false), // Always neutral/factual articles
-                        body: new Body(compositionResult.body),
-                        category: report.category,
-                        country,
-                        // Link back to the source report
-                        frames,
-
-                        headline: new Headline(compositionResult.headline),
-
-                        id: randomUUID(),
-
-                        language,
-
-                        publishedAt: report.dateline,
-                        // Use report's dateline as article publication date
-                        reportIds: [report.id], // Include the frames
-                    });
-
-                    // Save the article
-                    await this.articleRepository.createMany([article]);
-
-                    this.logger.info('article:generate:composed', {
-                        articleId: article.id,
-                        country: country.toString(),
-                        framesCount: frames.length,
-                        headline: article.headline.value,
-                        language: language.toString(),
-                        reportId: report.id,
-                    });
-
-                    generatedArticles.push(article);
-                } catch (articleError) {
-                    this.logger.warn('article:generate:error', {
-                        country: country.toString(),
-                        error: articleError,
-                        language: language.toString(),
-                        reportId: report.id,
-                    });
-                    // Continue processing other reports even if one fails
                 }
+            }
+
+            // 2) Generate FAKE articles (may be needed even if no real reports)
+            const fakeArticles = await this.generateFakeArticles(language, country);
+            generatedArticles.push(...fakeArticles);
+
+            // Persist all newly generated articles in a single batch
+            if (generatedArticles.length > 0) {
+                await this.articleRepository.createMany(generatedArticles);
             }
 
             this.logger.info('article:generate:done', {
                 country: country.toString(),
+                fakeCount: fakeArticles.length,
                 generatedCount: generatedArticles.length,
                 language: language.toString(),
                 processedCount: reportsToProcess.length,
+                realCount: generatedArticles.length - fakeArticles.length,
             });
 
             return generatedArticles;
@@ -155,5 +148,122 @@ export class GenerateArticlesFromReportsUseCase {
             });
             throw error;
         }
+    }
+
+    /**
+     * Generate a limited number of fake articles for the game experience
+     * @param language - Target language for fake articles
+     * @param country - Target country for fake articles
+     * @returns Array of fake articles
+     */
+    private async generateFakeArticles(language: Language, country: Country): Promise<Article[]> {
+        const fakeArticles: Article[] = [];
+
+        try {
+            // Get recent articles to check if we need fake ones
+            const recentArticles = await this.articleRepository.findMany({
+                country,
+                language,
+                limit: 10,
+            });
+
+            // Simple check: has there been any fake article in recent articles?
+            const hasFakeInRecent = recentArticles.some((article) => article.isFake());
+
+            // If no fake articles recently, generate 1-2
+            if (!hasFakeInRecent) {
+                const fakeCount = Math.random() > 0.5 ? 2 : 1;
+
+                this.logger.info('article:generate:fake-needed', {
+                    country: country.toString(),
+                    fakeCount,
+                    language: language.toString(),
+                    recentArticlesCount: recentArticles.length,
+                });
+
+                // Create context from recent articles
+                const recentArticlesContext = recentArticles.map((article) => ({
+                    body: article.body.value,
+                    frames:
+                        article.frames?.map((frame) => ({
+                            body: frame.body.value,
+                            headline: frame.headline.value,
+                        })) || [],
+                    headline: article.headline.value,
+                    publishedAt: article.publishedAt.toISOString(),
+                }));
+
+                // Generate the fake articles
+                for (let i = 0; i < fakeCount; i++) {
+                    try {
+                        // Let AI choose the category based on recent articles context
+                        const fakeResult = await this.articleFakerAgent.run({
+                            context: {
+                                currentDate: new Date(),
+                                recentArticles: recentArticlesContext,
+                            },
+                            // No targetCategory specified - AI will choose based on context
+                            targetCountry: country,
+                            targetLanguage: language,
+                            tone: 'random', // Mix of serious and satirical
+                        });
+
+                        if (!fakeResult) {
+                            this.logger.warn('article:generate:fake-agent-null', {
+                                country: country.toString(),
+                                language: language.toString(),
+                            });
+                            continue;
+                        }
+
+                        // Create fake article entity
+                        const fakeArticle = new Article({
+                            authenticity: new Authenticity(true, fakeResult.fakeReason),
+                            body: new Body(fakeResult.body),
+                            category: fakeResult.category,
+                            country,
+                            headline: new Headline(fakeResult.headline),
+                            id: randomUUID(),
+                            language,
+                            // Mix fake articles with real ones in the timeline
+                            publishedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000), // Within last 24 hours
+                        });
+
+                        this.logger.info('article:generate:fake-composed', {
+                            articleId: fakeArticle.id,
+                            category: fakeResult.category.toString(),
+                            country: country.toString(),
+                            headline: fakeArticle.headline.value,
+                            language: language.toString(),
+                            tone: fakeResult.tone,
+                        });
+
+                        fakeArticles.push(fakeArticle);
+                    } catch (fakeError) {
+                        this.logger.warn('article:generate:fake-error', {
+                            country: country.toString(),
+                            error: fakeError,
+                            language: language.toString(),
+                        });
+                        // Continue even if fake article generation fails
+                    }
+                }
+            } else {
+                this.logger.info('article:generate:fake-skip', {
+                    country: country.toString(),
+                    language: language.toString(),
+                    reason: 'Recent fake article found',
+                });
+            }
+        } catch (error) {
+            this.logger.warn('article:generate:fake-check-error', {
+                country: country.toString(),
+                error,
+                language: language.toString(),
+            });
+            // If we can't check, just skip fake generation
+        }
+
+        return fakeArticles;
     }
 }

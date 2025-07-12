@@ -36,7 +36,6 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
         'You are an expert content composer and journalistic writer. Your mission is to transform structured report data into compelling articles: a neutral main article presenting only facts, plus variants representing different viewpoints.',
         'Adopt the style of a quality newspaper: professional and authoritative, yet written in clear, simple words for a broad audience. Your tone should be neutral and objective.',
-        PROMPT_LIBRARY.PERSONAS.JOURNALIST,
         PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
     );
 

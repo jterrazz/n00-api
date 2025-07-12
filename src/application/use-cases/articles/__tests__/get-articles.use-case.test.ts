@@ -54,9 +54,9 @@ describe('GetArticlesUseCase', () => {
             // Then - it should call repository methods correctly
             expect(mockArticleRepository.findMany).toHaveBeenCalledWith({
                 category: undefined,
-                classification: ['STANDARD', 'NICHE'],
                 country: DEFAULT_COUNTRY,
                 cursor: undefined,
+                excludeArchived: true,
                 language: DEFAULT_LANGUAGE,
                 limit: DEFAULT_LIMIT + 1,
             });

@@ -28,14 +28,14 @@ export class GetArticlesUseCase {
     async execute(params: GetArticlesParams): Promise<PaginatedResponse<Article>> {
         const { category, country, cursor, language, limit } = params;
 
-        const [articles, total] = await Promise.all([
+        const [rawArticles, total] = await Promise.all([
             this.articleRepository.findMany({
                 category,
-                classification: ['STANDARD', 'NICHE'],
                 country,
                 cursor,
+                excludeArchived: true,
                 language,
-                limit: limit + 1,
+                limit: limit + 1, // over-fetch to determine hasMore after filtering
             }),
             this.articleRepository.countMany({
                 category,
@@ -44,8 +44,8 @@ export class GetArticlesUseCase {
             }),
         ]);
 
-        const hasMore = articles.length > limit;
-        const results = hasMore ? articles.slice(0, limit) : articles;
+        const hasMore = rawArticles.length > limit;
+        const results = hasMore ? rawArticles.slice(0, limit) : rawArticles;
 
         const lastItemDate =
             hasMore && results.length > 0 ? results[results.length - 1].publishedAt : null;

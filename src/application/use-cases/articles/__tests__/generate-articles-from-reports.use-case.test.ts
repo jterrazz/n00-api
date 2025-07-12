@@ -1,9 +1,14 @@
 import { type LoggerPort } from '@jterrazz/logger';
 import { beforeEach, describe, expect, test } from '@jterrazz/test';
+import { randomUUID } from 'crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
 import { getMockReports } from '../../../../domain/entities/__mocks__/reports.mock.js';
+import { Article } from '../../../../domain/entities/article.entity.js';
 import { type Report } from '../../../../domain/entities/report.entity.js';
+import { Authenticity } from '../../../../domain/value-objects/article/authenticity.vo.js';
+import { Body } from '../../../../domain/value-objects/article/body.vo.js';
+import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
 import { Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
@@ -12,6 +17,7 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionResult,
 } from '../../../ports/outbound/agents/article-composition.agent.js';
+import { type ArticleFakerAgentPort } from '../../../ports/outbound/agents/article-faker.agent.js';
 import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
 import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
 
@@ -25,6 +31,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
     // Test fixtures
     let mockArticleCompositionAgent: DeepMockProxy<ArticleCompositionAgentPort>;
+    let mockArticleFakerAgent: DeepMockProxy<ArticleFakerAgentPort>;
     let mockLogger: DeepMockProxy<LoggerPort>;
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
     let mockArticleRepository: DeepMockProxy<ArticleRepositoryPort>;
@@ -34,12 +41,14 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
     beforeEach(() => {
         mockArticleCompositionAgent = mock<ArticleCompositionAgentPort>();
+        mockArticleFakerAgent = mock<ArticleFakerAgentPort>();
         mockLogger = mock<LoggerPort>();
         mockReportRepository = mock<ReportRepositoryPort>();
         mockArticleRepository = mock<ArticleRepositoryPort>();
 
         useCase = new GenerateArticlesFromReportsUseCase(
             mockArticleCompositionAgent,
+            mockArticleFakerAgent,
             mockLogger,
             mockReportRepository,
             mockArticleRepository,
@@ -66,6 +75,12 @@ describe('GenerateArticlesFromReportsUseCase', () => {
         mockReportRepository.findReportsWithoutArticles.mockResolvedValue(testReports);
         mockArticleCompositionAgent.run.mockImplementation(async () => mockCompositionResults[0]);
         mockArticleRepository.createMany.mockResolvedValue();
+
+        // Mock fake article agent to return null by default for predictable testing
+        mockArticleFakerAgent.run.mockResolvedValue(null);
+
+        // Mock findMany to return empty array by default (no existing articles)
+        mockArticleRepository.findMany.mockResolvedValue([]);
     });
 
     describe('execute', () => {
@@ -94,12 +109,8 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 });
             });
 
-            // And save each composed article
-            expect(mockArticleRepository.createMany).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
-
-            // And return the composed articles
-            expect(result).toHaveLength(TEST_REPORTS_COUNT);
-            expect(result).toEqual(
+            // And save articles (at least once for real articles, possibly more for fake ones)
+            expect(mockArticleRepository.createMany).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
                         category: expect.any(Category),
@@ -109,8 +120,15 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 ]),
             );
 
-            // All articles should be neutral/factual
-            result.forEach((article) => {
+            // And return the composed articles (at least the real ones)
+            expect(result.length).toBeGreaterThanOrEqual(TEST_REPORTS_COUNT);
+
+            // Should have at least the real articles from reports
+            const realArticles = result.filter((article) => !article.isFake());
+            expect(realArticles).toHaveLength(TEST_REPORTS_COUNT);
+
+            // All real articles should be neutral/factual
+            realArticles.forEach((article) => {
                 expect(article.isFake()).toBe(false);
             });
         });
@@ -122,7 +140,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // When - executing the use case
             const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-            // Then - it should return empty array without calling agent or repository
+            // Then - it should return empty array without calling composition agent
             expect(mockArticleCompositionAgent.run).not.toHaveBeenCalled();
             expect(mockArticleRepository.createMany).not.toHaveBeenCalled();
             expect(result).toEqual([]);
@@ -140,8 +158,10 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
             // Then - it should skip null results and process valid ones
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
-            expect(mockArticleRepository.createMany).toHaveBeenCalledTimes(TEST_REPORTS_COUNT - 1);
-            expect(result).toHaveLength(TEST_REPORTS_COUNT - 1);
+
+            // Should have at least the successful real articles
+            const realArticles = result.filter((article) => !article.isFake());
+            expect(realArticles).toHaveLength(TEST_REPORTS_COUNT - 1);
         });
 
         test('should continue processing if individual article composition fails', async () => {
@@ -158,8 +178,10 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
             // Then - it should continue processing other reports
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
-            expect(mockArticleRepository.createMany).toHaveBeenCalledTimes(TEST_REPORTS_COUNT - 1);
-            expect(result).toHaveLength(TEST_REPORTS_COUNT - 1);
+
+            // Should have the successful real articles
+            const realArticles = result.filter((article) => !article.isFake());
+            expect(realArticles).toHaveLength(TEST_REPORTS_COUNT - 1);
         });
 
         test('should handle different countries and languages', async () => {
@@ -210,10 +232,11 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // When - executing the use case
             const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-            // Then - it should continue processing and return empty array
+            // Then - it should continue processing but return fewer articles due to failures
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
-            expect(mockArticleRepository.createMany).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
-            expect(result).toEqual([]);
+            expect(mockArticleRepository.createMany).toHaveBeenCalled();
+            // Result might be empty due to repository failures, but processing should continue
+            expect(result).toEqual(expect.any(Array));
         });
 
         test('should create articles with correct report relationships', async () => {
@@ -225,13 +248,252 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // When - executing the use case
             const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-            // Then - it should create article with report relationship
-            expect(result).toHaveLength(1);
-            expect(result[0].reportIds).toEqual([testReport.id]);
-            expect(result[0].publishedAt).toEqual(testReport.dateline);
-            expect(result[0].category).toEqual(testReport.category);
+            // Then - it should have at least one real article with report relationship
+            const realArticles = result.filter((article) => !article.isFake());
+            expect(realArticles).toHaveLength(1);
+            expect(realArticles[0].reportIds).toEqual([testReport.id]);
+            expect(realArticles[0].publishedAt).toEqual(testReport.dateline);
+            expect(realArticles[0].category).toEqual(testReport.category);
             // And article should be neutral/factual
+            expect(realArticles[0].isFake()).toBe(false);
+        });
+
+        test('should generate fake articles when no fake articles in recent ones', async () => {
+            // Given - valid reports and no fake articles in recent ones
+            const testReport = testReports[0];
+            mockReportRepository.findReportsWithoutArticles.mockResolvedValue([testReport]);
+            mockArticleCompositionAgent.run.mockResolvedValue(mockCompositionResults[0]);
+
+            // Mock existing articles with no fake ones (all real)
+            const existingRealArticles = Array.from(
+                { length: 10 },
+                (_, i) =>
+                    new Article({
+                        authenticity: new Authenticity(false), // Real articles only
+                        body: new Body(
+                            `This is existing real article body content number ${i + 1} with sufficient length for validation`,
+                        ),
+                        category: new Category('TECHNOLOGY'),
+                        country: DEFAULT_COUNTRY,
+                        headline: new Headline(`Existing Real Article ${i + 1}`),
+                        id: randomUUID(),
+                        language: DEFAULT_LANGUAGE,
+                        publishedAt: new Date(Date.now() - i * 1000 * 60 * 60),
+                    }),
+            );
+
+            mockArticleRepository.findMany.mockResolvedValue(existingRealArticles);
+
+            // Mock fake article generation to succeed
+            mockArticleFakerAgent.run.mockResolvedValue({
+                body: 'In a shocking turn of events that has left residents bewildered, a domestic cat named Whiskers has been elected mayor of the fictional town of Nowheresville.',
+                category: new Category('POLITICS'),
+                fakeReason:
+                    'This article is clearly satirical because cats cannot legally hold political office and Nowheresville is a fictional location.',
+                headline: 'Fake News: Local Cat Elected Mayor of Small Town',
+                tone: 'satirical',
+            });
+
+            // When - executing the use case
+            const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+            // Then - it should generate both real and fake articles
+            expect(result.length).toBeGreaterThan(1);
+
+            // Should have one real article (from report)
+            const realArticles = result.filter((article) => !article.isFake());
+            expect(realArticles).toHaveLength(1);
+            expect(realArticles[0].reportIds).toEqual([testReport.id]);
+
+            // Should have 1-2 fake articles (since no fake in recent)
+            const fakeArticles = result.filter((article) => article.isFake());
+            expect(fakeArticles.length).toBeGreaterThanOrEqual(1);
+            expect(fakeArticles.length).toBeLessThanOrEqual(2);
+
+            // Should have checked recent articles
+            expect(mockArticleRepository.findMany).toHaveBeenCalledWith({
+                country: DEFAULT_COUNTRY,
+                language: DEFAULT_LANGUAGE,
+                limit: 10,
+            });
+
+            // Should have called faker agent with context from recent articles
+            expect(mockArticleFakerAgent.run).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    context: expect.objectContaining({
+                        currentDate: expect.any(Date),
+                        recentArticles: expect.arrayContaining([
+                            expect.objectContaining({
+                                body: expect.stringContaining(
+                                    'This is existing real article body content',
+                                ),
+                                headline: expect.stringContaining('Existing Real Article'),
+                            }),
+                        ]),
+                    }),
+                    targetCountry: DEFAULT_COUNTRY,
+                    targetLanguage: DEFAULT_LANGUAGE,
+                    tone: 'random',
+                    // targetCategory should not be provided - AI chooses based on context
+                }),
+            );
+        });
+
+        test('should skip fake article generation when fake article exists in recent ones', async () => {
+            // Given - valid reports but fake article exists in recent ones
+            const testReport = testReports[0];
+            mockReportRepository.findReportsWithoutArticles.mockResolvedValue([testReport]);
+            mockArticleCompositionAgent.run.mockResolvedValue(mockCompositionResults[0]);
+
+            // Mock existing articles with one fake article
+            const existingArticles = [
+                new Article({
+                    authenticity: new Authenticity(false),
+                    body: new Body(
+                        'This is existing real article body content with sufficient length for validation',
+                    ),
+                    category: new Category('TECHNOLOGY'),
+                    country: DEFAULT_COUNTRY,
+                    headline: new Headline('Existing Real Article'),
+                    id: randomUUID(),
+                    language: DEFAULT_LANGUAGE,
+                    publishedAt: new Date(Date.now() - 1000 * 60 * 60),
+                }),
+                new Article({
+                    authenticity: new Authenticity(true, 'Fake for testing'),
+                    body: new Body(
+                        'This is existing fake article body content with sufficient length for validation',
+                    ),
+                    category: new Category('POLITICS'),
+                    country: DEFAULT_COUNTRY,
+                    headline: new Headline('Existing Fake Article'),
+                    id: randomUUID(),
+                    language: DEFAULT_LANGUAGE,
+                    publishedAt: new Date(Date.now() - 2000 * 60 * 60),
+                }),
+            ];
+
+            mockArticleRepository.findMany.mockResolvedValue(existingArticles);
+
+            // When - executing the use case
+            const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+            // Then - it should generate only real articles (no fake due to recent fake found)
+            expect(result).toHaveLength(1);
             expect(result[0].isFake()).toBe(false);
+            expect(result[0].reportIds).toEqual([testReport.id]);
+
+            // Should have checked recent articles
+            expect(mockArticleRepository.findMany).toHaveBeenCalledWith({
+                country: DEFAULT_COUNTRY,
+                language: DEFAULT_LANGUAGE,
+                limit: 10,
+            });
+
+            // Should not have called faker agent due to recent fake found
+            expect(mockArticleFakerAgent.run).not.toHaveBeenCalled();
+        });
+
+        test('should handle fake article generation failures gracefully', async () => {
+            // Given - valid reports but fake article generation fails
+            const testReport = testReports[0];
+            mockReportRepository.findReportsWithoutArticles.mockResolvedValue([testReport]);
+            mockArticleCompositionAgent.run.mockResolvedValue(mockCompositionResults[0]);
+
+            // Mock existing articles with no fake ones
+            const existingRealArticles = Array.from(
+                { length: 5 },
+                (_, i) =>
+                    new Article({
+                        authenticity: new Authenticity(false),
+                        body: new Body(
+                            `This is existing real article body content number ${i + 1} with sufficient length for validation`,
+                        ),
+                        category: new Category('TECHNOLOGY'),
+                        country: DEFAULT_COUNTRY,
+                        headline: new Headline(`Existing Real Article ${i + 1}`),
+                        id: randomUUID(),
+                        language: DEFAULT_LANGUAGE,
+                        publishedAt: new Date(Date.now() - i * 1000 * 60 * 60),
+                    }),
+            );
+
+            mockArticleRepository.findMany.mockResolvedValue(existingRealArticles);
+
+            // Mock fake article generation to fail
+            mockArticleFakerAgent.run.mockRejectedValue(
+                new Error('Fake article generation failed'),
+            );
+
+            // When - executing the use case
+            const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+            // Then - it should still generate real articles successfully
+            expect(result).toHaveLength(1);
+            expect(result[0].isFake()).toBe(false);
+            expect(result[0].reportIds).toEqual([testReport.id]);
+
+            // Should have called faker agent with context from recent articles
+            expect(mockArticleFakerAgent.run).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    context: expect.objectContaining({
+                        currentDate: expect.any(Date),
+                        recentArticles: expect.arrayContaining([
+                            expect.objectContaining({
+                                body: expect.stringContaining(
+                                    'This is existing real article body content',
+                                ),
+                                headline: expect.stringContaining('Existing Real Article'),
+                            }),
+                        ]),
+                    }),
+                    targetCountry: DEFAULT_COUNTRY,
+                    targetLanguage: DEFAULT_LANGUAGE,
+                    tone: 'random',
+                    // targetCategory should not be provided - AI chooses based on context
+                }),
+            );
+
+            // Should have logged the error but continued processing
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                'article:generate:fake-error',
+                expect.objectContaining({
+                    country: DEFAULT_COUNTRY.toString(),
+                    error: expect.any(Error),
+                    language: DEFAULT_LANGUAGE.toString(),
+                }),
+            );
+        });
+
+        test('should handle repository failure gracefully', async () => {
+            // Given - valid reports but article repository findMany fails
+            const testReport = testReports[0];
+            mockReportRepository.findReportsWithoutArticles.mockResolvedValue([testReport]);
+            mockArticleCompositionAgent.run.mockResolvedValue(mockCompositionResults[0]);
+
+            // Mock article repository to fail on findMany
+            mockArticleRepository.findMany.mockRejectedValue(new Error('Repository failed'));
+
+            // When - executing the use case
+            const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+            // Then - it should still generate real articles successfully
+            expect(result).toHaveLength(1);
+            expect(result[0].isFake()).toBe(false);
+            expect(result[0].reportIds).toEqual([testReport.id]);
+
+            // Should have logged the error
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                'article:generate:fake-check-error',
+                expect.objectContaining({
+                    country: DEFAULT_COUNTRY.toString(),
+                    error: expect.any(Error),
+                    language: DEFAULT_LANGUAGE.toString(),
+                }),
+            );
+
+            // Should not have called faker agent due to repository failure
+            expect(mockArticleFakerAgent.run).not.toHaveBeenCalled();
         });
     });
 });

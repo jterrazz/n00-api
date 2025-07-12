@@ -49,6 +49,11 @@ export interface FindManyOptions {
     classification?: Array<'NICHE' | 'STANDARD'>;
     country?: Country;
     cursor?: Date;
+    /**
+     * Exclude articles whose associated report classification is ARCHIVED.
+     * Defaults to true for most consumer-facing queries.
+     */
+    excludeArchived?: boolean;
     language?: Language;
     limit: number;
 }
