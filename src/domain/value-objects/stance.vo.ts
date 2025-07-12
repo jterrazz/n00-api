@@ -13,7 +13,7 @@ export const stanceSchema = z.enum([
 export type StanceValue = z.infer<typeof stanceSchema>;
 
 /**
- * @description Domain value object representing a stance toward a story.
+ * @description Domain value object representing a stance toward a report.
  */
 export class Stance {
     public readonly value: StanceValue;

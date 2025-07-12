@@ -15,7 +15,7 @@ export type ClassificationType = z.infer<typeof classificationSchema>;
 
 /**
  * @description
- * Represents the classification of a story, determining its
+ * Represents the classification of a report, determining its
  * potential audience appeal and placement priority.
  *
  * @example

@@ -2,8 +2,8 @@ import { z } from 'zod/v4';
 
 import { Category } from '../value-objects/category.vo.js';
 import { Country } from '../value-objects/country.vo.js';
+import { Classification } from '../value-objects/report/classification.vo.js';
 import { ReportAngle } from '../value-objects/report-angle/report-angle.vo.js';
-import { Classification } from '../value-objects/story/classification.vo.js';
 
 export const factsSchema = z
     .string()

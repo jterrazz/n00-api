@@ -35,6 +35,3 @@ export interface NewsReport {
     articles: NewsArticle[];
     publishedAt: Date;
 }
-
-// Legacy export for backward compatibility
-export type NewsStory = NewsReport;

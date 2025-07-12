@@ -18,8 +18,8 @@ import { Category } from '../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../domain/value-objects/country.vo.js';
 import { Discourse } from '../../../domain/value-objects/discourse.vo.js';
 import { Language } from '../../../domain/value-objects/language.vo.js';
+import { Classification } from '../../../domain/value-objects/report/classification.vo.js';
 import { Stance } from '../../../domain/value-objects/stance.vo.js';
-import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 
 export class ArticleMapper {
     mapCategoryToPrisma(category: Category): PrismaCategory {

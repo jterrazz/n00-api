@@ -12,10 +12,10 @@ import { Report } from '../../../domain/entities/report.entity.js';
 import { Category } from '../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../domain/value-objects/country.vo.js';
 import { Discourse } from '../../../domain/value-objects/discourse.vo.js';
+import { Classification } from '../../../domain/value-objects/report/classification.vo.js';
 import { AngleCorpus } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 import { Stance } from '../../../domain/value-objects/stance.vo.js';
-import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 
 export class ReportMapper {
     angleToPrisma(

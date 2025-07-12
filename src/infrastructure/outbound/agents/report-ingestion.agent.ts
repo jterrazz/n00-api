@@ -85,14 +85,14 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             '•   **Be an Objective Analyst:** Do not judge the viewpoints, simply identify and categorize them based on the text.',
             '•   **Analyze Inter-Angle Dynamics:** To determine the `discourse_type`, your goal is to map the main lines of public debate. Identify which discourse represents the dominant media narrative and which represents its primary contradiction.',
             '•   **Use These Discourse Definitions:**',
-            '    -   **MAINSTREAM:** The narrative of the dominant media. This is the most common and widely amplified storyline.',
+            '    -   **MAINSTREAM:** The narrative of the dominant media. This is the most common and widely amplified narrative.',
             '    -   **ALTERNATIVE:** The narrative of the contradictory media. This viewpoint directly challenges or offers a significant counterpoint to the mainstream narrative, while still being visible in the public sphere.',
             '    -   (Do not use other discourse types for now).',
             '',
 
             // Critical Rules
             'CRITICAL RULES:',
-            '•   **Focus on the Story:** Angles MUST be about the central news event. Do not create angles about the news publications, their missions, or their general stances. The analysis must be about the story, not the storyteller.',
+            '•   **Focus on the Report:** Angles MUST be about the central news event. Do not create angles about the news publications, their missions, or their general stances. The analysis must be about the report, not the storyteller.',
             '•   Base your entire analysis **only** on the provided articles. Do not add external information.',
             '•   Identify a **maximum of 2** angles. Only create an angle if it is genuinely distinct from the other.',
             '•   **No Redundant Angles:** If multiple sources make the same core argument, treat them as ONE angle. Do not create separate angles for sources that are on the same "side" or from the same "camp".',

@@ -111,7 +111,7 @@ describe('WorldNewsAdapter', () => {
         // When - fetching news from the adapter
         const result = await adapter.fetchNews();
 
-        // Then - it should return a story with all articles
+        // Then - it should return a report with all articles
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
             articles: [
@@ -246,7 +246,7 @@ describe('WorldNewsAdapter', () => {
 });
 
 describe('WorldNewsAdapter.transformResponse', () => {
-    it('should return a story with all articles from each section', () => {
+    it('should return a report with all articles from each section', () => {
         // Given
         const adapter = new WorldNewsAdapter(
             { apiKey: 'irrelevant' },
@@ -326,14 +326,14 @@ describe('WorldNewsAdapter.transformResponse', () => {
                         {
                             id: 200001,
                             publish_date: '2024-01-01T00:00:00Z',
-                            text: 'first story article 1',
-                            title: 'Story 1 - Article 1',
+                            text: 'first report article 1',
+                            title: 'Report 1 - Article 1',
                         },
                         {
                             id: 200002,
                             publish_date: '2024-01-02T00:00:00Z',
-                            text: 'first story article 2',
-                            title: 'Story 1 - Article 2',
+                            text: 'first report article 2',
+                            title: 'Report 1 - Article 2',
                         },
                     ],
                 },
@@ -342,8 +342,8 @@ describe('WorldNewsAdapter.transformResponse', () => {
                         {
                             id: 200003,
                             publish_date: '2024-01-03T00:00:00Z',
-                            text: 'second story article 1',
-                            title: 'Story 2 - Article 1',
+                            text: 'second report article 1',
+                            title: 'Report 2 - Article 1',
                         },
                     ],
                 },

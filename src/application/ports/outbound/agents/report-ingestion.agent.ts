@@ -26,7 +26,3 @@ export interface ReportIngestionResult {
     category: Category;
     facts: string;
 }
-
-// Legacy exports for backward compatibility during migration
-export type StoryIngestionAgentPort = ReportIngestionAgentPort;
-export type StoryIngestionResult = ReportIngestionResult;

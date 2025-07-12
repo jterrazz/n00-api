@@ -2,7 +2,7 @@ import { type Report } from '../../../../domain/entities/report.entity.js';
 import {
     Classification,
     classificationSchema,
-} from '../../../../domain/value-objects/story/classification.vo.js';
+} from '../../../../domain/value-objects/report/classification.vo.js';
 
 export { Classification, classificationSchema };
 
@@ -30,8 +30,3 @@ export interface ReportClassificationResult {
     classification: Classification;
     reason: string;
 }
-
-// Legacy exports for backward compatibility during migration
-export type StoryClassificationAgentPort = ReportClassificationAgentPort;
-export type StoryClassificationInput = ReportClassificationInput;
-export type StoryClassificationResult = ReportClassificationResult;

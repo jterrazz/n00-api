@@ -5,10 +5,10 @@ import { Report } from '../../../domain/entities/report.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { Discourse } from '../../../domain/value-objects/discourse.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
+import { Classification } from '../../../domain/value-objects/report/classification.vo.js';
 import { AngleCorpus } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 import { Stance } from '../../../domain/value-objects/stance.vo.js';
-import { Classification } from '../../../domain/value-objects/story/classification.vo.js';
 
 import { type ReportDeduplicationAgentPort } from '../../ports/outbound/agents/report-deduplication.agent.js';
 import { type ReportIngestionAgentPort } from '../../ports/outbound/agents/report-ingestion.agent.js';

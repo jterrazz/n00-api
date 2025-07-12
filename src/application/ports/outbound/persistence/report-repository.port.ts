@@ -70,6 +70,3 @@ export interface ReportRepositoryPort {
      */
     update(id: string, data: Partial<Report>): Promise<Report>;
 }
-
-// Legacy export for backward compatibility during migration
-export type StoryRepositoryPort = ReportRepositoryPort;

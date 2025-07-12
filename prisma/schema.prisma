@@ -110,7 +110,7 @@ model Article {
   fakeReason  String? // Reason why the main article is fake (if applicable)
   country     Country
   language    Language
-  publishedAt DateTime // When the original story was published
+  publishedAt DateTime // When the original report was published
   createdAt   DateTime @default(now())
 
   // Relations
@@ -125,7 +125,7 @@ model Article {
 model ArticleFrame {
   id        String    @id @default(uuid())
   headline  String // Frame headline from this viewpoint
-  body      String // Viewpoint-specific content explaining this side of the story
+  body      String // Viewpoint-specific content explaining this side of the report
   stance    Stance // The viewpoint/stance this frame represents
   discourse Discourse // The type of discourse this frame represents
 

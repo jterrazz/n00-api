@@ -2,9 +2,9 @@ import { randomUUID } from 'crypto';
 
 import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
 import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
+import { getClassification } from '../../value-objects/report/__mocks__/classifications.mock.js';
 import { mockReportAngles } from '../../value-objects/report-angle/__mocks__/report-angles.mock.js';
 import { type ReportAngle } from '../../value-objects/report-angle/report-angle.vo.js';
-import { getClassification } from '../../value-objects/story/__mocks__/classifications.mock.js';
 import { Report } from '../report.entity.js';
 
 /**

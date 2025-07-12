@@ -73,7 +73,7 @@ describe('IngestReportsUseCase', () => {
                 },
             ],
             category: new Category('technology'),
-            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the story completely without bias or interpretation.',
+            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
         };
 
         mockReportDeduplicationAgent.run.mockResolvedValue({
@@ -162,7 +162,7 @@ describe('IngestReportsUseCase', () => {
                 },
             ],
             category: new Category('technology'),
-            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the story completely without bias or interpretation.',
+            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
         };
 
         mockReportIngestionAgent.run.mockResolvedValueOnce(mockResult).mockResolvedValueOnce(null); // Second report fails to ingest

@@ -65,9 +65,6 @@ export interface ReportPipelineTaskConfig {
     language: LanguageEnum;
 }
 
-// Legacy export for backward compatibility during migration
-export type StoryPipelineTaskConfig = ReportPipelineTaskConfig;
-
 /**
  * Tasks configuration
  */

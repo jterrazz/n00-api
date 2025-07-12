@@ -15,7 +15,7 @@ import {
     type ReportClassificationResult,
 } from '../../../application/ports/outbound/agents/report-classification.agent.js';
 
-import { Classification as ClassificationVO } from '../../../domain/value-objects/story/classification.vo.js';
+import { Classification as ClassificationVO } from '../../../domain/value-objects/report/classification.vo.js';
 
 export class ReportClassificationAgentAdapter implements ReportClassificationAgentPort {
     static readonly SCHEMA = z.object({

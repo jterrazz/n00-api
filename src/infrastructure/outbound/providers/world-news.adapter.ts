@@ -172,11 +172,11 @@ export class WorldNewsAdapter implements NewsProviderPort {
         );
         const averageTimestamp =
             articleDates.reduce((sum, timestamp) => sum + timestamp, 0) / articleDates.length;
-        const storyDate = new Date(averageTimestamp);
+        const reportDate = new Date(averageTimestamp);
 
         return {
             articles,
-            publishedAt: storyDate,
+            publishedAt: reportDate,
         };
     }
 }

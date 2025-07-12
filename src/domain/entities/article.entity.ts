@@ -7,7 +7,7 @@ import { ArticleFrame } from '../value-objects/article-frame/article-frame.vo.js
 import { Category } from '../value-objects/category.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Language } from '../value-objects/language.vo.js';
-import { Classification } from '../value-objects/story/classification.vo.js';
+import { Classification } from '../value-objects/report/classification.vo.js';
 
 export const articleSchema = z.object({
     authenticity: z.instanceof(Authenticity),
