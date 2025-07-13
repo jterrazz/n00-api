@@ -68,19 +68,27 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
         const currentDate = input.context?.currentDate || new Date();
         const recentArticles = input.context?.recentArticles || [];
         const toneInstruction =
-            'TONE: **CHOOSE** either **SERIOUS** (realistic) or **SATIRICAL** (humorous exaggeration). Indicate your choice in the `tone` field.';
+            'TONE: **SATIRICAL ONLY** – Generate content in a dead-pan, absurdist style reminiscent of The Onion or Babylon Bee.';
 
         const categoryInstruction =
             'CATEGORY: Choose the single most appropriate category from [TECHNOLOGY, BUSINESS, POLITICS, SCIENCE, HEALTH, ENTERTAINMENT, SPORTS].';
 
         const styleGuidelines = [
-            '### SERIOUS STYLE',
-            '•   Mimic reputable outlets (e.g. Reuters, BBC). Professional tone and structure.',
-            '•   Introduce subtle misinformation, media bias, or political slant to illustrate manipulation.',
+            '### SATIRICAL STYLE (DEFAULT)',
+            '•   Dead-pan humour, absurd premise delivered in a straight-news voice.',
             '',
-            '### SATIRICAL STYLE',
-            '•   Dead-pan humour, absurd premises, reminiscent of The Onion / Babylon Bee.',
-            '•   Obviously fictional upon reflection but written as straight news.',
+            '### SKI_JUMP RULE',
+            'Hide the twist until the final 2-4 syllables of the headline.',
+            '',
+            '### BIG/SMALL SWITCH',
+            'Either treat monumental events with pedestrian seriousness OR trivial stories with outsized gravitas.',
+            '',
+            '### SPECIFICITY & PLAUSIBILITY',
+            '•   Include at least TWO concrete, believable details ("14-page ordinance", "Gallup poll of 1,028 voters").',
+            '•   Attribute at least one quote to a named (fictional) expert or agency.',
+            '',
+            '### LINGUISTIC BALANCE',
+            'Blend analytic phrasing with one emotionally loaded clause for believability.',
             '',
             '### CONTINUITY RULES',
             '•   Match headline length (8-16 words) and body word-count to recentArticles average (±10%).',
@@ -121,7 +129,7 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             '• The story must be 100% fabricated — no real events or people presented as fact.',
             '• Do NOT reveal within the article that it is fake.',
             '• Ensure the piece would be convincing to an average reader.',
-            '• Do not create harmful or defamatory content.',
+            '• Satire must punch **upward** – target institutions or powerful figures, never marginalised groups.',
             '',
 
             // Context & Timing
