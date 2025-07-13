@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
 
-import { ArticleFactory } from './fixtures/article.factory.js';
 import { openRouterUniversalResolver } from './providers/ai.openrouter/open-router-universal.resolver.js';
 import { worldNewsResolver } from './providers/com.worldnewsapi.api/top-news.resolver.js';
 import {
@@ -9,6 +8,7 @@ import {
     type IntegrationTestContext,
     setupIntegrationTest,
 } from './setup/integration.js';
+import { normaliseSnapshot } from './setup/snapshot-normaliser.js';
 
 /**
  * Integration tests for the Report Pipeline task.
@@ -40,61 +40,129 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
     // Test cases
     // --------------------
 
-    describe('Happy path with available news reports', () => {
-        it('should ingest reports, classify them, and generate articles accordingly', async () => {
-            // Given
-            const reportPipelineTask = testContext.gateways.tasks.find(
-                (task) => task.name === 'report-pipeline',
-            );
-            expect(reportPipelineTask).toBeDefined();
+    it('creates well-structured articles with mixed authenticity', async () => {
+        // When – run pipeline
+        const pipelineTask = testContext.gateways.tasks.find((t) => t.name === 'report-pipeline');
+        expect(pipelineTask).toBeDefined();
+        await pipelineTask!.execute();
 
-            // When – execute the pipeline
-            await reportPipelineTask!.execute();
-
-            // Then – Verify reports presence and correct classifications
-            const reports = await testContext.prisma.report.findMany({
-                orderBy: { createdAt: 'asc' },
-            });
-            expect(reports.length).toBeGreaterThanOrEqual(4); // Two languages processed
-
-            const classifications = new Set(reports.map((r) => r.classification));
-            expect(classifications.has('STANDARD')).toBe(true);
-            expect(classifications.has('NICHE')).toBe(true);
-            expect(classifications.has('ARCHIVED')).toBe(true);
-
-            // Articles should be generated for each STANDARD and NICHE report
-            const articles = await testContext.prisma.article.findMany();
-            expect(articles.length).toBeGreaterThanOrEqual(2);
-
-            // Ensure each article is linked to at least one report id
-            for (const article of articles) {
-                const links = (await testContext.prisma
-                    .$queryRaw`SELECT COUNT(*) as cnt FROM _ReportArticles WHERE A = ${article.id}`) as Array<{
-                    cnt: bigint | number;
-                }>;
-                const linkCount = links.length > 0 ? Number(links[0].cnt) : 0;
-                expect(linkCount).toBeGreaterThanOrEqual(1);
-            }
+        // Then – fetch reports & articles with relations for deeper validation
+        const reports = await testContext.prisma.report.findMany({ include: { angles: true } });
+        const articles = await testContext.prisma.article.findMany({
+            include: { frames: true, reports: true },
         });
 
-        it('should generate at least one fake article for educational gameplay', async () => {
-            // Given
-            // Create one authentic article so the fake-generation ratio deems a fake necessary.
-            await new ArticleFactory().asReal().createInDatabase(testContext.prisma);
+        // Basic expectations
+        expect(reports.length).toBeGreaterThan(0);
+        expect(articles.length).toBeGreaterThan(0);
 
-            const reportPipelineTask = testContext.gateways.tasks.find(
-                (task) => task.name === 'report-pipeline',
-            );
+        /* ------------------------------------------------------------------ */
+        /* Strict JSON snapshot comparison with normalised dynamic fields      */
+        /* ------------------------------------------------------------------ */
 
-            // Execute the pipeline again to ensure articles exist and fake generation logic runs
-            await reportPipelineTask!.execute();
+        const SOURCE_RE = /^worldnewsapi:/;
 
-            // When – fetch articles
-            const articles = await testContext.prisma.article.findMany();
+        const snapshot = normaliseSnapshot(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (JSON.parse(JSON.stringify(articles)) as any[]).sort(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (a: any, b: any) => {
+                    return (
+                        a.country.localeCompare(b.country) ||
+                        a.language.localeCompare(b.language) ||
+                        a.authenticity.localeCompare(b.authenticity) ||
+                        a.reports[0].classification.localeCompare(b.reports[0].classification)
+                    );
+                },
+            ),
+            [[SOURCE_RE, '<source>']],
+        );
 
-            // Then – verify at least one falsified article exists
-            const hasFake = articles.some((a) => a.authenticity === 'FALSIFIED');
-            expect(hasFake).toBe(true);
+        const authTemplate = (country: 'FR' | 'US', classification: 'NICHE' | 'STANDARD') => ({
+            authenticity: 'AUTHENTIC',
+            body: 'Neutral summary of the core, undisputed facts of the event.',
+            category: 'TECHNOLOGY',
+            country,
+            createdAt: '<date>',
+            falsificationReason: null,
+            frames: [
+                {
+                    articleId: '<uuid>',
+                    body: 'Perspective specific frame content for the angle.',
+                    createdAt: '<date>',
+                    discourse: 'MAINSTREAM',
+                    headline: 'Angle headline',
+                    id: '<uuid>',
+                    stance: 'NEUTRAL',
+                },
+            ],
+            headline: 'Main headline for the article',
+            id: '<uuid>',
+            language: country === 'US' ? 'EN' : 'FR',
+            publishedAt: '<date>',
+            reports: [
+                {
+                    category: 'TECHNOLOGY',
+                    classification,
+                    country,
+                    createdAt: '<date>',
+                    dateline: '<date>',
+                    facts: 'Verified facts about the event presented in a clear, objective manner.',
+                    id: '<uuid>',
+                    sources: ['<source>', '<source>', '<source>', '<source>', '<source>'],
+                    updatedAt: '<date>',
+                },
+            ],
         });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const comparator = (a: any, b: any) => {
+            return (
+                a.country.localeCompare(b.country) ||
+                a.language.localeCompare(b.language) ||
+                a.authenticity.localeCompare(b.authenticity) ||
+                (a.reports[0]?.classification ?? '').localeCompare(
+                    b.reports[0]?.classification ?? '',
+                )
+            );
+        };
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const expectedSnapshot: any[] = [
+            authTemplate('FR', 'NICHE'),
+            authTemplate('FR', 'STANDARD'),
+            authTemplate('US', 'NICHE'),
+            authTemplate('US', 'STANDARD'),
+            {
+                authenticity: 'FALSIFIED',
+                body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
+                category: 'TECHNOLOGY',
+                country: 'FR',
+                createdAt: '<date>',
+                falsificationReason: 'Unrealistic scientific claims with no evidence',
+                frames: [],
+                headline: 'Scientists Harness Unicorn Fossil Fuel for Endless Clean Energy',
+                id: '<uuid>',
+                language: 'FR',
+                publishedAt: '<date>',
+                reports: [],
+            },
+            {
+                authenticity: 'FALSIFIED',
+                body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
+                category: 'TECHNOLOGY',
+                country: 'US',
+                createdAt: '<date>',
+                falsificationReason: 'Unrealistic scientific claims with no evidence',
+                frames: [],
+                headline: 'Scientists Harness Unicorn Fossil Fuel for Endless Clean Energy',
+                id: '<uuid>',
+                language: 'EN',
+                publishedAt: '<date>',
+                reports: [],
+            },
+        ].sort(comparator);
+
+        expect(snapshot).toStrictEqual(expectedSnapshot);
     });
 });

@@ -121,16 +121,12 @@ export class GenerateArticlesFromReportsUseCase {
                 }
             }
 
-            // 2) Generate FAKE articles (may be needed even if no real reports)
-            const fakeArticles = await this.generateFakeArticles(language, country);
-            generatedArticles.push(...fakeArticles);
-
-            // Persist all newly generated articles in a single batch
+            // Persist real articles before generating fakes so that fake-generation ratio has context
             if (generatedArticles.length > 0) {
                 try {
                     await this.articleRepository.createMany(generatedArticles);
                 } catch (persistError) {
-                    this.logger.warn('article:generate:persist-error', {
+                    this.logger.warn('article:generate:persist-real-error', {
                         country: country.toString(),
                         error: persistError,
                         language: language.toString(),
@@ -138,16 +134,35 @@ export class GenerateArticlesFromReportsUseCase {
                 }
             }
 
+            // 2) Generate FAKE articles (may be needed even if no real reports)
+            const fakeArticles = await this.generateFakeArticles(language, country);
+
+            // Persist newly generated fake articles
+            if (fakeArticles.length > 0) {
+                try {
+                    await this.articleRepository.createMany(fakeArticles);
+                } catch (persistError) {
+                    this.logger.warn('article:generate:persist-fake-error', {
+                        country: country.toString(),
+                        error: persistError,
+                        language: language.toString(),
+                    });
+                }
+            }
+
+            // Combine for return and logging
+            const allGenerated = [...generatedArticles, ...fakeArticles];
+
             this.logger.info('article:generate:done', {
                 country: country.toString(),
                 fakeCount: fakeArticles.length,
-                generatedCount: generatedArticles.length,
+                generatedCount: allGenerated.length,
                 language: language.toString(),
                 processedCount: reportsToProcess.length,
-                realCount: generatedArticles.length - fakeArticles.length,
+                realCount: generatedArticles.length,
             });
 
-            return generatedArticles;
+            return allGenerated;
         } catch (error) {
             this.logger.error('article:generate:error', {
                 country: country.toString(),

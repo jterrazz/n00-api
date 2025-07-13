@@ -50,4 +50,4 @@ export function validateParams(params: TopNewsQueryParams): HttpResponse | undef
         return new HttpResponse(null, { status: 403, statusText: 'Invalid test API key' });
     }
     return undefined;
-} 
+}
