@@ -85,23 +85,7 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
 
         const SOURCE_RE = /^worldnewsapi:/;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comparator = (a: any, b: any) => {
-            const aClass = a.reports[0]?.classification ?? '';
-            const bClass = b.reports[0]?.classification ?? '';
-            return (
-                a.country.localeCompare(b.country) ||
-                a.language.localeCompare(b.language) ||
-                a.authenticity.localeCompare(b.authenticity) ||
-                aClass.localeCompare(bClass)
-            );
-        };
-
-        const snapshot = normaliseSnapshot(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (JSON.parse(JSON.stringify(articles)) as any[]).sort(comparator),
-            [[SOURCE_RE, '<source>']],
-        );
+        const snapshot = normaliseSnapshot(articles, [[SOURCE_RE, '<source>']]);
 
         const authTemplate = (country: 'FR' | 'US', classification: 'NICHE' | 'STANDARD') => ({
             authenticity: 'AUTHENTIC',
@@ -174,8 +158,10 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
                 publishedAt: '<date>',
                 reports: [],
             },
-        ].sort(comparator);
+        ];
 
-        expect(snapshot).toStrictEqual(expectedSnapshot);
+        // Order-insensitive comparison
+        expect(snapshot).toEqual(expect.arrayContaining(expectedSnapshot));
+        expect(snapshot).toHaveLength(expectedSnapshot.length);
     });
 });

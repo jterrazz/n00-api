@@ -22,6 +22,11 @@ export type ReplacementRule = [pattern: RegExp, placeholder: string];
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normaliseSnapshot(value: any, extraRules: ReplacementRule[] = []): any {
+    // Handle Date objects directly
+    if (value instanceof Date) {
+        return '<date>';
+    }
+
     if (Array.isArray(value)) {
         return value.map((v) => normaliseSnapshot(v, extraRules));
     }
