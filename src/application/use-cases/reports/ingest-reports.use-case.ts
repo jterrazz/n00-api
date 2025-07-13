@@ -50,12 +50,10 @@ export class IngestReportsUseCase {
             });
 
             // Step 2: Fetch news from external providers
-            let newsStories = await this.newsProvider.fetchNews({
+            const newsStories = await this.newsProvider.fetchNews({
                 country,
                 language,
             });
-
-            newsStories = newsStories.slice(0, 5);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news reports fetched', {
@@ -78,15 +76,29 @@ export class IngestReportsUseCase {
                 this.logger.info('No duplicate reports found');
                 return [];
             }
-            this.logger.info('Filtered out duplicate reports', { count: newNewsReports.length });
+            this.logger.info('Valid reports after deduplication', { count: newNewsReports.length });
 
             // Step 4: Filter out reports with insufficient articles
-            const validNewsReports = newNewsReports.filter((report) => report.articles.length >= 2);
+            // Determine the maximum number of articles in the fetched reports
+            const maxArticleCount = Math.max(
+                ...newNewsReports.map((report) => report.articles.length),
+            );
+
+            // Calculate the threshold (70% of the max) and ensure a minimum meaningful ceiling
+            const articleThreshold = Math.ceil(maxArticleCount * 0.7);
+
+            // Keep reports that either meet the 70% threshold or have at least 4 articles
+            const validNewsReports = newNewsReports.filter(
+                (report) =>
+                    report.articles.length >= articleThreshold || report.articles.length > 3,
+            );
 
             if (validNewsReports.length === 0) {
                 this.logger.warn('No valid reports after filtering');
                 return [];
             }
+
+            this.logger.info('Valid reports after filtering', { count: validNewsReports.length });
 
             // Step 5: Process each valid news report
             const digestedReports: Report[] = [];
