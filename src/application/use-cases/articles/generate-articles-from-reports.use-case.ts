@@ -175,16 +175,19 @@ export class GenerateArticlesFromReportsUseCase {
                 limit: 10,
             });
 
-            // Simple check: has there been any fake article in recent articles?
-            const hasFakeInRecent = recentArticles.some((article) => article.isFalsified());
+            const existingFakeCount = recentArticles.filter((a) => a.isFalsified()).length;
 
-            // If no fake articles recently, generate 1-2
-            if (!hasFakeInRecent) {
-                const fakeCount = Math.random() > 0.5 ? 2 : 1;
+            // Target ratio: ~25% of articles should be fake.
+            const desiredFakeTotal = Math.ceil(recentArticles.length / 3); // nReal /3 ≈ 25% overall
+            let generateCount = desiredFakeTotal - existingFakeCount;
 
+            // Clamp between 0 and 3 to avoid large batches
+            generateCount = Math.max(0, Math.min(generateCount, 3));
+
+            if (generateCount > 0) {
                 this.logger.info('article:generate:fake-needed', {
                     country: country.toString(),
-                    fakeCount,
+                    fakeCount: generateCount,
                     language: language.toString(),
                     recentArticlesCount: recentArticles.length,
                 });
@@ -202,7 +205,7 @@ export class GenerateArticlesFromReportsUseCase {
                 }));
 
                 // Generate the fake articles
-                for (let i = 0; i < fakeCount; i++) {
+                for (let i = 0; i < generateCount; i++) {
                     try {
                         // Let AI choose the category based on recent articles context
                         const fakeResult = await this.articleFalsificationAgent.run({
