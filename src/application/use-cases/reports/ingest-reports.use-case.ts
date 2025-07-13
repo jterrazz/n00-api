@@ -64,8 +64,30 @@ export class IngestReportsUseCase {
             }
             this.logger.info('Fetched news reports', { count: newsStories.length });
 
-            // Step 3: Filter out reports that have already been processed by source ID
-            const newNewsReports = newsStories.filter(
+            // Step 3: Filter out reports with insufficient articles (before considering duplicates)
+            const maxArticleCount = Math.max(
+                ...newsStories.map((report) => report.articles.length),
+            );
+
+            const articleThreshold = Math.ceil(maxArticleCount * 0.7);
+
+            const articleFilteredReports = newsStories.filter(
+                (report) =>
+                    report.articles.length >= articleThreshold || report.articles.length > 3,
+            );
+
+            if (articleFilteredReports.length === 0) {
+                this.logger.warn('No valid reports after article-count filtering');
+                return [];
+            }
+
+            this.logger.info('Valid reports after article-count filtering', {
+                articleThreshold,
+                count: articleFilteredReports.length,
+            });
+
+            // Step 4: Filter out reports that have already been processed by source ID
+            const newNewsReports = articleFilteredReports.filter(
                 (report) =>
                     !report.articles.some((article) =>
                         existingSourceReferences.includes(article.id),
@@ -73,32 +95,14 @@ export class IngestReportsUseCase {
             );
 
             if (newNewsReports.length === 0) {
-                this.logger.info('No duplicate reports found');
+                this.logger.info('No non-duplicate reports found');
                 return [];
             }
+
             this.logger.info('Valid reports after deduplication', { count: newNewsReports.length });
 
-            // Step 4: Filter out reports with insufficient articles
-            // Determine the maximum number of articles in the fetched reports
-            const maxArticleCount = Math.max(
-                ...newNewsReports.map((report) => report.articles.length),
-            );
-
-            // Calculate the threshold (70% of the max) and ensure a minimum meaningful ceiling
-            const articleThreshold = Math.ceil(maxArticleCount * 0.7);
-
-            // Keep reports that either meet the 70% threshold or have at least 4 articles
-            const validNewsReports = newNewsReports.filter(
-                (report) =>
-                    report.articles.length >= articleThreshold || report.articles.length > 3,
-            );
-
-            if (validNewsReports.length === 0) {
-                this.logger.warn('No valid reports after filtering');
-                return [];
-            }
-
-            this.logger.info('Valid reports after filtering', { count: validNewsReports.length });
+            // Rename for clarity in the following processing steps
+            const validNewsReports = newNewsReports;
 
             // Step 5: Process each valid news report
             const digestedReports: Report[] = [];

@@ -187,4 +187,92 @@ describe('IngestReportsUseCase', () => {
         expect(mockReportDeduplicationAgent.run).toHaveBeenCalledTimes(1);
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
     });
+
+    test('it should only process reports that meet the 70% article threshold or have more than 3 articles', async () => {
+        // Given: Four news reports with varying article counts (10, 6, 3, and 2).
+        const newsReports: NewsReport[] = [
+            {
+                articles: Array.from({ length: 10 }, (_, i) => ({
+                    body: `B${i}`,
+                    headline: `H${i}`,
+                    id: `id${i}`,
+                })),
+                publishedAt: new Date(),
+            },
+            {
+                articles: Array.from({ length: 6 }, (_, i) => ({
+                    body: `B${i}`,
+                    headline: `H${i}`,
+                    id: `id6${i}`,
+                })),
+                publishedAt: new Date(),
+            },
+            {
+                articles: Array.from({ length: 3 }, (_, i) => ({
+                    body: `B${i}`,
+                    headline: `H${i}`,
+                    id: `id3${i}`,
+                })),
+                publishedAt: new Date(),
+            },
+            {
+                articles: Array.from({ length: 2 }, (_, i) => ({
+                    body: `B${i}`,
+                    headline: `H${i}`,
+                    id: `id2${i}`,
+                })),
+                publishedAt: new Date(),
+            },
+        ];
+
+        // Override default mock
+        mockNewsProvider.fetchNews.mockResolvedValue(newsReports);
+        mockReportRepository.getAllSourceReferences.mockResolvedValue([]); // No duplicates
+
+        // When
+        await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+        // Then: Only the 10- and 6-article reports should be processed.
+        expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
+        expect(mockReportRepository.create).toHaveBeenCalledTimes(2);
+        // Verify the IDs processed correspond to the 10- and 6-article reports
+        const processedArticleCounts = mockReportIngestionAgent.run.mock.calls.map(
+            ([{ newsReport }]) => newsReport.articles.length,
+        );
+        expect(processedArticleCounts).toEqual([10, 6]);
+    });
+
+    test('it should process a report that passes article threshold even if the largest report is filtered out as duplicate', async () => {
+        // Given: Two reports – 10-article (duplicate) and 6-article (unique).
+        const duplicateReportArticles = Array.from({ length: 10 }, (_, i) => ({
+            body: `DB${i}`,
+            headline: `DH${i}`,
+            id: `dup${i}`,
+        }));
+        const uniqueReportArticles = Array.from({ length: 6 }, (_, i) => ({
+            body: `UB${i}`,
+            headline: `UH${i}`,
+            id: `uniq${i}`,
+        }));
+
+        const newsReports: NewsReport[] = [
+            { articles: duplicateReportArticles, publishedAt: new Date() },
+            { articles: uniqueReportArticles, publishedAt: new Date() },
+        ];
+
+        // Mock: all articles of first report already exist in DB
+        mockNewsProvider.fetchNews.mockResolvedValue(newsReports);
+        mockReportRepository.getAllSourceReferences.mockResolvedValue(
+            duplicateReportArticles.map((a) => a.id),
+        );
+
+        // When
+        await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+
+        // Then: The 6-article report should still be processed (as it meets 70% of 10).
+        expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(1);
+        const processedArticleCount =
+            mockReportIngestionAgent.run.mock.calls[0][0].newsReport.articles.length;
+        expect(processedArticleCount).toBe(6);
+    });
 });
