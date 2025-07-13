@@ -12,44 +12,44 @@ export class NodeCronAdapter implements WorkerPort {
     ) {}
 
     async initialize(): Promise<void> {
-        this.logger.debug('worker:start', { taskCount: this.tasks.length });
+        this.logger.debug('Starting worker', { tasks: this.tasks.length });
 
         for (const task of this.tasks) {
             this.scheduleTask(task);
         }
 
-        this.logger.debug('worker:ready');
+        this.logger.debug('Worker initialization complete');
     }
 
     async stop(): Promise<void> {
-        this.logger.info('worker:stop', { runningTasks: this.scheduledTasks.length });
+        this.logger.info('Stopping worker', { runningTasks: this.scheduledTasks.length });
 
         for (const task of this.scheduledTasks) {
             task.stop();
         }
 
         this.scheduledTasks.length = 0;
-        this.logger.info('worker:stopped');
+        this.logger.info('Worker has stopped');
     }
 
     /**
      * Schedules an individual cron task and wires up logging + graceful shutdown handling.
      */
     private scheduleTask(task: TaskPort): void {
-        this.logger.debug('worker:schedule', { cron: task.schedule, task: task.name });
+        this.logger.debug('Scheduling task', { schedule: task.schedule, task: task.name });
 
         const executeSafely = async (): Promise<void> => {
             const start = Date.now();
-            this.logger.debug('task:start', { task: task.name });
+            this.logger.debug('Task started', { task: task.name });
 
             try {
                 await task.execute();
-                this.logger.info('task:success', {
+                this.logger.info('Task completed successfully', {
                     durationMs: Date.now() - start,
                     task: task.name,
                 });
             } catch (error) {
-                this.logger.error('task:error', { error, task: task.name });
+                this.logger.error('Task execution error', { error, task: task.name });
             }
         };
 
@@ -60,7 +60,7 @@ export class NodeCronAdapter implements WorkerPort {
         this.scheduledTasks.push(cronTask);
 
         if (task.executeOnStartup) {
-            this.logger.debug('task:startup', { task: task.name });
+            this.logger.debug('Executing startup task', { task: task.name });
             void executeSafely();
         }
 

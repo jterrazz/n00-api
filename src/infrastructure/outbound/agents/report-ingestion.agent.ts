@@ -115,7 +115,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
     async run(params: { newsReport: NewsReport }): Promise<null | ReportIngestionResult> {
         try {
             this.logger.info(
-                `[${this.name}] Ingesting report with ${params.newsReport.articles.length} articles`,
+                `Ingesting report with ${params.newsReport.articles.length} articles`,
             );
 
             const result = await this.agent.run(
@@ -123,16 +123,16 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             );
 
             if (!result) {
-                this.logger.warn(`[${this.name}] No result from AI model`);
+                this.logger.warn('Ingestion agent returned no result');
                 return null;
             }
 
             // Log successful parsing for debugging
             this.logger.info(
-                `[${this.name}] Successfully parsed AI response with ${result.angles.length} angles`,
+                `AI response parsed successfully with ${result.angles.length} angles`,
                 {
-                    angleTypes: result.angles.map((angle) => angle.discourse),
                     category: result.category,
+                    discourseTypes: result.angles.map((angle) => angle.discourse),
                 },
             );
 
@@ -153,12 +153,12 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             };
 
             this.logger.info(
-                `[${this.name}] Successfully ingested report: ${ingestionResult.facts.substring(0, 100)}... with ${ingestionResult.angles.length} angles`,
+                `Report ingested: ${ingestionResult.facts.substring(0, 100)}... with ${ingestionResult.angles.length} angles`,
             );
 
             return ingestionResult;
         } catch (error) {
-            this.logger.error(`[${this.name}] Failed to ingest report`, {
+            this.logger.error('Failed to ingest report', {
                 articleCount: params.newsReport.articles.length,
                 error,
             });

@@ -44,7 +44,7 @@ export class GenerateArticlesFromReportsUseCase {
      */
     public async execute(language: Language, country: Country): Promise<Article[]> {
         try {
-            this.logger.info('article:generate:start', {
+            this.logger.info('Starting article generation process', {
                 country: country.toString(),
                 language: language.toString(),
             });
@@ -57,13 +57,15 @@ export class GenerateArticlesFromReportsUseCase {
             });
 
             if (reportsToProcess.length === 0) {
-                this.logger.info('article:generate:none', {
+                this.logger.info('No reports found for article generation', {
                     country: country.toString(),
                     language: language.toString(),
                 });
             }
 
-            this.logger.info('article:generate:found', { count: reportsToProcess.length });
+            this.logger.info('Reports found for article generation', {
+                count: reportsToProcess.length,
+            });
 
             const generatedArticles: Article[] = [];
 
@@ -81,7 +83,7 @@ export class GenerateArticlesFromReportsUseCase {
                             await this.articleCompositionAgent.run(compositionInput);
 
                         if (!compositionResult) {
-                            this.logger.warn('article:generate:agent-null', {
+                            this.logger.warn('Composition agent returned no result', {
                                 country: country.toString(),
                                 language: language.toString(),
                                 reportId: report.id,
@@ -114,7 +116,7 @@ export class GenerateArticlesFromReportsUseCase {
 
                         generatedArticles.push(article);
                     } catch (articleError) {
-                        this.logger.warn('article:generate:error', {
+                        this.logger.warn('Error generating article', {
                             country: country.toString(),
                             error: articleError,
                             language: language.toString(),
@@ -129,7 +131,7 @@ export class GenerateArticlesFromReportsUseCase {
                 try {
                     await this.articleRepository.createMany(generatedArticles);
                 } catch (persistError) {
-                    this.logger.warn('article:generate:persist-real-error', {
+                    this.logger.warn('Error persisting real articles', {
                         country: country.toString(),
                         error: persistError,
                         language: language.toString(),
@@ -145,7 +147,7 @@ export class GenerateArticlesFromReportsUseCase {
                 try {
                     await this.articleRepository.createMany(fakeArticles);
                 } catch (persistError) {
-                    this.logger.warn('article:generate:persist-fake-error', {
+                    this.logger.warn('Error persisting fake articles', {
                         country: country.toString(),
                         error: persistError,
                         language: language.toString(),
@@ -156,7 +158,7 @@ export class GenerateArticlesFromReportsUseCase {
             // Combine for return and logging
             const allGenerated = [...generatedArticles, ...fakeArticles];
 
-            this.logger.info('article:generate:done', {
+            this.logger.info('Article generation process completed', {
                 country: country.toString(),
                 fakeCount: fakeArticles.length,
                 generatedCount: allGenerated.length,
@@ -167,7 +169,7 @@ export class GenerateArticlesFromReportsUseCase {
 
             return allGenerated;
         } catch (error) {
-            this.logger.error('article:generate:error', {
+            this.logger.error('Article generation encountered an error', {
                 country: country.toString(),
                 error,
                 language: language.toString(),
@@ -206,7 +208,7 @@ export class GenerateArticlesFromReportsUseCase {
             generateCount = Math.max(0, Math.min(generateCount, 3));
 
             if (generateCount > 0) {
-                this.logger.info('article:generate:fake-needed', {
+                this.logger.info('Fake articles will be generated', {
                     country: country.toString(),
                     fakeCount: generateCount,
                     language: language.toString(),
@@ -240,7 +242,7 @@ export class GenerateArticlesFromReportsUseCase {
                         });
 
                         if (!fakeResult) {
-                            this.logger.warn('article:generate:fake-agent-null', {
+                            this.logger.warn('Falsification agent returned no result', {
                                 country: country.toString(),
                                 language: language.toString(),
                             });
@@ -301,7 +303,7 @@ export class GenerateArticlesFromReportsUseCase {
                             publishedAt,
                         });
 
-                        this.logger.info('article:generate:fake-composed', {
+                        this.logger.info('Fake article composed', {
                             articleId: fakeArticle.id,
                             category: fakeResult.category.toString(),
                             country: country.toString(),
@@ -312,7 +314,7 @@ export class GenerateArticlesFromReportsUseCase {
 
                         fakeArticles.push(fakeArticle);
                     } catch (fakeError) {
-                        this.logger.warn('article:generate:fake-error', {
+                        this.logger.warn('Error generating fake article', {
                             country: country.toString(),
                             error: fakeError,
                             language: language.toString(),
@@ -321,14 +323,14 @@ export class GenerateArticlesFromReportsUseCase {
                     }
                 }
             } else {
-                this.logger.info('article:generate:fake-skip', {
+                this.logger.info('Skipping fake article generation', {
                     country: country.toString(),
                     language: language.toString(),
                     reason: 'Recent fake article found',
                 });
             }
         } catch (error) {
-            this.logger.warn('article:generate:fake-check-error', {
+            this.logger.warn('Error checking fake article requirements', {
                 country: country.toString(),
                 error,
                 language: language.toString(),

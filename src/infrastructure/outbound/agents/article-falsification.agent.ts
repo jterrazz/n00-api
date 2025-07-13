@@ -145,7 +145,7 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
 
     async run(input: ArticleFalsificationInput): Promise<ArticleFalsificationResult | null> {
         try {
-            this.logger.info(`[${this.name}] Generating fake article`, {
+            this.logger.info('Generating fabricated article', {
                 country: input.targetCountry.toString(),
                 language: input.targetLanguage.toString(),
             });
@@ -155,12 +155,12 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             );
 
             if (!result) {
-                this.logger.warn(`[${this.name}] No result from AI model`);
+                this.logger.warn('Falsification agent returned no result');
                 return null;
             }
 
             // Log successful generation for debugging
-            this.logger.info(`[${this.name}] Successfully generated fake article`, {
+            this.logger.info('Fake article generated successfully', {
                 bodyLength: result.body.length,
                 category: result.category,
                 headline: result.headline,
@@ -176,12 +176,12 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             };
 
             this.logger.info(
-                `[${this.name}] Successfully generated fake article: "${fakerResult.headline}" (${fakerResult.body.length} chars)`,
+                `Generated fake article: "${fakerResult.headline}" (${fakerResult.body.length} chars)`,
             );
 
             return fakerResult;
         } catch (error) {
-            this.logger.error(`[${this.name}] Failed to generate fake article`, {
+            this.logger.error('Failed to generate fake article', {
                 error,
                 targetCountry: input.targetCountry.toString(),
                 targetLanguage: input.targetLanguage.toString(),

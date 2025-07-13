@@ -116,31 +116,31 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
     async run(input: ArticleCompositionInput): Promise<ArticleCompositionResult | null> {
         try {
             this.logger.info(
-                `[${this.name}] Composing article for report with ${input.report.angles.length} angles`,
+                `Composing article for report with ${input.report.angles.length} angles`,
                 {
+                    category: input.report.category.toString(),
                     country: input.targetCountry.toString(),
                     language: input.targetLanguage.toString(),
-                    reportCategory: input.report.category.toString(),
                 },
             );
 
             const result = await this.agent.run(ArticleCompositionAgentAdapter.USER_PROMPT(input));
 
             if (!result) {
-                this.logger.warn(`[${this.name}] No result from AI model`);
+                this.logger.warn('Article composition agent returned no result');
                 return null;
             }
 
             // Validate that we have the correct number of frames
             if (result.frames.length !== input.report.angles.length) {
                 this.logger.warn(
-                    `[${this.name}] AI returned ${result.frames.length} frames but expected ${input.report.angles.length} (one per angle)`,
+                    `AI returned ${result.frames.length} frames but expected ${input.report.angles.length} (one per angle)`,
                 );
                 return null;
             }
 
             // Log successful composition for debugging
-            this.logger.info(`[${this.name}] Successfully composed article with frames`, {
+            this.logger.info('Successfully composed article with frames', {
                 bodyLength: result.body.length,
                 framesCount: result.frames.length,
                 headlineLength: result.headline.length,
@@ -161,12 +161,12 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
             };
 
             this.logger.info(
-                `[${this.name}] Successfully composed article: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.frames.length} frames`,
+                `Article composed: "${compositionResult.headline}" (${compositionResult.body.length} chars) with ${compositionResult.frames.length} frames`,
             );
 
             return compositionResult;
         } catch (error) {
-            this.logger.error(`[${this.name}] Failed to compose article`, {
+            this.logger.error('Failed to compose article', {
                 error,
                 reportId: input.report.id,
                 targetCountry: input.targetCountry.toString(),

@@ -109,8 +109,8 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
         newReport: NewsReport;
     }): Promise<null | ReportDeduplicationResult> {
         try {
-            this.logger.info(`[${this.name}] Checking for report duplicates...`, {
-                newReportTitle: params.newReport.articles[0]?.headline,
+            this.logger.info('Checking if the incoming report is a duplicate', {
+                headline: params.newReport.articles[0]?.headline,
             });
 
             const result = await this.agent.run(
@@ -118,18 +118,15 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
             );
 
             if (!result) {
-                this.logger.warn(
-                    `[${this.name}] Deduplication check failed. No result from AI model.`,
-                    {
-                        newReportTitle: params.newReport.articles[0]?.headline,
-                    },
-                );
+                this.logger.warn('Deduplication check failed: AI model returned no result', {
+                    headline: params.newReport.articles[0]?.headline,
+                });
                 return null;
             }
 
-            this.logger.info(`[${this.name}] Deduplication check complete.`, {
+            this.logger.info('Deduplication check complete', {
                 duplicateOfReportId: result.duplicateOfReportId,
-                newReportTitle: params.newReport.articles[0]?.headline,
+                headline: params.newReport.articles[0]?.headline,
                 reason: result.reason,
             });
 
@@ -137,9 +134,9 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
                 duplicateOfReportId: result.duplicateOfReportId,
             };
         } catch (error) {
-            this.logger.error(`[${this.name}] An error occurred during deduplication check.`, {
+            this.logger.error('Error during deduplication check', {
                 error,
-                newReportTitle: params.newReport.articles[0]?.headline,
+                headline: params.newReport.articles[0]?.headline,
             });
             return null;
         }

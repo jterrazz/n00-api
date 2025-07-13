@@ -40,10 +40,10 @@ export class HonoServerAdapter implements ServerPort {
 
     public async start(config: ServerConfiguration): Promise<void> {
         return new Promise((resolve) => {
-            this.logger.debug('server:start', { host: config.host, port: config.port });
+            this.logger.debug('Starting server', { host: config.host, port: config.port });
 
             this.server = serve(this.app, (info) => {
-                this.logger.debug('server:listening', { host: config.host, port: info.port });
+                this.logger.debug('Server listening', { host: config.host, port: info.port });
                 resolve();
             });
         });
@@ -52,10 +52,10 @@ export class HonoServerAdapter implements ServerPort {
     public async stop(): Promise<void> {
         if (!this.server) return;
 
-        this.logger.info('server:stopping');
+        this.logger.info('Stopping server');
         await this.server.close();
         this.server = null;
-        this.logger.info('server:stopped');
+        this.logger.info('Server stopped');
     }
 
     private registerRoutes(): void {

@@ -37,19 +37,19 @@ export class PrismaAdapter implements DatabasePort {
         });
 
         this.client.$on('error' as never, (event: Prisma.LogEvent) => {
-            this.logger.error('db:prisma:error', { ...event });
+            this.logger.error('Prisma emitted an error', { ...event });
         });
 
         this.client.$on('warn' as never, (event: Prisma.LogEvent) => {
-            this.logger.warn('db:prisma:warn', { ...event });
+            this.logger.warn('Prisma emitted a warning', { ...event });
         });
 
         this.client.$on('info' as never, (event: Prisma.LogEvent) => {
-            this.logger.info('db:prisma:info', { ...event });
+            this.logger.info('Prisma info', { ...event });
         });
 
         this.client.$on('query' as never, (event: Prisma.LogEvent) => {
-            this.logger.debug('db:prisma:query', { ...event });
+            this.logger.debug('Prisma query executed', { ...event });
         });
     }
 

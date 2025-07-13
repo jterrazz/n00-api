@@ -100,7 +100,7 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
 
     async run(input: ReportClassificationInput): Promise<null | ReportClassificationResult> {
         try {
-            this.logger.info(`[${this.name}] Classifying report...`, {
+            this.logger.info('Classifying report', {
                 reportId: input.report.id,
             });
 
@@ -109,13 +109,13 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
             );
 
             if (!result) {
-                this.logger.warn(`[${this.name}] Classification failed. No result from AI model.`, {
+                this.logger.warn('Classification agent returned no result', {
                     reportId: input.report.id,
                 });
                 return null;
             }
 
-            this.logger.info(`[${this.name}] Report classified successfully.`, {
+            this.logger.info('Report classified successfully', {
                 classification: result.classification,
                 reason: result.reason,
                 reportId: input.report.id,
@@ -126,7 +126,7 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
                 reason: result.reason,
             };
         } catch (error) {
-            this.logger.error(`[${this.name}] An error occurred during classification.`, {
+            this.logger.error('Error during report classification', {
                 error,
                 reportId: input.report.id,
             });

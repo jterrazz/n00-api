@@ -24,10 +24,10 @@ export class ReportPipelineTask implements TaskPort {
     ) {}
 
     async execute(): Promise<void> {
-        this.logger.info('task:report-pipeline:start');
+        this.logger.info('Report pipeline task started');
 
         try {
-            this.logger.info('task:report-pipeline:config', {
+            this.logger.info('Loaded report pipeline configuration', {
                 taskCount: this.taskConfigs.length,
                 tasks: this.taskConfigs,
             });
@@ -40,7 +40,7 @@ export class ReportPipelineTask implements TaskPort {
             // Step 1: Ingest reports
             await Promise.all(
                 languages.map(async ({ country, language }) => {
-                    this.logger.info('task:report-pipeline:ingest', {
+                    this.logger.info('Ingesting reports', {
                         country: country.toString(),
                         language: language.toString(),
                     });
@@ -48,17 +48,17 @@ export class ReportPipelineTask implements TaskPort {
                 }),
             );
 
-            this.logger.info('task:report-pipeline:ingest:done');
+            this.logger.info('Report ingestion completed');
 
             // Step 2: Classify newly ingested reports
             await this.classifyReports.execute();
 
-            this.logger.info('task:report-pipeline:classify:done');
+            this.logger.info('Report classification completed');
 
             // Step 3: Generate articles from reports that have been classified
             await Promise.all(
                 languages.map(async ({ country, language }) => {
-                    this.logger.info('task:report-pipeline:generate', {
+                    this.logger.info('Generating articles for reports', {
                         country: country.toString(),
                         language: language.toString(),
                     });
@@ -66,9 +66,9 @@ export class ReportPipelineTask implements TaskPort {
                 }),
             );
 
-            this.logger.info('task:report-pipeline:done');
+            this.logger.info('Report pipeline execution finished');
         } catch (error) {
-            this.logger.error('task:report-pipeline:error', { error });
+            this.logger.error('Report pipeline encountered an error', { error });
             throw error;
         }
     }

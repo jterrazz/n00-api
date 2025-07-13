@@ -50,10 +50,9 @@ export class CachedNewsAdapter implements NewsProviderPort {
         private readonly cacheDirectory: string,
     ) {
         const cacheDir = getCacheDir(this.cacheDirectory);
-        this.logger.info('adapter:init', {
-            cacheDir,
-            component: 'CachedNews',
-            env: this.cacheDirectory,
+        this.logger.info('Initializing CachedNews adapter', {
+            directory: cacheDir,
+            environment: this.cacheDirectory,
             ttlMs: CACHE_TTL,
         });
     }
@@ -66,32 +65,32 @@ export class CachedNewsAdapter implements NewsProviderPort {
             const cacheDir = getCacheDir(this.cacheDirectory);
             if (existsSync(cacheDir)) {
                 rmSync(cacheDir, { force: true, recursive: true });
-                this.logger.info('cache:clear', { cacheDir });
+                this.logger.info('Cache cleared', { directory: cacheDir });
             }
         } catch (error) {
-            this.logger.error('cache:clear:error', { error });
+            this.logger.error('Error while clearing cache', { error });
         }
     }
 
     public async fetchNews(options?: NewsOptions): Promise<NewsReport[]> {
         const language = options?.language?.toString() ?? DEFAULT_LANGUAGE;
 
-        this.logger.debug('cache:check', { language });
+        this.logger.debug('Checking cache', { language });
 
         const cachedData = this.readCache(language);
         if (cachedData) {
-            this.logger.info('cache:hit', {
-                cacheAge: Date.now() - cachedData.timestamp,
+            this.logger.info('Cache hit', {
+                ageMs: Date.now() - cachedData.timestamp,
                 language,
                 reportCount: cachedData.data.length,
             });
             return cachedData.data;
         }
 
-        this.logger.info('cache:miss', { language });
+        this.logger.info('Cache miss', { language });
         const stories = await this.newsSource.fetchNews(options);
 
-        this.logger.debug('cache:write', {
+        this.logger.debug('Writing to cache', {
             language,
             reportCount: stories.length,
         });
@@ -123,7 +122,7 @@ export class CachedNewsAdapter implements NewsProviderPort {
 
             // Check if file is empty or contains invalid JSON
             if (!cacheContent.trim()) {
-                this.logger.warn('cache:empty', { cachePath, language });
+                this.logger.warn('Cache file empty, removing', { language, path: cachePath });
                 this.removeCache(cachePath);
                 return null;
             }
@@ -132,7 +131,7 @@ export class CachedNewsAdapter implements NewsProviderPort {
             const cache = cacheDataSchema.parse(parsedCache);
 
             if (this.isCacheExpired(cache.timestamp)) {
-                this.logger.info('cache:expired', { cachePath, language });
+                this.logger.info('Cache expired, removing file', { language, path: cachePath });
                 this.removeCache(cachePath);
                 return null;
             }
@@ -140,10 +139,10 @@ export class CachedNewsAdapter implements NewsProviderPort {
             return cache;
         } catch (error) {
             const cachePath = getCachePath(this.cacheDirectory, language);
-            this.logger.error('cache:read:error', {
-                cachePath,
+            this.logger.error('Error reading cache', {
                 error,
                 language,
+                path: cachePath,
             });
             this.removeCache(cachePath);
             return null;
@@ -156,7 +155,7 @@ export class CachedNewsAdapter implements NewsProviderPort {
                 unlinkSync(cachePath);
             }
         } catch (error) {
-            this.logger.error('cache:remove:error', { cachePath, error });
+            this.logger.error('Error removing cache file', { error, path: cachePath });
         }
     }
 
@@ -172,14 +171,14 @@ export class CachedNewsAdapter implements NewsProviderPort {
 
             writeFileSync(cachePath, JSON.stringify(cacheData, null, JSON_INDENT));
 
-            this.logger.info('cache:wrote', {
-                cachePath,
-                cacheSize: JSON.stringify(cacheData).length,
+            this.logger.info('Cache file written', {
                 language,
+                path: cachePath,
                 reportCount: data.length,
+                size: JSON.stringify(cacheData).length,
             });
         } catch (error) {
-            this.logger.error('cache:write:error', { error, language });
+            this.logger.error('Error writing cache file', { error, language });
         }
     }
 }

@@ -66,7 +66,7 @@ const newsFactory = Injectable(
     'News',
     ['Configuration', 'Logger', 'NewRelic'] as const,
     (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
-        logger.info('adapter:init', { component: 'WorldNews' });
+        logger.info('Initializing WorldNews adapter', { adapter: 'WorldNews' });
         const newsAdapter = new WorldNewsAdapter(
             {
                 apiKey: config.getOutboundConfiguration().worldNews.apiKey,
@@ -143,7 +143,7 @@ const articleRepositoryFactory = Injectable(
     'ArticleRepository',
     ['Database', 'Logger'] as const,
     (db: PrismaAdapter, logger: LoggerPort) => {
-        logger.info('repository:init', { component: 'PrismaArticle' });
+        logger.info('Initializing Article repository', { repository: 'PrismaArticle' });
         const articleRepository = new PrismaArticleRepository(db);
         return articleRepository;
     },
@@ -153,7 +153,7 @@ const reportRepositoryFactory = Injectable(
     'ReportRepository',
     ['Database', 'Logger'] as const,
     (db: PrismaAdapter, logger: LoggerPort) => {
-        logger.info('repository:init', { component: 'PrismaReport' });
+        logger.info('Initializing Report repository', { repository: 'PrismaReport' });
         const reportRepository = new PrismaReportRepository(db, logger);
         return reportRepository;
     },
@@ -289,7 +289,7 @@ const newRelicFactory = Injectable(
             return new NoopMonitoringAdapter(logger);
         }
 
-        logger.info('adapter:init', { component: 'NewRelic' });
+        logger.info('Initializing NewRelic monitoring', { adapter: 'NewRelic' });
         return new NewRelicMonitoringAdapter({
             environment: config.getInboundConfiguration().env,
             licenseKey: outboundConfig.newRelic.licenseKey,
@@ -308,7 +308,7 @@ const serverFactory = Injectable(
     'Server',
     ['Logger', 'Controllers'] as const,
     (logger: LoggerPort, controllers: { getArticles: GetArticlesController }): ServerPort => {
-        logger.info('server:init', { component: 'Server', implementation: 'Hono' });
+        logger.info('Initializing Server', { implementation: 'Hono' });
         const server = new HonoServerAdapter(logger, controllers.getArticles);
         return server;
     },
@@ -318,7 +318,7 @@ const workerFactory = Injectable(
     'Worker',
     ['Logger', 'Tasks'] as const,
     (logger: LoggerPort, tasks: TaskPort[]): WorkerPort => {
-        logger.info('worker:init', { component: 'Worker', implementation: 'NodeCron' });
+        logger.info('Initializing Worker', { implementation: 'NodeCron' });
         const worker = new NodeCronAdapter(logger, tasks);
         return worker;
     },

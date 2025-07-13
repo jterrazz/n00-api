@@ -19,7 +19,7 @@ export class ClassifyReportsUseCase {
      * @description Finds reports pending classification and processes them through the AI agent
      */
     public async execute(): Promise<void> {
-        this.logger.info('report:classify:start');
+        this.logger.info('Starting report classification');
 
         let successfulClassifications = 0;
         let failedClassifications = 0;
@@ -32,11 +32,11 @@ export class ClassifyReportsUseCase {
             });
 
             if (reportsToReview.length === 0) {
-                this.logger.info('report:classify:none');
+                this.logger.info('No reports pending classification');
                 return;
             }
 
-            this.logger.info('report:classify:found', { count: reportsToReview.length });
+            this.logger.info('Reports found for classification', { count: reportsToReview.length });
 
             // Process each report through the classification agent
             for (const report of reportsToReview) {
@@ -48,29 +48,34 @@ export class ClassifyReportsUseCase {
                             classification: result.classification,
                         });
 
-                        this.logger.info('report:classify:classified', {
+                        this.logger.info('Report classified', {
                             classification: result.classification,
                             reason: result.reason,
                             reportId: report.id,
                         });
                         successfulClassifications++;
                     } else {
-                        this.logger.warn('report:classify:agent-null', { reportId: report.id });
+                        this.logger.warn('Classification agent returned no result', {
+                            reportId: report.id,
+                        });
                         failedClassifications++;
                     }
                 } catch (error) {
-                    this.logger.error('report:classify:error', { error, reportId: report.id });
+                    this.logger.error('Error during report classification', {
+                        error,
+                        reportId: report.id,
+                    });
                     failedClassifications++;
                 }
             }
         } catch (error) {
-            this.logger.error('report:classify:unhandled-error', {
+            this.logger.error('Unhandled error during classification process', {
                 error,
             });
             throw error;
         }
 
-        this.logger.info('report:classify:done', {
+        this.logger.info('Report classification completed', {
             failed: failedClassifications,
             successful: successfulClassifications,
             totalReviewed: successfulClassifications + failedClassifications,

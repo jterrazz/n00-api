@@ -68,7 +68,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
 
         return this.monitoring.monitorSegment('Api/WorldNews/FetchNews', async () => {
             try {
-                this.logger.debug('news:fetch:start', {
+                this.logger.debug('Fetching news from WorldNews API', {
                     country: country.toString(),
                     language: language.toString(),
                 });
@@ -78,7 +78,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
                 const response = await this.makeApiRequest(url);
                 const stories = await this.processApiResponse(response);
 
-                this.logger.info('news:fetch:success', {
+                this.logger.info('Successfully fetched news from WorldNews API', {
                     country: country.toString(),
                     language: language.toString(),
                     reportCount: stories.length,
@@ -86,7 +86,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
                 return stories;
             } catch (error) {
                 this.monitoring.recordCount('WorldNews', 'Errors');
-                this.logger.error('news:fetch:error', {
+                this.logger.error('Failed to fetch news from WorldNews API', {
                     country: country.toString(),
                     error,
                     language: language.toString(),
@@ -106,7 +106,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
         url.searchParams.append('language', language.toString());
         url.searchParams.append('date', countryDate);
 
-        this.logger.debug('news:api:url', {
+        this.logger.debug('Constructed WorldNews API URL', {
             country: country.toString(),
             countryDate,
         });
@@ -132,7 +132,7 @@ export class WorldNewsAdapter implements NewsProviderPort {
 
         if (!response.ok) {
             this.monitoring.recordCount('WorldNews', 'Errors');
-            this.logger.error('news:api:error', {
+            this.logger.error('WorldNews API returned an error response', {
                 status: response.status,
                 statusText: response.statusText,
                 url: url.toString(),

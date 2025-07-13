@@ -32,7 +32,7 @@ export class IngestReportsUseCase {
      */
     public async execute(language: Language, country: Country): Promise<Report[]> {
         try {
-            this.logger.info('report:ingest:start', {
+            this.logger.info('Starting report ingestion', {
                 country: country.toString(),
                 language: language.toString(),
             });
@@ -44,7 +44,7 @@ export class IngestReportsUseCase {
                 this.reportRepository.getAllSourceReferences(country),
             ]);
 
-            this.logger.info('report:ingest:stats', {
+            this.logger.info('Repository statistics', {
                 recentReports: recentReports.length,
                 sourceReferences: existingSourceReferences.length,
             });
@@ -58,13 +58,13 @@ export class IngestReportsUseCase {
             newsStories = newsStories.slice(0, 5);
 
             if (newsStories.length === 0) {
-                this.logger.warn('report:ingest:news:none', {
+                this.logger.warn('No news reports fetched', {
                     country: country.toString(),
                     language: language.toString(),
                 });
                 return [];
             }
-            this.logger.info('report:ingest:news:fetched', { count: newsStories.length });
+            this.logger.info('Fetched news reports', { count: newsStories.length });
 
             // Step 3: Filter out reports that have already been processed by source ID
             const newNewsReports = newsStories.filter(
@@ -75,16 +75,16 @@ export class IngestReportsUseCase {
             );
 
             if (newNewsReports.length === 0) {
-                this.logger.info('report:ingest:duplicates:none');
+                this.logger.info('No duplicate reports found');
                 return [];
             }
-            this.logger.info('report:ingest:duplicates:filtered', { count: newNewsReports.length });
+            this.logger.info('Filtered out duplicate reports', { count: newNewsReports.length });
 
             // Step 4: Filter out reports with insufficient articles
             const validNewsReports = newNewsReports.filter((report) => report.articles.length >= 2);
 
             if (validNewsReports.length === 0) {
-                this.logger.warn('report:ingest:invalid:none');
+                this.logger.warn('No valid reports after filtering');
                 return [];
             }
 
@@ -108,7 +108,7 @@ export class IngestReportsUseCase {
                             );
 
                             if (existing) {
-                                this.logger.info('report:deduplicated', {
+                                this.logger.info('Report marked as duplicate', {
                                     duplicateOf: deduplicationResult.duplicateOfReportId,
                                 });
                                 await this.reportRepository.addSourceReferences(
@@ -118,7 +118,7 @@ export class IngestReportsUseCase {
                                 continue; // Skip to the next report
                             }
 
-                            this.logger.warn('report:dedup:not-found', {
+                            this.logger.warn('Duplicate report id not found in repository', {
                                 duplicateOf: deduplicationResult.duplicateOfReportId,
                             });
                         }
@@ -127,8 +127,8 @@ export class IngestReportsUseCase {
                     // Step 5.2: Ingest the unique report
                     const ingestionResult = await this.reportIngestionAgent.run({ newsReport });
                     if (!ingestionResult) {
-                        this.logger.warn('report:ingest:agent-null', {
-                            newsReportArticles: newsReport.articles.length,
+                        this.logger.warn('Ingestion agent returned no result', {
+                            articleCount: newsReport.articles.length,
                         });
                         continue;
                     }
@@ -161,9 +161,9 @@ export class IngestReportsUseCase {
                     digestedReports.push(savedReport);
                     // Add the newly created report to deduplication tracking for subsequent reports
                     allReportsForDeduplication.push(savedReport);
-                    this.logger.info('report:ingest:ingested', { reportId: savedReport.id });
+                    this.logger.info('Report ingested successfully', { reportId: savedReport.id });
                 } catch (reportError) {
-                    this.logger.warn('report:ingest:report:error', {
+                    this.logger.warn('Error while processing individual report', {
                         error: reportError,
                     });
                 }
@@ -171,7 +171,7 @@ export class IngestReportsUseCase {
 
             return digestedReports;
         } catch (error) {
-            this.logger.error('report:ingest:error', { error });
+            this.logger.error('Report ingestion encountered an error', { error });
             throw error;
         }
     }
