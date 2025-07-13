@@ -24,10 +24,8 @@ export interface ArticleFalsificationInput {
             publishedAt: string;
         }>;
     };
-    targetCategory?: Category; // Optional - AI will choose if not provided
     targetCountry: Country;
     targetLanguage: Language;
-    tone?: FakeArticleTone; // defaults to 'random'
 }
 
 /**
@@ -52,4 +50,4 @@ export interface ArticleFalsificationResult {
  * @description
  * The tone/style of fake article to generate
  */
-export type FakeArticleTone = 'random' | 'satirical' | 'serious';
+export type FakeArticleTone = 'satirical' | 'serious';

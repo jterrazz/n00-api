@@ -41,9 +41,8 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
-        'You are a skilled content creator specialized in generating convincing but fake news articles for educational purposes. Your mission is to create plausible-sounding but fictional news content that helps users learn to identify misinformation.',
-        'Write in a professional journalistic style that mimics real news outlets, but ensure the content is entirely fabricated. Focus on creating believable scenarios that could theoretically happen but are completely made up.',
-        'CRITICAL: You are creating content for a fake news detection game. The articles must be clearly fake but convincing enough to be educational. Never create content that could spread actual misinformation if taken out of context.',
+        'You are a senior editorial simulator specialising in crafting **convincing but completely fabricated** news articles for an educational fake-news-detection game.',
+        'Your purpose is twofold: 1) entertain and educate by showing how misinformation can look credible, 2) never risk real-world harm. The content must be plausible, professional, and journalistic in tone, yet entirely fictional and safe.',
         PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
     );
 
@@ -68,73 +67,77 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
     static readonly USER_PROMPT = (input: ArticleFalsificationInput) => {
         const currentDate = input.context?.currentDate || new Date();
         const recentArticles = input.context?.recentArticles || [];
-
-        // Determine requested tone. 'random' means the AI should decide.
-        const requestedTone = input.tone || 'random';
-
-        const baseMission =
-            'Your mission is to create a convincing but entirely fake news article for educational purposes. This is for a fake news detection game where users learn to identify misinformation.';
-
-        const categoryInstruction = input.targetCategory
-            ? `Required Category: ${input.targetCategory.toString()}`
-            : 'Category: Choose the most appropriate category from [TECHNOLOGY, BUSINESS, POLITICS, SCIENCE, HEALTH, ENTERTAINMENT, SPORTS] based on the content you create and recent reports context.';
-
         const toneInstruction =
-            requestedTone === 'random'
-                ? 'TONE: **CHOOSE** - Decide whether **SERIOUS** (traditional fake news) or **SATIRICAL** (humorous) will best serve the educational purpose given the context. Indicate your chosen tone in the `tone` field of the output.'
-                : `TONE: **${requestedTone.toUpperCase()}** - Follow the guidelines for this tone exactly.`;
+            'TONE: **CHOOSE** either **SERIOUS** (realistic) or **SATIRICAL** (humorous exaggeration). Indicate your choice in the `tone` field.';
+
+        const categoryInstruction =
+            'CATEGORY: Choose the single most appropriate category from [TECHNOLOGY, BUSINESS, POLITICS, SCIENCE, HEALTH, ENTERTAINMENT, SPORTS].';
 
         const styleGuidelines = [
             '### SERIOUS STYLE',
-            '•   Professional journalistic style that appears legitimate but contains subtle misinformation.',
-            '•   Believable, uses credible tone and structure.',
+            '•   Mimic reputable outlets (e.g. Reuters, BBC). Professional tone and structure.',
+            '•   Introduce subtle misinformation, media bias, or political slant to illustrate manipulation.',
             '',
             '### SATIRICAL STYLE',
-            '•   Humorous, absurd scenarios with deadpan delivery (e.g., The Babylon Bee, The Onion).',
-            '•   Clearly fictional and exaggerated upon reflection.',
+            '•   Dead-pan humour, absurd premises, reminiscent of The Onion / Babylon Bee.',
+            '•   Obviously fictional upon reflection but written as straight news.',
             '',
-            '### CONTINUITY REQUIREMENTS',
-            '•   The **overall length** (word count) and **stylistic tone** of your article must closely match recent articles in the history.',
-            '•   Mirror the journalistic structure: similar paragraph count and average sentence length.',
-            '•   HEADLINE: Craft a headline whose length (character count) and style are in line with the sample headlines.',
-            '•   BODY: Aim for a body word count within ±10% of the average of recent article bodies.',
-            '•   The `frames` data is **context only** – do NOT copy or reference frame text verbatim; instead, use it to inspire coherent misinformation.',
+            '### CONTINUITY RULES',
+            '•   Match headline length (8-16 words) and body word-count to recentArticles average (±10%).',
+            '•   If no recentArticles, aim for headline 8-16 words and body 40-100 words.',
         ].join('\n');
 
-        const singlePrompt = new UserPromptAdapter(
-            `CRITICAL: Output MUST be in ${input.targetLanguage.toString().toUpperCase()} language.`,
+        return new UserPromptAdapter(
+            // Language Constraint
+            `CRITICAL: All output MUST be written in ${input.targetLanguage.toString().toUpperCase()}.`,
             '',
-            baseMission,
+
+            // Core Mission
+            'Create a **completely fictional** yet **plausible** news article for our fake-news-detection game. Users will try to spot why it is misleading.',
             '',
+
+            // Output Structure
+            'OUTPUT STRUCTURE (JSON): { headline, body, clarification, category, tone, insertAfterIndex }',
+            '• headline → Click-worthy headline (8-16 words) matching chosen tone.',
+            '• body → Article body with word-count matching continuity rules.',
+            '• clarification → One sentence explaining *why* and *how* the article is misleading.',
+            '• category → As instructed in CATEGORY.',
+            '• tone → "serious" or "satirical".',
+            '• insertAfterIndex → Index after which this article fits chronologically in recentArticles, or -1 if none.',
+            '',
+
+            // Tone & Category Instructions
             toneInstruction,
+            categoryInstruction,
             '',
-            'REQUIREMENTS:',
-            '•   **Entirely Fictional:** Do not base on real events, people, or organizations.',
-            '•   **Educational Value:** The article should help users learn to detect misinformation.',
-            '•   **Contextual Relevance:** If recent articles are provided, incorporate them subtly.',
-            '',
+
+            // Style Guidelines
+            'STYLE GUIDELINES:',
             styleGuidelines,
             '',
+
+            // Critical Rules
+            'CRITICAL RULES:',
+            '• The story must be 100% fabricated — no real events or people presented as fact.',
+            '• Do NOT reveal within the article that it is fake.',
+            '• Ensure the piece would be convincing to an average reader.',
+            '• Do not create harmful or defamatory content.',
+            '',
+
+            // Context & Timing
             `TARGET: Country: ${input.targetCountry.toString()}, Language: ${input.targetLanguage.toString()}`,
-            categoryInstruction,
-            `Date: ${currentDate.toISOString()}`,
+            `DATE: ${currentDate.toISOString()}`,
             recentArticles.length > 0 ? 'RECENT_ARTICLES:' : '',
             ...(recentArticles.length > 0 ? [JSON.stringify(recentArticles, null, 2)] : []),
             '',
             'TIMELINE INSTRUCTION:',
-            '•   Analyse the timestamps of RECENT_ARTICLES. Decide **after which article** your newly generated article should appear so the chronology feels natural. Provide the index (0-based) of that article in the `insertAfterIndex` field of your JSON output.',
-            '•   If there are no recent articles, set `insertAfterIndex` to -1.',
-            '',
-            'OUTPUT: Return a JSON object with the fields { headline, body, clarification, category, tone, insertAfterIndex }.',
+            '•   Analyse timestamps of RECENT_ARTICLES and provide `insertAfterIndex` so chronology feels natural.',
         );
-
-        return singlePrompt;
     };
 
     async run(input: ArticleFalsificationInput): Promise<ArticleFalsificationResult | null> {
         try {
             this.logger.info(`[${this.name}] Generating fake article`, {
-                category: input.targetCategory?.toString() || 'AI will choose',
                 country: input.targetCountry.toString(),
                 language: input.targetLanguage.toString(),
             });
@@ -145,14 +148,6 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
 
             if (!result) {
                 this.logger.warn(`[${this.name}] No result from AI model`);
-                return null;
-            }
-
-            // Validate that the category matches if it was specified
-            if (input.targetCategory && result.category !== input.targetCategory.value) {
-                this.logger.warn(
-                    `[${this.name}] AI returned category ${result.category} but expected ${input.targetCategory.value}`,
-                );
                 return null;
             }
 
@@ -180,7 +175,6 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
         } catch (error) {
             this.logger.error(`[${this.name}] Failed to generate fake article`, {
                 error,
-                targetCategory: input.targetCategory?.toString() || 'AI will choose',
                 targetCountry: input.targetCountry.toString(),
                 targetLanguage: input.targetLanguage.toString(),
             });

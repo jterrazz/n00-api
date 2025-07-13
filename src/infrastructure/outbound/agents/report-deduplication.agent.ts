@@ -1,7 +1,6 @@
 import {
     BasicAgentAdapter,
     type ModelPort,
-    PROMPT_LIBRARY,
     SystemPromptAdapter,
     UserPromptAdapter,
 } from '@jterrazz/intelligence';
@@ -30,10 +29,9 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
-        "You are an intelligent digital gatekeeper. Your job is to read a new, incoming news report and determine if it's describing the exact same core event as a report that already exists in our database.",
-        'You prevent the system from creating redundant reports about the same event.',
-        PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
-        PROMPT_LIBRARY.TONES.NEUTRAL,
+        'You are a senior editorial gatekeeper for a global news organisation.',
+        'Your mission is to decide whether an incoming news report describes the exact same core information as any report that already exists in our database.',
+        'If two reports describe the identical event, flag the new one as a duplicate; otherwise mark it as unique. Differences in wording, headline, publisher, language, or minor details do NOT create uniqueness. When in doubt, prefer uniqueness.',
     );
 
     public readonly name = 'ReportDeduplicationAgent';
@@ -62,33 +60,31 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
 
         return new UserPromptAdapter(
             // Core Mission
-            'Your primary mission is to perform a sophisticated semantic comparison to determine if a new report is a duplicate of an existing one. This is not a simple keyword search.',
+            'Perform a deep semantic comparison to decide whether the incoming report describes the SAME underlying event—who did what, where, and when—as any report already stored. This is far beyond surface-level keyword matching.',
             '',
 
-            // The Logic
-            '1.  First, understand the essence of the new report. Ask: "What is the single, fundamental event being reported here? Who did what, where, and when?"',
-            '2.  Then, compare this core event to the facts of the existing reports provided.',
-            '3.  A report is a duplicate if it reports on the same fundamental event, even if the wording, headline, or source is different.',
+            // Decision Framework
+            'DECISION FRAMEWORK:',
+            '1. Extract the core event from the NEW report (actors, action, location, timeframe, etc.).',
+            '2. Extract the core event from EACH EXISTING report.',
+            "3. If every element (actors, action, location, timeframe, etc.) matches for any existing report, classify the new report as a duplicate of that report's id.",
+            '4. If no existing report matches on all elements, classify the new report as unique.',
             '',
 
             // Examples
-            '•   **DUPLICATE:** A new report about "Team A defeating Team B in the championship final" is a duplicate of an existing report with the facts "The championship final concluded with Team A winning."',
-            '•   **UNIQUE:** A new report about "a key player from Team A getting injured" is NOT a duplicate of the report about the final, even though it involves the same team. It is a different, separate event.',
+            'EXAMPLES:',
+            '• DUPLICATE → New: "Team A beats Team B 3-1 in the championship final." Existing: "Championship final ends with Team A\'s 3-1 victory over Team B."',
+            '• UNIQUE → New: "Star player from Team A injures knee during practice." Existing: "Team A beats Team B 3-1 in championship final."',
             '',
 
-            // Critical Safety Rule
-            '**CRITICAL:** If you are not absolutely certain a report is a duplicate, classify it as unique. It is better to have a rare duplicate than to miss a new report. Default to `null` if in doubt.',
+            // Safety Rule
+            '**SAFETY RULE:** If you are not absolutely certain a report is a duplicate, classify it as UNIQUE (duplicateOfReportId = null). It is better to allow a rare duplicate than to miss a new story.',
             '',
 
-            // Your Task
-            "Your task is to analyze the new report against the list of existing reports. Based on your semantic analysis, determine if it's a duplicate.",
-            '',
-
-            // Critical Rules
-            'CRITICAL RULES:',
-            '•   If it is a duplicate, you **MUST** return the `id` of the existing report in the `duplicateOfReportId` field.',
-            '•   If it is a unique report, you **MUST** return `null` in the `duplicateOfReportId` field.',
-            '•   You **MUST** provide a brief, clear `reason` justifying your decision.',
+            // Output Requirements
+            'OUTPUT REQUIREMENTS:',
+            '• duplicateOfReportId → id of existing duplicate OR null.',
+            '• reason → one concise sentence explaining the decision.',
             '',
 
             // Data to Analyze

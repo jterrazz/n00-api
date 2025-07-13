@@ -40,12 +40,11 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
-        'You are a master investigative journalist and media analyst. Your core mission is to analyze news articles and deconstruct them into a structured intelligence brief, identifying the core facts and the distinct angles presented.',
-        'Your analysis must be objective and based solely on the provided text. You do not judge viewpoints; you identify and categorize them. Your primary goal is to find **genuinely distinct or opposing viewpoints** to map the landscape of the public debate, not to find minor variations of the same argument.',
-        PROMPT_LIBRARY.PERSONAS.JOURNALIST,
-        PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
-        PROMPT_LIBRARY.LANGUAGES.ENGLISH_NATIVE,
+        'You are a senior investigative journalist and media analyst for a global newsroom. Your mission is to distil multiple news articles about the same event into a structured intelligence brief that surfaces the undisputed facts and the genuinely distinct viewpoints at play.',
+        'Your analysis must remain strictly grounded in the provided text—no external knowledge or opinions. Identify and categorise only those viewpoints that are truly different or opposing, ignoring superficial wording variations, so that readers can quickly grasp the real landscape of the public debate.',
         'CRITICAL: Output MUST be in English.',
+        PROMPT_LIBRARY.LANGUAGES.ENGLISH_NATIVE,
+        PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
         PROMPT_LIBRARY.TONES.NEUTRAL,
         PROMPT_LIBRARY.VERBOSITY.DETAILED,
     );
@@ -69,37 +68,40 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
     static readonly USER_PROMPT = (newsReport: NewsReport) =>
         new UserPromptAdapter(
             // Core Mission
-            'Analyze the following news articles about a single event and deconstruct them into a structured intelligence brief.',
+            'Your mission is to transform the following news articles, all covering the SAME subject, into a structured intelligence brief composed of VERIFIED FACTS and up to TWO genuinely DISTINCT ANGLES (viewpoints).',
             '',
 
-            // The "What" - Required Output
-            'Your output MUST contain two parts:',
-            '1.  **Facts:** A comprehensive, neutral summary of the core facts. What happened, who was involved, where, and when. Prioritize factual completeness.',
-            '2.  **Angles:** Identify the 1 or 2 most dominant angles presented in the articles. For each angle, provide:',
-            '    a.  **corpus:** This is NOT a summary. It must be a **complete compilation of all information** for that specific viewpoint, focused *only on the news event*. Gather every argument, fact, and piece of evidence presented *for that side*. It MUST NOT contain information about the news source itself.',
-            "    b.  **tags:** Classify the angle's `stance` and `discourse_type`.",
+            // Output Requirements
+            'OUTPUT REQUIREMENTS:',
+            '• facts → A neutral, exhaustive statement of who did what, where, and when. No speculation, opinion, or editorialising.',
+            '• angles → An array with **1-2** items. For each angle include:',
+            '    • corpus → NOT a summary. Compile EVERY argument, fact, and piece of evidence supporting that viewpoint, focused solely on the subject. Exclude information about the publication or author.',
+            '    • tags → { stance, discourse_type } where `stance` reflects tone (e.g. SUPPORTIVE, CRITICAL) and `discourse_type` is MAINSTREAM or ALTERNATIVE.',
             '',
 
-            // The "How" - Your Analysis Guidelines
-            'Follow these analysis guidelines:',
-            '•   **Be an Objective Analyst:** Do not judge the viewpoints, simply identify and categorize them based on the text.',
-            '•   **Analyze Inter-Angle Dynamics:** To determine the `discourse_type`, your goal is to map the main lines of public debate. Identify which discourse represents the dominant media narrative and which represents its primary contradiction.',
-            '•   **Use These Discourse Definitions:**',
-            '    -   **MAINSTREAM:** The narrative of the dominant media. This is the most common and widely amplified narrative.',
-            '    -   **ALTERNATIVE:** The narrative of the contradictory media. This viewpoint directly challenges or offers a significant counterpoint to the mainstream narrative, while still being visible in the public sphere.',
-            '    -   (Do not use other discourse types for now).',
+            // Analysis Framework
+            'ANALYSIS FRAMEWORK:',
+            '1. Extract the undisputed facts common to all.',
+            '2. Identify every viewpoint expressed across articles and MERGE any that share the same core argument.',
+            '3. Select the 1-2 most dominant, clearly DIFFERENT angles.',
+            '4. For each selected angle, compile the full corpus and assign `stance` and `discourse_type` tags.',
+            '',
+
+            // Discourse Definitions
+            'DISCOURSE DEFINITIONS:',
+            '• MAINSTREAM → Dominant media narrative (widely amplified).',
+            '• ALTERNATIVE → Counter-narratives that challenges or contradicts the mainstream.',
             '',
 
             // Critical Rules
             'CRITICAL RULES:',
-            '•   **Focus on the Report:** Angles MUST be about the central news event. Do not create angles about the news publications, their missions, or their general stances. The analysis must be about the report, not the storyteller.',
-            '•   Base your entire analysis **only** on the provided articles. Do not add external information.',
-            '•   Identify a **maximum of 2** angles. Only create an angle if it is genuinely distinct from the other.',
-            '•   **No Redundant Angles:** If multiple sources make the same core argument, treat them as ONE angle. Do not create separate angles for sources that are on the same "side" or from the same "camp".',
+            '• Focus ONLY on the news subject; do NOT create angles about the publication or journalists.',
+            '• Use ONLY the provided text—no external information.',
+            '• Never produce more than 2 angles; merge redundant ones.',
             '',
 
             // Data input
-            'NEWS ARTICLES TO ANALYZE:',
+            'NEWS ARTICLES TO ANALYSE:',
             JSON.stringify(
                 newsReport.articles.map((article) => ({
                     body: article.body,
