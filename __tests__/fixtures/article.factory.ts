@@ -96,7 +96,7 @@ export class ArticleFactory {
 
         await prisma.article.create({
             data: {
-                authenticity: article.isFabricated() ? 'FALSIFIED' : 'AUTHENTIC',
+                authenticity: article.isFabricated() ? 'FABRICATED' : 'AUTHENTIC',
                 body: article.body.value,
                 category: article.category.toString() as PrismaCategory,
                 clarification: article.authenticity.clarification,

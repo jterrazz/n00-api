@@ -57,7 +57,7 @@ enum Discourse {
 
 enum AuthenticityStatus {
   AUTHENTIC
-  FALSIFIED
+  FABRICATED
 }
 
 model Report {
@@ -107,16 +107,16 @@ model ReportAngle {
 }
 
 model Article {
-  id                  String             @id @default(uuid())
-  headline            String
-  body                String // Main neutral article presenting only facts from all sides
-  category            Category
-  authenticity        AuthenticityStatus @default(AUTHENTIC) // Whether the article is authentic or falsified
-  clarification       String? // Explanation when authenticity is FALSIFIED
-  country             Country
-  language            Language
-  publishedAt         DateTime // When the original report was published
-  createdAt           DateTime           @default(now())
+  id            String             @id @default(uuid())
+  headline      String
+  body          String // Main neutral article presenting only facts from all sides
+  category      Category
+  authenticity  AuthenticityStatus @default(AUTHENTIC) // Whether the article is authentic or fabricated
+  clarification String? // Explanation when authenticity is FABRICATED
+  country       Country
+  language      Language
+  publishedAt   DateTime // When the original report was published
+  createdAt     DateTime           @default(now())
 
   // Relations
   frames  ArticleFrame[]

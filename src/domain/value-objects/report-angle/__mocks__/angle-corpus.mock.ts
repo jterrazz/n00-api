@@ -16,4 +16,4 @@ export function getAngleCorpus(index = 0): AngleCorpus {
  */
 export function mockAngleCorpora(count: number): AngleCorpus[] {
     return Array.from({ length: count }, (_, idx) => getAngleCorpus(idx));
-} 
+}

@@ -337,7 +337,6 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     }),
                     targetCountry: DEFAULT_COUNTRY,
                     targetLanguage: DEFAULT_LANGUAGE,
-                    tone: 'random',
                     // targetCategory should not be provided - AI chooses based on context
                 }),
             );
@@ -456,7 +455,6 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     }),
                     targetCountry: DEFAULT_COUNTRY,
                     targetLanguage: DEFAULT_LANGUAGE,
-                    tone: 'random',
                     // targetCategory should not be provided - AI chooses based on context
                 }),
             );

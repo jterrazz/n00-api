@@ -87,7 +87,7 @@ describe('Server /articles route – integration', () => {
         };
 
         it('returns full structured JSON response for mixed US articles', async () => {
-            // Given – a mixed set of US articles including falsified and authentic ones
+            // Given – a mixed set of US articles including fabricated and authentic ones
             await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
             await ArticleTestScenarios.createFabricatedInventedEventArticle(
                 integrationContext.prisma,

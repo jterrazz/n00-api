@@ -131,7 +131,7 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
             authTemplate('US', 'NICHE'),
             authTemplate('US', 'STANDARD'),
             {
-                authenticity: 'FALSIFIED',
+                authenticity: 'FABRICATED',
                 body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
                 category: 'TECHNOLOGY',
                 clarification: 'Unrealistic scientific claims with no evidence',
@@ -145,7 +145,7 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
                 reports: [],
             },
             {
-                authenticity: 'FALSIFIED',
+                authenticity: 'FABRICATED',
                 body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
                 category: 'TECHNOLOGY',
                 clarification: 'Unrealistic scientific claims with no evidence',

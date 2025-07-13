@@ -55,7 +55,7 @@ export class ArticleMapper {
 
         return new Article({
             authenticity: new Authenticity(
-                prisma.authenticity === 'FALSIFIED'
+                prisma.authenticity === 'FABRICATED'
                     ? AuthenticityStatusEnum.FABRICATED
                     : AuthenticityStatusEnum.AUTHENTIC,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +80,7 @@ export class ArticleMapper {
 
     toPrisma(domain: Article): Prisma.ArticleCreateInput {
         return {
-            authenticity: domain.isFabricated() ? 'FALSIFIED' : 'AUTHENTIC',
+            authenticity: domain.isFabricated() ? 'FABRICATED' : 'AUTHENTIC',
             body: domain.body.value,
             category: this.mapCategoryToPrisma(domain.category),
             clarification: domain.authenticity.clarification,

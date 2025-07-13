@@ -136,7 +136,10 @@ export const openRouterUniversalResolver = http.post(
 
         /* ----------------------------- Prompt routing ----------------------------- */
 
-        if (userPrompt.startsWith('Analyze the following news articles')) {
+        if (
+            userPrompt.startsWith('Analyze the following news articles') ||
+            userPrompt.startsWith('Your mission is to transform the following news articles')
+        ) {
             return handleIngestion(model);
         }
 
@@ -150,19 +153,24 @@ export const openRouterUniversalResolver = http.post(
         if (
             userPrompt.startsWith(
                 'Your primary mission is to perform a sophisticated semantic comparison',
-            )
+            ) ||
+            userPrompt.startsWith('Perform a deep semantic comparison')
         ) {
             return handleDeduplication(model);
         }
 
         if (
             userPrompt.includes('fake news detection game') ||
+            userPrompt.includes('fake-news-detection game') ||
             userPrompt.includes('entirely fake news article')
         ) {
             return handleFalsification(model);
         }
 
-        if (userPrompt.startsWith('CRITICAL: Output MUST be in')) {
+        if (
+            userPrompt.startsWith('CRITICAL: Output MUST be in') ||
+            userPrompt.startsWith('CRITICAL: All output MUST be')
+        ) {
             return handleComposition(model);
         }
 
