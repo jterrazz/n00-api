@@ -6,7 +6,7 @@ import {
     setupIntegrationTest,
 } from './setup/integration.js';
 
-describe('HTTP - Health - Integration Tests', () => {
+describe('Server /health route – integration', () => {
     let testContext: IntegrationTestContext;
 
     beforeAll(async () => {

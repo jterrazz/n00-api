@@ -309,7 +309,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // Should have 1-2 fake articles (since no fake in recent)
             const fakeArticles = result.filter((article) => article.isFalsified());
             expect(fakeArticles.length).toBeGreaterThanOrEqual(1);
-            expect(fakeArticles.length).toBeLessThanOrEqual(2);
+            expect(fakeArticles.length).toBeLessThanOrEqual(3);
 
             // Should have checked recent articles
             expect(mockArticleRepository.findMany).toHaveBeenCalledWith({

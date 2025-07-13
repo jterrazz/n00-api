@@ -53,7 +53,7 @@ export async function setupIntegrationTest(
     const testContainer = createContainer({ databaseUrl });
     const { level } = testContainer.get('Configuration').getInboundConfiguration().logger;
 
-    execSync('npx prisma db push --force-reset', {
+    execSync('npx prisma db push --force-reset --skip-generate', {
         env: { ...process.env, DATABASE_URL: databaseUrl },
         stdio: level === 'silent' ? 'ignore' : 'inherit',
     });

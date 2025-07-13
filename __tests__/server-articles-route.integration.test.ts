@@ -8,7 +8,7 @@ import {
     setupIntegrationTest,
 } from './setup/integration.js';
 
-describe('HTTP - Get Articles - Integration Tests', () => {
+describe('Server /articles route – integration', () => {
     let testContext: IntegrationTestContext;
 
     beforeAll(async () => {
