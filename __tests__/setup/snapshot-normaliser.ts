@@ -42,4 +42,4 @@ export function normaliseSnapshot(value: any, extraRules: ReplacementRule[] = []
     }
 
     return value;
-} 
+}

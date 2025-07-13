@@ -6,7 +6,10 @@ import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 import { getMockReports } from '../../../../domain/entities/__mocks__/reports.mock.js';
 import { Article } from '../../../../domain/entities/article.entity.js';
 import { type Report } from '../../../../domain/entities/report.entity.js';
-import { Authenticity } from '../../../../domain/value-objects/article/authenticity.vo.js';
+import {
+    Authenticity,
+    AuthenticityStatusEnum,
+} from '../../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
 import { Category } from '../../../../domain/value-objects/category.vo.js';
@@ -124,12 +127,12 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(result.length).toBeGreaterThanOrEqual(TEST_REPORTS_COUNT);
 
             // Should have at least the real articles from reports
-            const realArticles = result.filter((article) => !article.isFalsified());
+            const realArticles = result.filter((article) => !article.isFabricated());
             expect(realArticles).toHaveLength(TEST_REPORTS_COUNT);
 
             // All real articles should be neutral/factual
             realArticles.forEach((article) => {
-                expect(article.isFalsified()).toBe(false);
+                expect(article.isFabricated()).toBe(false);
             });
         });
 
@@ -160,7 +163,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
 
             // Should have at least the successful real articles
-            const realArticles = result.filter((article) => !article.isFalsified());
+            const realArticles = result.filter((article) => !article.isFabricated());
             expect(realArticles).toHaveLength(TEST_REPORTS_COUNT - 1);
         });
 
@@ -180,7 +183,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledTimes(TEST_REPORTS_COUNT);
 
             // Should have the successful real articles
-            const realArticles = result.filter((article) => !article.isFalsified());
+            const realArticles = result.filter((article) => !article.isFabricated());
             expect(realArticles).toHaveLength(TEST_REPORTS_COUNT - 1);
         });
 
@@ -249,13 +252,13 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             const result = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
             // Then - it should have at least one real article with report relationship
-            const realArticles = result.filter((article) => !article.isFalsified());
+            const realArticles = result.filter((article) => !article.isFabricated());
             expect(realArticles).toHaveLength(1);
             expect(realArticles[0].reportIds).toEqual([testReport.id]);
             expect(realArticles[0].publishedAt).toEqual(testReport.dateline);
             expect(realArticles[0].category).toEqual(testReport.category);
             // And article should be neutral/factual
-            expect(realArticles[0].isFalsified()).toBe(false);
+            expect(realArticles[0].isFabricated()).toBe(false);
         });
 
         test('should generate fake articles when no fake articles in recent ones', async () => {
@@ -269,7 +272,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 { length: 10 },
                 (_, i) =>
                     new Article({
-                        authenticity: new Authenticity(false), // Real articles only
+                        authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC), // Real articles only
                         body: new Body(
                             `This is existing real article body content number ${i + 1} with sufficient length for validation`,
                         ),
@@ -288,7 +291,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             mockArticleFalsificationAgent.run.mockResolvedValue({
                 body: 'In a shocking turn of events that has left residents bewildered, a domestic cat named Whiskers has been elected mayor of the fictional town of Nowheresville.',
                 category: new Category('POLITICS'),
-                falsificationReason:
+                clarification:
                     'This article is fabricated as part of a fake-news detection game. Cats cannot run for public office, making the premise impossible.',
                 headline: 'House Cat Elected Mayor in Landslide Victory',
                 insertAfterIndex: 0,
@@ -302,12 +305,12 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(result.length).toBeGreaterThan(1);
 
             // Should have one real article (from report)
-            const realArticles = result.filter((article) => !article.isFalsified());
+            const realArticles = result.filter((article) => !article.isFabricated());
             expect(realArticles).toHaveLength(1);
             expect(realArticles[0].reportIds).toEqual([testReport.id]);
 
             // Should have 1-2 fake articles (since no fake in recent)
-            const fakeArticles = result.filter((article) => article.isFalsified());
+            const fakeArticles = result.filter((article) => article.isFabricated());
             expect(fakeArticles.length).toBeGreaterThanOrEqual(1);
             expect(fakeArticles.length).toBeLessThanOrEqual(3);
 
@@ -349,7 +352,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // Mock existing articles with one fake article
             const existingArticles = [
                 new Article({
-                    authenticity: new Authenticity(false),
+                    authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
                     body: new Body(
                         'This is existing real article body content with sufficient length for validation',
                     ),
@@ -361,7 +364,10 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     publishedAt: new Date(Date.now() - 1000 * 60 * 60),
                 }),
                 new Article({
-                    authenticity: new Authenticity(true, 'Fake for testing'),
+                    authenticity: new Authenticity(
+                        AuthenticityStatusEnum.FABRICATED,
+                        'Fabricated for testing',
+                    ),
                     body: new Body(
                         'This is existing fake article body content with sufficient length for validation',
                     ),
@@ -381,7 +387,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
             // Then - it should generate only real articles (no fake due to recent fake found)
             expect(result).toHaveLength(1);
-            expect(result[0].isFalsified()).toBe(false);
+            expect(result[0].isFabricated()).toBe(false);
             expect(result[0].reportIds).toEqual([testReport.id]);
 
             // Should have checked recent articles
@@ -406,7 +412,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 { length: 5 },
                 (_, i) =>
                     new Article({
-                        authenticity: new Authenticity(false),
+                        authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
                         body: new Body(
                             `This is existing real article body content number ${i + 1} with sufficient length for validation`,
                         ),
@@ -431,7 +437,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
             // Then - it should still generate real articles successfully
             expect(result).toHaveLength(1);
-            expect(result[0].isFalsified()).toBe(false);
+            expect(result[0].isFabricated()).toBe(false);
             expect(result[0].reportIds).toEqual([testReport.id]);
 
             // Should have called falsification agent with context from recent articles
@@ -480,7 +486,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
             // Then - it should still generate real articles successfully
             expect(result).toHaveLength(1);
-            expect(result[0].isFalsified()).toBe(false);
+            expect(result[0].isFabricated()).toBe(false);
             expect(result[0].reportIds).toEqual([testReport.id]);
 
             // Should have logged the error

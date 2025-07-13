@@ -5,7 +5,10 @@ import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
 import { getLanguage } from '../../value-objects/__mocks__/languages.mock.js';
 import { getBody } from '../../value-objects/article/__mocks__/bodies.mock.js';
 import { getHeadline } from '../../value-objects/article/__mocks__/headlines.mock.js';
-import { Authenticity } from '../../value-objects/article/authenticity.vo.js';
+import {
+    Authenticity,
+    AuthenticityStatusEnum,
+} from '../../value-objects/article/authenticity.vo.js';
 import { mockArticleFrames } from '../../value-objects/article-frame/__mocks__/article-frames.mock.js';
 import { Article } from '../article.entity.js';
 
@@ -14,7 +17,7 @@ import { Article } from '../article.entity.js';
  */
 export function createMockArticle(index: number): Article {
     return new Article({
-        authenticity: new Authenticity(false),
+        authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
         body: getBody(index),
         category: getCategory(index),
         country: getCountry(index),

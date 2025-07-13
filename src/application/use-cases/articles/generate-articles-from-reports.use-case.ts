@@ -2,7 +2,10 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
 import { Article } from '../../../domain/entities/article.entity.js';
-import { Authenticity } from '../../../domain/value-objects/article/authenticity.vo.js';
+import {
+    Authenticity,
+    AuthenticityStatusEnum,
+} from '../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../domain/value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
@@ -97,7 +100,7 @@ export class GenerateArticlesFromReportsUseCase {
                         );
 
                         const article = new Article({
-                            authenticity: new Authenticity(false),
+                            authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
                             body: new Body(compositionResult.body),
                             category: report.category,
                             country,
@@ -190,7 +193,7 @@ export class GenerateArticlesFromReportsUseCase {
                 limit: 10,
             });
 
-            const existingFakeCount = recentArticles.filter((a) => a.isFalsified()).length;
+            const existingFakeCount = recentArticles.filter((a) => a.isFabricated()).length;
 
             // Target ratio: ~25% of articles should be fake.
             const desiredFakeTotal = Math.ceil(recentArticles.length / 3); // nReal /3 ≈ 25% overall
@@ -283,7 +286,10 @@ export class GenerateArticlesFromReportsUseCase {
 
                         // Create fake article entity
                         const fakeArticle = new Article({
-                            authenticity: new Authenticity(true, fakeResult.falsificationReason),
+                            authenticity: new Authenticity(
+                                AuthenticityStatusEnum.FABRICATED,
+                                fakeResult.clarification,
+                            ),
                             body: new Body(fakeResult.body),
                             category: fakeResult.category,
                             country,

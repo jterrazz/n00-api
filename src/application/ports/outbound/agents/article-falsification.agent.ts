@@ -12,7 +12,7 @@ export interface ArticleFalsificationAgentPort {
 
 /**
  * @description
- * Input data required for fake article generation
+ * Input data required for fabricated article generation
  */
 export interface ArticleFalsificationInput {
     context?: {
@@ -32,12 +32,12 @@ export interface ArticleFalsificationInput {
 
 /**
  * @description
- * Result of fake article generation containing the fake article content and metadata
+ * Result of fabricated article generation containing the article content and metadata
  */
 export interface ArticleFalsificationResult {
     body: string;
     category: Category;
-    falsificationReason: string;
+    clarification: string;
     headline: string;
     /**
      * Index of the recentArticles array **after** which this fake article should be inserted

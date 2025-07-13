@@ -1,33 +1,49 @@
 import { z } from 'zod/v4';
 
+/**
+ * Enumerates the possible authenticity states of an article.
+ */
+
+export enum AuthenticityStatusEnum {
+    AUTHENTIC = 'AUTHENTIC',
+    FABRICATED = 'FABRICATED',
+}
+
+export const authenticityStatusSchema = z.nativeEnum(AuthenticityStatusEnum);
+
 export const authenticitySchema = z
     .object({
-        falsificationReason: z.string().nullable().default(null),
-        isFalsified: z.boolean().default(false),
+        clarification: z.string().nullable().default(null),
+        status: authenticityStatusSchema.default(AuthenticityStatusEnum.AUTHENTIC),
     })
-    .refine((data) => !data.isFalsified || (data.isFalsified && data.falsificationReason), {
-        message: 'Falsified articles must include a falsificationReason',
-        path: ['falsificationReason'],
+    .refine((data) => data.status !== AuthenticityStatusEnum.FABRICATED || !!data.clarification, {
+        message: 'Fabricated articles must include a clarification',
+        path: ['clarification'],
     });
 
 export class Authenticity {
-    public readonly falsificationReason: null | string;
-    public readonly isFalsified: boolean;
+    public readonly clarification: null | string;
+    public readonly status: AuthenticityStatusEnum;
 
-    constructor(isFalsified: boolean, falsificationReason: null | string = null) {
-        const result = authenticitySchema.safeParse({ falsificationReason, isFalsified });
+    constructor(status: AuthenticityStatusEnum, clarification: null | string = null) {
+        const result = authenticitySchema.safeParse({ clarification, status });
 
         if (!result.success) {
             throw new Error(`Invalid authenticity: ${result.error.message}`);
         }
 
-        this.isFalsified = result.data.isFalsified;
-        this.falsificationReason = result.data.falsificationReason;
+        this.status = result.data.status;
+        this.clarification = result.data.clarification;
+    }
+
+    /** Convenience: true when status === FABRICATED */
+    public isFabricated(): boolean {
+        return this.status === AuthenticityStatusEnum.FABRICATED;
     }
 
     public toString(): string {
-        return this.isFalsified
-            ? `Falsified article (Reason: ${this.falsificationReason})`
+        return this.isFabricated()
+            ? `Fabricated article (Clarification: ${this.clarification})`
             : 'Authentic article';
     }
 }

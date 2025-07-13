@@ -1,13 +1,11 @@
 import { http, HttpResponse } from 'msw';
 
-import { createTZDateForCountry, formatTZDateForCountry } from '../../../src/shared/date/timezone.js';
-
 import {
-    buildTopNewsPayload,
-    extractParams,
-    validateParams,
-} from './top-news.utils.js';
+    createTZDateForCountry,
+    formatTZDateForCountry,
+} from '../../../src/shared/date/timezone.js';
 
+import { buildTopNewsPayload, extractParams, validateParams } from './top-news.utils.js';
 
 /**
  * Mock handler for the World News API top news endpoint.

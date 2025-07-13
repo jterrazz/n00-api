@@ -22,10 +22,10 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
     static readonly SCHEMA = z.object({
         body: bodySchema,
         category: categorySchema,
-        falsificationReason: z
+        clarification: z
             .string()
             .describe(
-                'Clear explanation of why this article is fake (falsified) and what makes it misleading',
+                'Clear explanation of why this article is fabricated and what makes it misleading',
             ),
         headline: headlineSchema,
         insertAfterIndex: z
@@ -125,7 +125,7 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             '•   Analyse the timestamps of RECENT_ARTICLES. Decide **after which article** your newly generated article should appear so the chronology feels natural. Provide the index (0-based) of that article in the `insertAfterIndex` field of your JSON output.',
             '•   If there are no recent articles, set `insertAfterIndex` to -1.',
             '',
-            'OUTPUT: Return a JSON object with the fields { headline, body, falsificationReason, category, tone, insertAfterIndex }.',
+            'OUTPUT: Return a JSON object with the fields { headline, body, clarification, category, tone, insertAfterIndex }.',
         );
 
         return singlePrompt;
@@ -166,7 +166,7 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             const fakerResult: ArticleFalsificationResult = {
                 body: result.body,
                 category: new Category(result.category),
-                falsificationReason: result.falsificationReason,
+                clarification: result.clarification,
                 headline: result.headline,
                 insertAfterIndex: result.insertAfterIndex,
                 tone: result.tone,

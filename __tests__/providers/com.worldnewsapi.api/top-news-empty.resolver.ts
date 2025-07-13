@@ -22,4 +22,4 @@ export const worldNewsEmptyResolver = http.get(
 
         return HttpResponse.json(emptyResponse);
     },
-); 
+);

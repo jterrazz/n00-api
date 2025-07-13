@@ -20,8 +20,8 @@ type ArticleMetadata = {
 
 type ArticleResponse = {
     authenticity: {
-        reason?: string;
-        status: 'authentic' | 'fake';
+        clarification?: string;
+        status: 'authentic' | 'fabricated';
     };
     body: string;
     frames: ArticleFrameResponse[];
@@ -63,7 +63,7 @@ export class GetArticlesResponsePresenter {
         const { contentRaw, contentWithAnnotations } = this.processContent(content);
 
         // Use processed content based on authenticity
-        const displayBody = article.isFalsified() ? contentWithAnnotations : contentRaw;
+        const displayBody = article.isFabricated() ? contentWithAnnotations : contentRaw;
 
         // Map article frames from domain entities
         const frames: ArticleFrameResponse[] =
@@ -76,8 +76,8 @@ export class GetArticlesResponsePresenter {
 
         return {
             authenticity: {
-                reason: article.authenticity.falsificationReason ?? undefined,
-                status: article.isFalsified() ? 'fake' : 'authentic',
+                clarification: article.authenticity.clarification ?? undefined,
+                status: article.isFabricated() ? 'fabricated' : 'authentic',
             },
             body: displayBody,
             frames,

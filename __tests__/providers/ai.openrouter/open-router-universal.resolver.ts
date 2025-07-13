@@ -106,7 +106,7 @@ function handleFalsification(model: string) {
         buildCompletion('mock-fake-article-id', model, {
             body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
             category: 'TECHNOLOGY',
-            falsificationReason: 'Unrealistic scientific claims with no evidence',
+            clarification: 'Unrealistic scientific claims with no evidence',
             headline: 'Scientists Harness Unicorn Fossil Fuel for Endless Clean Energy',
             insertAfterIndex: -1,
             tone: 'satirical',

@@ -10,7 +10,10 @@ import {
 } from '@prisma/client';
 
 import { Article } from '../../../domain/entities/article.entity.js';
-import { Authenticity } from '../../../domain/value-objects/article/authenticity.vo.js';
+import {
+    Authenticity,
+    AuthenticityStatusEnum,
+} from '../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../domain/value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
@@ -52,8 +55,11 @@ export class ArticleMapper {
 
         return new Article({
             authenticity: new Authenticity(
-                prisma.authenticity === 'FALSIFIED',
-                prisma.falsificationReason,
+                prisma.authenticity === 'FALSIFIED'
+                    ? AuthenticityStatusEnum.FABRICATED
+                    : AuthenticityStatusEnum.AUTHENTIC,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (prisma as any).clarification ?? (prisma as any).falsificationReason ?? null,
             ),
             body: new Body(prisma.body),
             category: new Category(prisma.category),
@@ -74,11 +80,11 @@ export class ArticleMapper {
 
     toPrisma(domain: Article): Prisma.ArticleCreateInput {
         return {
-            authenticity: domain.isFalsified() ? 'FALSIFIED' : 'AUTHENTIC',
+            authenticity: domain.isFabricated() ? 'FALSIFIED' : 'AUTHENTIC',
             body: domain.body.value,
             category: this.mapCategoryToPrisma(domain.category),
+            clarification: domain.authenticity.clarification,
             country: this.mapCountryToPrisma(domain.country),
-            falsificationReason: domain.authenticity.falsificationReason,
             frames: domain.frames
                 ? {
                       create: domain.frames.map((frame) => ({
@@ -98,6 +104,6 @@ export class ArticleMapper {
                       connect: domain.reportIds.map((id) => ({ id })),
                   }
                 : undefined,
-        };
+        } as unknown as Prisma.ArticleCreateInput;
     }
 }

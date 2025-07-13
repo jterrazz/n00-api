@@ -2,12 +2,16 @@ import {
     type Category as PrismaCategory,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
+    type Prisma,
     type PrismaClient,
 } from '@prisma/client';
 import { addDays, subDays } from 'date-fns';
 
 import { Article } from '../../src/domain/entities/article.entity.js';
-import { Authenticity } from '../../src/domain/value-objects/article/authenticity.vo.js';
+import {
+    Authenticity,
+    AuthenticityStatusEnum,
+} from '../../src/domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../src/domain/value-objects/article/body.vo.js';
 import { Headline } from '../../src/domain/value-objects/article/headline.vo.js';
 import { Category } from '../../src/domain/value-objects/category.vo.js';
@@ -19,7 +23,7 @@ import { Language } from '../../src/domain/value-objects/language.vo.js';
  * Provides fluent API for creating test articles with domain entities
  */
 export class ArticleFactory {
-    private data: {
+    private readonly data: {
         authenticity: Authenticity;
         body: Body;
         category: Category;
@@ -28,12 +32,11 @@ export class ArticleFactory {
         id: string;
         language: Language;
         publishedAt: Date;
-        reportIds: string[];
     };
 
     constructor() {
         this.data = {
-            authenticity: new Authenticity(false),
+            authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
             body: new Body('Default test article body with detailed information about the topic.'),
             category: new Category('TECHNOLOGY'),
             country: new Country('US'),
@@ -41,20 +44,27 @@ export class ArticleFactory {
             id: crypto.randomUUID(),
             language: new Language('EN'),
             publishedAt: new Date('2024-03-01T12:00:00.000Z'),
-            reportIds: [],
         };
     }
 
+    /** Marks the article as fabricated for testing scenarios. */
+    public asFabricated(reason?: string): ArticleFactory {
+        this.data.authenticity = new Authenticity(AuthenticityStatusEnum.FABRICATED, reason);
+        return this;
+    }
+
+    /**
+     * @deprecated Use {@link asFabricated} instead. Kept for compatibility with non-root tests.
+     */
+
     public asFake(reason?: string): ArticleFactory {
-        this.data.authenticity = new Authenticity(true, reason);
-        return this;
+        return this.asFabricated(reason);
     }
 
-    public asReal(): ArticleFactory {
-        this.data.authenticity = new Authenticity(false);
-        return this;
-    }
-
+    /**
+     * Builds an in-memory Article domain entity.
+     * Prefer {@link createInDatabase} when persistence is required.
+     */
     public build(): Article {
         return new Article({
             authenticity: this.data.authenticity,
@@ -65,34 +75,33 @@ export class ArticleFactory {
             id: this.data.id,
             language: this.data.language,
             publishedAt: this.data.publishedAt,
-            reportIds: this.data.reportIds,
         });
     }
 
-    async createInDatabase(prisma: PrismaClient): Promise<Article> {
+    /** Persists the built article (and a linked report) to the database. */
+    public async createInDatabase(prisma: PrismaClient): Promise<Article> {
         const article = this.build();
 
-        // Ensure a report exists for the article to be queryable
+        // A minimal linked report is required by the API contract.
         const report = await prisma.report.create({
             data: {
                 category: article.category.toString() as PrismaCategory,
                 classification: 'STANDARD',
                 country: article.country.toString() as PrismaCountry,
                 dateline: article.publishedAt,
-                facts: `These are test facts for the report related to article ${article.headline.value}. They are long enough to pass validation and cover all key data points required.`,
-                // Default to STANDARD for tests
+                facts: `Facts for ${article.headline.value}`,
                 sources: [],
             },
         });
 
         await prisma.article.create({
             data: {
-                authenticity: article.isFalsified() ? 'FALSIFIED' : 'AUTHENTIC',
+                authenticity: article.isFabricated() ? 'FALSIFIED' : 'AUTHENTIC',
                 body: article.body.value,
                 category: article.category.toString() as PrismaCategory,
+                clarification: article.authenticity.clarification,
                 country: article.country.toString() as PrismaCountry,
                 createdAt: article.publishedAt,
-                falsificationReason: article.authenticity.falsificationReason,
                 headline: article.headline.value,
                 id: article.id,
                 language: article.language.toString() as PrismaLanguage,
@@ -100,43 +109,16 @@ export class ArticleFactory {
                 reports: {
                     connect: { id: report.id },
                 },
-            },
+            } as unknown as Prisma.ArticleCreateInput,
         });
+
         return article;
     }
 
-    public async createManyInDatabase(prisma: PrismaClient, count: number): Promise<Article[]> {
-        const articles: Article[] = [];
-        for (let i = 0; i < count; i++) {
-            // Create articles with incremental timestamps to ensure proper pagination
-            const publishedAt = new Date(this.data.publishedAt.getTime() + i * 1000); // Add 1 second per article
-
-            // Create a new factory instance for each article to ensure unique IDs
-            const factory = new ArticleFactory()
-                .withCategory(this.data.category)
-                .withCountry(this.data.country)
-                .withLanguage(this.data.language)
-                .withPublishedAt(publishedAt)
-                .withAuthenticity(this.data.authenticity);
-
-            const article = await factory.createInDatabase(prisma);
-            articles.push(article);
-        }
-        return articles;
-    }
-
-    public withAuthenticity(authenticity: Authenticity): ArticleFactory {
-        this.data.authenticity = authenticity;
-        return this;
-    }
+    // ----------------- Fluent setters used by integration tests -----------------
 
     public withBody(body: string): ArticleFactory {
         this.data.body = new Body(body);
-        return this;
-    }
-
-    public withCategory(category: Category | string): ArticleFactory {
-        this.data.category = typeof category === 'string' ? new Category(category) : category;
         return this;
     }
 
@@ -167,48 +149,48 @@ export class ArticleFactory {
  */
 export class ArticleTestScenarios {
     /**
-     * Creates a scenario with no articles for testing empty result handling
+     * Seeds a single fabricated US article for the “Invented Event Shocks World” case.
+     * Meant to be called in addition to {@link createMixedArticles} for modularity.
      */
-    static async createEmptyResultScenario(prisma: PrismaClient): Promise<void> {
-        // This method creates an empty scenario by not creating any articles
-        // The empty scenario is achieved by simply not creating any data
-        await prisma.article.deleteMany();
+    static async createFabricatedInventedEventArticle(prisma: PrismaClient): Promise<void> {
+        const bodyWithMarkers =
+            'Breaking %%[(FABRICATED)]( sensational )%% news about an invented event.';
+
+        await new ArticleFactory()
+            .withHeadline('Invented Event Shocks World')
+            .withBody(bodyWithMarkers)
+            .withCountry('US')
+            .withLanguage('EN')
+            .withPublishedAt(new Date('2024-03-03T12:00:00.000Z'))
+            .asFabricated('Fabricated story')
+            .createInDatabase(prisma);
     }
 
-    /**
-     * Creates articles with mixed configurations for comprehensive testing
+    /** Seeds the DB with a small set of authentic articles in
+     * different languages/countries to exercise pagination & grouping logic.
      */
-    static async createMixedArticles(prisma: PrismaClient) {
-        const today = new Date('2024-03-01T12:00:00.000Z');
-        const yesterday = subDays(today, 1);
-        const tomorrow = addDays(today, 1);
+    static async createMixedArticles(prisma: PrismaClient): Promise<void> {
+        const baseDate = new Date('2024-03-01T12:00:00.000Z');
 
-        // Create US articles
-        const usArticles = await Promise.all([
+        await Promise.all([
+            // US articles (authentic)
             new ArticleFactory()
-                .withCountry(new Country('US'))
-                .withLanguage(new Language('EN'))
-                .withPublishedAt(today)
+                .withCountry('US')
+                .withLanguage('EN')
+                .withPublishedAt(subDays(baseDate, 1))
                 .createInDatabase(prisma),
             new ArticleFactory()
-                .withCountry(new Country('US'))
-                .withLanguage(new Language('EN'))
-                .withPublishedAt(yesterday)
+                .withCountry('US')
+                .withLanguage('EN')
+                .withPublishedAt(baseDate)
                 .createInDatabase(prisma),
-        ]);
 
-        // Create French articles
-        const frenchArticles = await Promise.all([
+            // French article (authentic)
             new ArticleFactory()
-                .withCountry(new Country('FR'))
-                .withLanguage(new Language('FR'))
-                .withPublishedAt(tomorrow)
+                .withCountry('FR')
+                .withLanguage('FR')
+                .withPublishedAt(addDays(baseDate, 1))
                 .createInDatabase(prisma),
         ]);
-
-        return {
-            frenchArticles,
-            usArticles,
-        };
     }
 }

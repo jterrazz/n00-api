@@ -59,7 +59,7 @@ export class Article {
         this.frames = validatedData.frames;
     }
 
-    public isFalsified(): boolean {
-        return this.authenticity.isFalsified;
+    public isFabricated(): boolean {
+        return this.authenticity.isFabricated();
     }
 }

@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
 
-import { ArticleFactory, ArticleTestScenarios } from './fixtures/article.factory.js';
+import { ArticleTestScenarios } from './fixtures/article.factory.js';
 import {
     createIntegrationContext,
     executeRequest,
@@ -34,10 +34,10 @@ describe('Server /articles route – integration', () => {
             items: [
                 {
                     authenticity: {
-                        reason: 'Fabricated story',
-                        status: 'fake',
+                        clarification: 'Fabricated story',
+                        status: 'fabricated',
                     },
-                    body: 'Breaking %%[(FAKE)]( sensational ) news about an invented event.',
+                    body: 'Breaking %%[(FABRICATED)]( sensational ) news about an invented event.',
                     frames: [],
                     headline: 'Invented Event Shocks World',
                     id: '<uuid>',
@@ -89,16 +89,9 @@ describe('Server /articles route – integration', () => {
         it('returns full structured JSON response for mixed US articles', async () => {
             // Given – a mixed set of US articles including falsified and authentic ones
             await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
-
-            const bodyWithMarkers =
-                'Breaking %%[(FAKE)]( sensational )%% news about an invented event.';
-
-            await new ArticleFactory()
-                .withHeadline('Invented Event Shocks World')
-                .withBody(bodyWithMarkers)
-                .withPublishedAt(new Date('2024-03-03T12:00:00.000Z'))
-                .asFake('Fabricated story')
-                .createInDatabase(integrationContext.prisma);
+            await ArticleTestScenarios.createFabricatedInventedEventArticle(
+                integrationContext.prisma,
+            );
 
             // When – request all articles
             const res = await executeRequest(integrationContext, '/articles?limit=10');
@@ -115,16 +108,9 @@ describe('Server /articles route – integration', () => {
         it('returns the same structured JSON response when paginated', async () => {
             // Given – the same mixed set of articles in the database
             await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
-
-            const bodyWithMarkers =
-                'Breaking %%[(FAKE)]( sensational )%% news about an invented event.';
-
-            await new ArticleFactory()
-                .withHeadline('Invented Event Shocks World')
-                .withBody(bodyWithMarkers)
-                .withPublishedAt(new Date('2024-03-03T12:00:00.000Z'))
-                .asFake('Fabricated story')
-                .createInDatabase(integrationContext.prisma);
+            await ArticleTestScenarios.createFabricatedInventedEventArticle(
+                integrationContext.prisma,
+            );
 
             // When – first page request (limit 2)
             const firstRes = await executeRequest(integrationContext, '/articles?limit=2');

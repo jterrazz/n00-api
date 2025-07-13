@@ -85,21 +85,21 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
 
         const SOURCE_RE = /^worldnewsapi:/;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const comparator = (a: any, b: any) => {
+            const aClass = a.reports[0]?.classification ?? '';
+            const bClass = b.reports[0]?.classification ?? '';
+            return (
+                a.country.localeCompare(b.country) ||
+                a.language.localeCompare(b.language) ||
+                a.authenticity.localeCompare(b.authenticity) ||
+                aClass.localeCompare(bClass)
+            );
+        };
+
         const snapshot = normaliseSnapshot(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (JSON.parse(JSON.stringify(articles)) as any[]).sort(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (a: any, b: any) => {
-                    const aClass = a.reports[0]?.classification ?? '';
-                    const bClass = b.reports[0]?.classification ?? '';
-                    return (
-                        a.country.localeCompare(b.country) ||
-                        a.language.localeCompare(b.language) ||
-                        a.authenticity.localeCompare(b.authenticity) ||
-                        aClass.localeCompare(bClass)
-                    );
-                },
-            ),
+            (JSON.parse(JSON.stringify(articles)) as any[]).sort(comparator),
             [[SOURCE_RE, '<source>']],
         );
 
@@ -107,9 +107,9 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
             authenticity: 'AUTHENTIC',
             body: 'Neutral summary of the core, undisputed facts of the event.',
             category: 'TECHNOLOGY',
+            clarification: null,
             country,
             createdAt: '<date>',
-            falsificationReason: null,
             frames: [
                 {
                     articleId: '<uuid>',
@@ -141,18 +141,6 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comparator = (a: any, b: any) => {
-            return (
-                a.country.localeCompare(b.country) ||
-                a.language.localeCompare(b.language) ||
-                a.authenticity.localeCompare(b.authenticity) ||
-                (a.reports[0]?.classification ?? '').localeCompare(
-                    b.reports[0]?.classification ?? '',
-                )
-            );
-        };
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const expectedSnapshot: any[] = [
             authTemplate('FR', 'NICHE'),
             authTemplate('FR', 'STANDARD'),
@@ -162,9 +150,9 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
                 authenticity: 'FALSIFIED',
                 body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
                 category: 'TECHNOLOGY',
+                clarification: 'Unrealistic scientific claims with no evidence',
                 country: 'FR',
                 createdAt: '<date>',
-                falsificationReason: 'Unrealistic scientific claims with no evidence',
                 frames: [],
                 headline: 'Scientists Harness Unicorn Fossil Fuel for Endless Clean Energy',
                 id: '<uuid>',
@@ -176,9 +164,9 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
                 authenticity: 'FALSIFIED',
                 body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
                 category: 'TECHNOLOGY',
+                clarification: 'Unrealistic scientific claims with no evidence',
                 country: 'US',
                 createdAt: '<date>',
-                falsificationReason: 'Unrealistic scientific claims with no evidence',
                 frames: [],
                 headline: 'Scientists Harness Unicorn Fossil Fuel for Endless Clean Energy',
                 id: '<uuid>',
