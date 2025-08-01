@@ -1,7 +1,5 @@
 import {
-    type Category as PrismaCategory,
     type Country as PrismaCountry,
-    type Discourse as PrismaDiscourse,
     type Prisma,
     type Report as PrismaReport,
     type ReportAngle as PrismaReportAngle,
@@ -9,9 +7,8 @@ import {
 } from '@prisma/client';
 
 import { Report } from '../../../../domain/entities/report.entity.js';
-import { Category } from '../../../../domain/value-objects/category.vo.js';
+import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Discourse } from '../../../../domain/value-objects/discourse.vo.js';
 import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
 import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
@@ -24,14 +21,38 @@ export class ReportMapper {
     ): Omit<PrismaReportAngle, 'createdAt' | 'id' | 'updatedAt'> {
         return {
             corpus: angle.angleCorpus.toString(),
-            discourse: this.mapDiscourseToPrisma(angle.discourse.value),
             reportId,
             stance: this.mapStanceToPrisma(angle.stance.value),
         };
     }
 
-    mapCategoryToPrisma(category: Category): PrismaCategory {
-        return category.toString() as PrismaCategory;
+    /**
+     * Creates a Prisma where condition for category filtering using JSON array operations
+     */
+    createCategoryFilter(category?: string, categories?: string[]): object | undefined {
+        if (categories) {
+            // Filter reports that contain ANY of the specified categories
+            return {
+                categories: {
+                    array_contains: categories,
+                },
+            };
+        }
+
+        if (category) {
+            // Filter reports that contain the specific category
+            return {
+                categories: {
+                    array_contains: [category],
+                },
+            };
+        }
+
+        return undefined;
+    }
+
+    mapCategoriesToPrisma(categories: Categories): string[] {
+        return categories.toArray();
     }
 
     mapCountryFromPrisma(country: PrismaCountry): Country {
@@ -40,10 +61,6 @@ export class ReportMapper {
 
     mapCountryToPrisma(country: Country): PrismaCountry {
         return country.toString() as PrismaCountry;
-    }
-
-    mapDiscourseToPrisma(discourse?: string): null | PrismaDiscourse {
-        return discourse ? (discourse as PrismaDiscourse) : null;
     }
 
     mapStanceToPrisma(stance?: string): null | PrismaStance {
@@ -59,14 +76,15 @@ export class ReportMapper {
             (a) =>
                 new ReportAngle({
                     angleCorpus: new AngleCorpus(a.corpus),
-                    discourse: new Discourse(a.discourse as PrismaDiscourse),
                     stance: new Stance(a.stance as PrismaStance),
                 }),
         );
 
         return new Report({
             angles,
-            category: new Category(prisma.category),
+            categories: new Categories(
+                Array.isArray(prisma.categories) ? (prisma.categories as string[]) : [],
+            ),
             classification: new Classification(
                 prisma.classification as
                     | 'ARCHIVED'
@@ -86,7 +104,7 @@ export class ReportMapper {
 
     toPrisma(report: Report): Prisma.ReportCreateInput {
         return {
-            category: this.mapCategoryToPrisma(report.category),
+            categories: this.mapCategoriesToPrisma(report.categories),
             classification: report.classification.toString() as
                 | 'ARCHIVED'
                 | 'NICHE'

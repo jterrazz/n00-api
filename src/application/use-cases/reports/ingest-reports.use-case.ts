@@ -2,8 +2,8 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
 import { Report } from '../../../domain/entities/report.entity.js';
+import { Categories } from '../../../domain/value-objects/categories.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
-import { Discourse } from '../../../domain/value-objects/discourse.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { Classification } from '../../../domain/value-objects/report/classification.vo.js';
 import { AngleCorpus } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
@@ -50,10 +50,12 @@ export class IngestReportsUseCase {
             });
 
             // Step 2: Fetch news from external providers
-            const newsStories = await this.newsProvider.fetchNews({
+            let newsStories = await this.newsProvider.fetchNews({
                 country,
                 language,
             });
+
+            newsStories = newsStories.slice(0, 3);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news reports fetched', {
@@ -155,14 +157,13 @@ export class IngestReportsUseCase {
                         (angle) =>
                             new ReportAngle({
                                 angleCorpus: new AngleCorpus(angle.corpus),
-                                discourse: new Discourse(angle.discourse),
                                 stance: new Stance(angle.stance),
                             }),
                     );
 
                     const report = new Report({
                         angles,
-                        category: ingestionResult.category,
+                        categories: new Categories([ingestionResult.category.toString()]),
                         classification: new Classification('PENDING_CLASSIFICATION'),
                         country,
                         createdAt: now,

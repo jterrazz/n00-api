@@ -4,9 +4,8 @@ import { randomUUID } from 'crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
 import { Report } from '../../../../domain/entities/report.entity.js';
-import { Category } from '../../../../domain/value-objects/category.vo.js';
+import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Discourse } from '../../../../domain/value-objects/discourse.vo.js';
 import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
 import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
@@ -31,11 +30,10 @@ const createMockReport = (
                 angleCorpus: new AngleCorpus(
                     'This is a very long and detailed holistic digest for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
                 ),
-                discourse: new Discourse('mainstream'),
                 stance: new Stance('neutral'),
             }),
         ],
-        category: new Category('technology'),
+        categories: new Categories(['TECHNOLOGY']),
         classification: new Classification(tier),
         country: new Country('us'),
         createdAt: new Date(),

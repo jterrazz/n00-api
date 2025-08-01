@@ -33,16 +33,24 @@ describe('Server /articles route – integration', () => {
         const expectedSnapshot = {
             items: [
                 {
-                    authenticity: {
-                        clarification: 'Fabricated story',
-                        status: 'fabricated',
-                    },
                     body: 'Breaking %%[(FABRICATED)]( sensational ) news about an invented event.',
                     frames: [],
                     headline: 'Invented Event Shocks World',
                     id: '<uuid>',
+                    interactions: {
+                        authenticityChallenge: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        insights: [],
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     metadata: {
-                        category: 'TECHNOLOGY',
+                        authenticity: 'fabricated',
+                        categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',
@@ -50,15 +58,24 @@ describe('Server /articles route – integration', () => {
                     publishedAt: '<date>',
                 },
                 {
-                    authenticity: {
-                        status: 'authentic',
-                    },
                     body: 'Default test article body with detailed information about the topic.',
                     frames: [],
                     headline: 'Default Test Article',
                     id: '<uuid>',
+                    interactions: {
+                        authenticityChallenge: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        insights: [],
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     metadata: {
-                        category: 'TECHNOLOGY',
+                        authenticity: 'authentic',
+                        categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',
@@ -66,15 +83,24 @@ describe('Server /articles route – integration', () => {
                     publishedAt: '<date>',
                 },
                 {
-                    authenticity: {
-                        status: 'authentic',
-                    },
                     body: 'Default test article body with detailed information about the topic.',
                     frames: [],
                     headline: 'Default Test Article',
                     id: '<uuid>',
+                    interactions: {
+                        authenticityChallenge: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        insights: [],
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     metadata: {
-                        category: 'TECHNOLOGY',
+                        authenticity: 'authentic',
+                        categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',

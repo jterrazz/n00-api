@@ -48,13 +48,6 @@ enum Classification {
   ARCHIVED
 }
 
-enum Discourse {
-  MAINSTREAM
-  ALTERNATIVE
-  UNDERREPORTED
-  DUBIOUS
-}
-
 enum AuthenticityStatus {
   AUTHENTIC
   FABRICATED
@@ -63,7 +56,7 @@ enum AuthenticityStatus {
 model Report {
   id             String         @id @default(uuid())
   facts          String
-  category       Category
+  categories     Json // Array of Category enum values
   classification Classification @default(PENDING_CLASSIFICATION)
 
   // Geographic and temporal context
@@ -81,17 +74,15 @@ model Report {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([category])
   @@index([country])
   @@index([dateline])
   @@index([createdAt])
 }
 
 model ReportAngle {
-  id        String     @id @default(uuid())
-  corpus    String
-  stance    Stance?
-  discourse Discourse?
+  id     String  @id @default(uuid())
+  corpus String
+  stance Stance?
 
   // Relations
   report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
@@ -103,14 +94,13 @@ model ReportAngle {
 
   @@index([reportId])
   @@index([stance])
-  @@index([discourse])
 }
 
 model Article {
   id            String             @id @default(uuid())
   headline      String
   body          String // Main neutral article presenting only facts from all sides
-  category      Category
+  categories    Json // Array of Category enum values  
   authenticity  AuthenticityStatus @default(AUTHENTIC) // Whether the article is authentic or fabricated
   clarification String? // Explanation when authenticity is FABRICATED
   country       Country
@@ -128,11 +118,10 @@ model Article {
 }
 
 model ArticleFrame {
-  id        String    @id @default(uuid())
-  headline  String // Frame headline from this viewpoint
-  body      String // Viewpoint-specific content explaining this side of the report
-  stance    Stance // The viewpoint/stance this frame represents
-  discourse Discourse // The type of discourse this frame represents
+  id       String @id @default(uuid())
+  headline String // Frame headline from this viewpoint
+  body     String // Viewpoint-specific content explaining this side of the report
+  stance   Stance // The viewpoint/stance this frame represents
 
   // Relations
   article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
@@ -143,5 +132,4 @@ model ArticleFrame {
 
   @@index([articleId])
   @@index([stance])
-  @@index([discourse])
 }

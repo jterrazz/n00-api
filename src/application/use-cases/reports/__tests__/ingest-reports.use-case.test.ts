@@ -68,7 +68,6 @@ describe('IngestReportsUseCase', () => {
             angles: [
                 {
                     corpus: 'This is a comprehensive angle corpus that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
-                    discourse: 'MAINSTREAM',
                     stance: 'NEUTRAL',
                 },
             ],
@@ -159,7 +158,6 @@ describe('IngestReportsUseCase', () => {
             angles: [
                 {
                     corpus: 'This is a comprehensive angle corpus that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
-                    discourse: 'MAINSTREAM',
                     stance: 'NEUTRAL',
                 },
             ],

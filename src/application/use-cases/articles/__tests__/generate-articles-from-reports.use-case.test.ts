@@ -12,7 +12,7 @@ import {
 } from '../../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
-import { Category } from '../../../../domain/value-objects/category.vo.js';
+import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
@@ -62,12 +62,11 @@ describe('GenerateArticlesFromReportsUseCase', () => {
         // Create mock composition results
         mockCompositionResults = testReports.map((report, index) => ({
             body: `Composed article body for report ${index + 1} with neutral presentation of facts from all angles.`,
-            category: report.category,
+            categories: report.categories,
             frames: [
                 {
                     body: `Frame article body for report ${index + 1} presenting a specific viewpoint on the matter.`,
-                    discourse: 'MAINSTREAM',
-                    headline: `${report.category.toString()} Angle: ${index + 1}`,
+                    headline: `${report.categories.primary().toString()} Angle: ${index + 1}`,
                     stance: 'NEUTRAL',
                 },
             ],
@@ -116,7 +115,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(mockArticleRepository.createMany).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
-                        category: expect.any(Category),
+                        categories: expect.any(Categories),
                         country: expect.any(Country),
                         reportIds: expect.arrayContaining([expect.any(String)]),
                     }),
@@ -256,7 +255,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(realArticles).toHaveLength(1);
             expect(realArticles[0].reportIds).toEqual([testReport.id]);
             expect(realArticles[0].publishedAt).toEqual(testReport.dateline);
-            expect(realArticles[0].category).toEqual(testReport.category);
+            expect(realArticles[0].categories).toEqual(testReport.categories);
             // And article should be neutral/factual
             expect(realArticles[0].isFabricated()).toBe(false);
         });
@@ -276,7 +275,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                         body: new Body(
                             `This is existing real article body content number ${i + 1} with sufficient length for validation`,
                         ),
-                        category: new Category('TECHNOLOGY'),
+                        categories: new Categories(['TECHNOLOGY']),
                         country: DEFAULT_COUNTRY,
                         headline: new Headline(`Existing Real Article ${i + 1}`),
                         id: randomUUID(),
@@ -290,7 +289,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             // Mock fake article generation to succeed
             mockArticleFalsificationAgent.run.mockResolvedValue({
                 body: 'In a shocking turn of events that has left residents bewildered, a domestic cat named Whiskers has been elected mayor of the fictional town of Nowheresville.',
-                category: new Category('POLITICS'),
+                categories: new Categories(['POLITICS']),
                 clarification:
                     'This article is fabricated as part of a fake-news detection game. Cats cannot run for public office, making the premise impossible.',
                 headline: 'House Cat Elected Mayor in Landslide Victory',
@@ -355,7 +354,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     body: new Body(
                         'This is existing real article body content with sufficient length for validation',
                     ),
-                    category: new Category('TECHNOLOGY'),
+                    categories: new Categories(['TECHNOLOGY']),
                     country: DEFAULT_COUNTRY,
                     headline: new Headline('Existing Real Article'),
                     id: randomUUID(),
@@ -370,7 +369,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     body: new Body(
                         'This is existing fake article body content with sufficient length for validation',
                     ),
-                    category: new Category('POLITICS'),
+                    categories: new Categories(['POLITICS']),
                     country: DEFAULT_COUNTRY,
                     headline: new Headline('Existing Fake Article'),
                     id: randomUUID(),
@@ -415,7 +414,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                         body: new Body(
                             `This is existing real article body content number ${i + 1} with sufficient length for validation`,
                         ),
-                        category: new Category('TECHNOLOGY'),
+                        categories: new Categories(['TECHNOLOGY']),
                         country: DEFAULT_COUNTRY,
                         headline: new Headline(`Existing Real Article ${i + 1}`),
                         id: randomUUID(),

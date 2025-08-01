@@ -21,9 +21,11 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
     }
 
     async countMany(params: CountManyOptions): Promise<number> {
+        const categoryFilter = this.mapper.createCategoryFilter(params.category, params.categories);
+
         const where = {
             ...(params.language && { language: this.mapper.mapLanguageToPrisma(params.language) }),
-            ...(params.category && { category: this.mapper.mapCategoryToPrisma(params.category) }),
+            ...(categoryFilter && categoryFilter),
             ...(params.country && { country: this.mapper.mapCountryToPrisma(params.country) }),
             ...(params.startDate &&
                 params.endDate && {
@@ -78,13 +80,16 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
     }
 
     async findMany(options: FindManyOptions): Promise<Article[]> {
+        const categoryFilter = this.mapper.createCategoryFilter(
+            options.category,
+            options.categories,
+        );
+
         const where: Prisma.ArticleWhereInput = {
             ...(options.language && {
                 language: this.mapper.mapLanguageToPrisma(options.language),
             }),
-            ...(options.category && {
-                category: this.mapper.mapCategoryToPrisma(options.category),
-            }),
+            ...(categoryFilter && categoryFilter),
             ...(options.country && { country: this.mapper.mapCountryToPrisma(options.country) }),
             ...(options.cursor && {
                 publishedAt: {

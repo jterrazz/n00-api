@@ -1,4 +1,5 @@
 import { type Article } from '../../../../domain/entities/article.entity.js';
+import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Category } from '../../../../domain/value-objects/category.vo.js';
 import { type Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';
@@ -31,6 +32,7 @@ export interface ArticleRepositoryPort {
 }
 
 export interface CountManyOptions {
+    categories?: Categories;
     category?: Category;
     country?: Country;
     endDate?: Date;
@@ -45,6 +47,7 @@ export interface FindHeadlinesAndSummariesOptions {
 }
 
 export interface FindManyOptions {
+    categories?: Categories;
     category?: Category;
     classification?: Array<'NICHE' | 'STANDARD'>;
     country?: Country;

@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 
-import { Category } from '../value-objects/category.vo.js';
+import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Classification } from '../value-objects/report/classification.vo.js';
 import { ReportAngle } from '../value-objects/report-angle/report-angle.vo.js';
@@ -11,9 +11,9 @@ export const factsSchema = z
         'Facts are a concise, information-dense collection of essential data points, key actors, and the core narrative in ~50 words. Example: "Tesla CEO Musk acquires Twitter ($44B, Oct 2022), fires executives, adds $8 verification fee, restores suspended accounts, triggers advertiser exodus (GM, Pfizer), 75 % staff cuts, sparks free-speech vs. safety debate."',
     );
 
-export const categorySchema = z
-    .instanceof(Category)
-    .describe('The primary category classification of the report.');
+export const categoriesSchema = z
+    .instanceof(Categories)
+    .describe('The category classifications of the report.');
 
 export const classificationSchema = z
     .instanceof(Classification)
@@ -45,7 +45,7 @@ export const updatedAtSchema = z.date().describe('The timestamp when the report 
 
 export const reportSchema = z.object({
     angles: anglesSchema,
-    category: categorySchema,
+    categories: categoriesSchema,
     classification: classificationSchema,
     country: countrySchema,
     createdAt: createdAtSchema,
@@ -63,7 +63,7 @@ export type ReportProps = z.input<typeof reportSchema>;
  */
 export class Report {
     public readonly angles: ReportAngle[];
-    public readonly category: Category;
+    public readonly categories: Categories;
     public readonly classification: Classification;
     public readonly country: Country;
     public readonly createdAt: Date;
@@ -83,7 +83,7 @@ export class Report {
         const validatedData = result.data;
         this.id = validatedData.id;
         this.facts = validatedData.facts;
-        this.category = validatedData.category;
+        this.categories = validatedData.categories;
         this.angles = validatedData.angles;
         this.dateline = validatedData.dateline;
         this.sourceReferences = validatedData.sourceReferences;

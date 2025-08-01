@@ -1,5 +1,4 @@
 import {
-    type Category as PrismaCategory,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
     type Prisma,
@@ -14,7 +13,7 @@ import {
 } from '../../src/domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../src/domain/value-objects/article/body.vo.js';
 import { Headline } from '../../src/domain/value-objects/article/headline.vo.js';
-import { Category } from '../../src/domain/value-objects/category.vo.js';
+import { Categories } from '../../src/domain/value-objects/categories.vo.js';
 import { Country } from '../../src/domain/value-objects/country.vo.js';
 import { Language } from '../../src/domain/value-objects/language.vo.js';
 
@@ -26,7 +25,7 @@ export class ArticleFactory {
     private readonly data: {
         authenticity: Authenticity;
         body: Body;
-        category: Category;
+        categories: Categories;
         country: Country;
         headline: Headline;
         id: string;
@@ -38,7 +37,7 @@ export class ArticleFactory {
         this.data = {
             authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
             body: new Body('Default test article body with detailed information about the topic.'),
-            category: new Category('TECHNOLOGY'),
+            categories: new Categories(['TECHNOLOGY']),
             country: new Country('US'),
             headline: new Headline('Default Test Article'),
             id: crypto.randomUUID(),
@@ -69,7 +68,7 @@ export class ArticleFactory {
         return new Article({
             authenticity: this.data.authenticity,
             body: this.data.body,
-            category: this.data.category,
+            categories: this.data.categories,
             country: this.data.country,
             headline: this.data.headline,
             id: this.data.id,
@@ -85,7 +84,7 @@ export class ArticleFactory {
         // A minimal linked report is required by the API contract.
         const report = await prisma.report.create({
             data: {
-                category: article.category.toString() as PrismaCategory,
+                categories: article.categories.toArray(),
                 classification: 'STANDARD',
                 country: article.country.toString() as PrismaCountry,
                 dateline: article.publishedAt,
@@ -98,7 +97,7 @@ export class ArticleFactory {
             data: {
                 authenticity: article.isFabricated() ? 'FABRICATED' : 'AUTHENTIC',
                 body: article.body.value,
-                category: article.category.toString() as PrismaCategory,
+                categories: article.categories.toArray(),
                 clarification: article.authenticity.clarification,
                 country: article.country.toString() as PrismaCountry,
                 createdAt: article.publishedAt,

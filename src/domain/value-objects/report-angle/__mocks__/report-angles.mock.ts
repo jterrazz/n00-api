@@ -1,4 +1,3 @@
-import { getDiscourse } from '../../__mocks__/discourses.mock.js';
 import { getStance } from '../../__mocks__/stances.mock.js';
 import { ReportAngle } from '../report-angle.vo.js';
 
@@ -10,7 +9,6 @@ import { getAngleCorpus } from './angle-corpus.mock.js';
 export function createMockReportAngle(index: number): ReportAngle {
     return new ReportAngle({
         angleCorpus: getAngleCorpus(index),
-        discourse: getDiscourse(index),
         stance: getStance(index),
     });
 }

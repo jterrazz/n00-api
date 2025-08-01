@@ -28,7 +28,6 @@ export interface ArticleCompositionResult {
     body: string;
     frames: Array<{
         body: string;
-        discourse: string;
         headline: string;
         stance: string;
     }>;

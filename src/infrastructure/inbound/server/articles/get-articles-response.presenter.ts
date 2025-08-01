@@ -6,27 +6,46 @@ import { type Article } from '../../../../domain/entities/article.entity.js';
 
 type ArticleFrameResponse = {
     body: string;
-    discourse: string;
     headline: string;
     stance: string;
 };
 
+type ArticleInteractions = {
+    authenticityChallenge: {
+        enable: boolean;
+        explanation: string;
+    };
+    insights: Array<{
+        agent: string;
+        analysis: string;
+        duration: string;
+        enable: boolean;
+        publishedAt: string;
+    }>;
+    quiz: {
+        enable: boolean;
+        questions: Array<{
+            answers: string[];
+            correctAnswerIndex: number;
+            question: string;
+        }>;
+    };
+};
+
 type ArticleMetadata = {
-    category: Category;
+    authenticity: 'authentic' | 'fabricated';
+    categories: Category[];
     classification?: 'ARCHIVED' | 'NICHE' | 'STANDARD';
     country: Country;
     language: Language;
 };
 
 type ArticleResponse = {
-    authenticity: {
-        clarification?: string;
-        status: 'authentic' | 'fabricated';
-    };
     body: string;
     frames: ArticleFrameResponse[];
     headline: string;
     id: string;
+    interactions: ArticleInteractions;
     metadata: ArticleMetadata;
     publishedAt: string;
 };
@@ -69,22 +88,29 @@ export class GetArticlesResponsePresenter {
         const frames: ArticleFrameResponse[] =
             article.frames?.map((frame) => ({
                 body: frame.body.toString(),
-                discourse: frame.discourse.value,
                 headline: frame.headline.toString(),
                 stance: frame.stance.value,
             })) ?? [];
 
         return {
-            authenticity: {
-                clarification: article.authenticity.clarification ?? undefined,
-                status: article.isFabricated() ? 'fabricated' : 'authentic',
-            },
             body: displayBody,
             frames,
             headline: article.headline.toString(),
             id: article.id,
+            interactions: {
+                authenticityChallenge: {
+                    enable: false,
+                    explanation: '',
+                },
+                insights: [],
+                quiz: {
+                    enable: false,
+                    questions: [],
+                },
+            },
             metadata: {
-                category: article.category.toString() as Category,
+                authenticity: article.isFabricated() ? 'fabricated' : 'authentic',
+                categories: article.categories.toArray() as Category[],
                 classification: article.classification?.toString() as
                     | 'ARCHIVED'
                     | 'NICHE'

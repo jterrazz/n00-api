@@ -16,7 +16,8 @@ import {
 
 import { bodySchema } from '../../../domain/value-objects/article/body.vo.js';
 import { headlineSchema } from '../../../domain/value-objects/article/headline.vo.js';
-import { Category, categorySchema } from '../../../domain/value-objects/category.vo.js';
+import { Categories } from '../../../domain/value-objects/categories.vo.js';
+import { categorySchema } from '../../../domain/value-objects/category.vo.js';
 
 export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAgentPort {
     static readonly SCHEMA = z.object({
@@ -160,13 +161,13 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
             // Log successful generation for debugging
             this.logger.info('Fake article generated successfully', {
                 bodyLength: result.body.length,
-                category: result.category,
+                categories: result.category,
                 headline: result.headline,
             });
 
             const fakerResult: ArticleFalsificationResult = {
                 body: result.body,
-                category: new Category(result.category),
+                categories: new Categories([result.category]),
                 clarification: result.clarification,
                 headline: result.headline,
                 insertAfterIndex: result.insertAfterIndex,

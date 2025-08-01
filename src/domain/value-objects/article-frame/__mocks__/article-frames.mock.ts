@@ -1,4 +1,3 @@
-import { getDiscourse } from '../../__mocks__/discourses.mock.js';
 import { getStance } from '../../__mocks__/stances.mock.js';
 import { getBody } from '../../article/__mocks__/bodies.mock.js';
 import { getHeadline } from '../../article/__mocks__/headlines.mock.js';
@@ -10,7 +9,6 @@ import { ArticleFrame } from '../article-frame.vo.js';
 export function createMockArticleFrame(index: number): ArticleFrame {
     return new ArticleFrame({
         body: getBody(index),
-        discourse: getDiscourse(index),
         headline: getHeadline(index),
         stance: getStance(index),
     });

@@ -101,7 +101,10 @@ export class PrismaReportRepository implements ReportRepositoryPort {
 
         // Category filter
         if (criteria.category) {
-            where.category = criteria.category.toUpperCase();
+            const categoryFilter = this.mapper.createCategoryFilter(criteria.category);
+            if (categoryFilter) {
+                Object.assign(where, categoryFilter);
+            }
         }
 
         // Country filter
@@ -175,7 +178,10 @@ export class PrismaReportRepository implements ReportRepositoryPort {
 
         // Category filter
         if (criteria?.category) {
-            where.category = criteria.category;
+            const categoryFilter = this.mapper.createCategoryFilter(criteria.category);
+            if (categoryFilter) {
+                Object.assign(where, categoryFilter);
+            }
         }
 
         // Country filter

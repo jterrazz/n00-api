@@ -17,7 +17,6 @@ import { type NewsReport } from '../../../application/ports/outbound/providers/n
 import { factsSchema } from '../../../domain/entities/report.entity.js';
 import { Category } from '../../../domain/value-objects/category.vo.js';
 import { categorySchema } from '../../../domain/value-objects/category.vo.js';
-import { discourseSchema } from '../../../domain/value-objects/discourse.vo.js';
 import { angleCorpusSchema } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { stanceSchema } from '../../../domain/value-objects/stance.vo.js';
 
@@ -29,7 +28,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
                     corpus: angleCorpusSchema.describe(
                         'A complete compilation of all information for this viewpoint, NOT a summary. It must be focused on the news event itself and include every argument, fact, and piece of evidence presented for this side. It MUST NOT contain information about the news source.',
                     ),
-                    discourse: discourseSchema,
                     stance: stanceSchema,
                 }),
             )
@@ -76,7 +74,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             '• facts → A neutral, exhaustive statement of who did what, where, and when. No speculation, opinion, or editorialising.',
             '• angles → An array with **1-2** items. For each angle include:',
             '    • corpus → NOT a summary. Compile EVERY argument, fact, and piece of evidence supporting that viewpoint, focused solely on the subject. Exclude information about the publication or author.',
-            '    • tags → { stance, discourse_type } where `stance` reflects tone (e.g. SUPPORTIVE, CRITICAL) and `discourse_type` is MAINSTREAM or ALTERNATIVE.',
+            '    • stance → Reflects tone (e.g. SUPPORTIVE, CRITICAL, NEUTRAL).',
             '',
 
             // Analysis Framework
@@ -84,13 +82,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             '1. Extract the undisputed facts common to all.',
             '2. Identify every viewpoint expressed across articles and MERGE any that share the same core argument.',
             '3. Select the 1-2 most dominant, clearly DIFFERENT angles.',
-            '4. For each selected angle, compile the full corpus and assign `stance` and `discourse_type` tags.',
-            '',
-
-            // Discourse Definitions
-            'DISCOURSE DEFINITIONS:',
-            '• MAINSTREAM → Dominant media narrative (widely amplified).',
-            '• ALTERNATIVE → Counter-narratives that challenges or contradicts the mainstream.',
+            '4. For each selected angle, compile the full corpus and assign `stance` tag.',
             '',
 
             // Critical Rules
@@ -130,7 +122,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
                 `AI response parsed successfully with ${result.angles.length} angles`,
                 {
                     category: result.category,
-                    discourseTypes: result.angles.map((angle) => angle.discourse),
+                    stances: result.angles.map((angle) => angle.stance),
                 },
             );
 
@@ -140,7 +132,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             // Create angle data from AI response (without creating full ReportAngle entities)
             const angles = result.angles.map((angleData) => ({
                 corpus: angleData.corpus,
-                discourse: angleData.discourse,
                 stance: angleData.stance,
             }));
 

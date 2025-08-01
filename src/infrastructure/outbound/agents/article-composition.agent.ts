@@ -102,7 +102,6 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                 {
                     angles: input.report.angles.map((angle) => ({
                         digest: angle.angleCorpus.value,
-                        discourse: angle.discourse.value,
                         stance: angle.stance.value,
                     })),
                     dateline: input.report.dateline.toISOString(),
@@ -118,7 +117,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
             this.logger.info(
                 `Composing article for report with ${input.report.angles.length} angles`,
                 {
-                    category: input.report.category.toString(),
+                    category: input.report.categories.primary().toString(),
                     country: input.targetCountry.toString(),
                     language: input.targetLanguage.toString(),
                 },
@@ -152,7 +151,6 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                     const angle = input.report.angles[index];
                     return {
                         body: frame.body,
-                        discourse: angle.discourse.value || 'MAINSTREAM',
                         headline: frame.headline,
                         stance: angle.stance.value || 'NEUTRAL',
                     };

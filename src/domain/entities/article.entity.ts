@@ -4,7 +4,7 @@ import { Authenticity } from '../value-objects/article/authenticity.vo.js';
 import { Body } from '../value-objects/article/body.vo.js';
 import { Headline } from '../value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../value-objects/article-frame/article-frame.vo.js';
-import { Category } from '../value-objects/category.vo.js';
+import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Language } from '../value-objects/language.vo.js';
 import { Classification } from '../value-objects/report/classification.vo.js';
@@ -12,7 +12,7 @@ import { Classification } from '../value-objects/report/classification.vo.js';
 export const articleSchema = z.object({
     authenticity: z.instanceof(Authenticity),
     body: z.instanceof(Body),
-    category: z.instanceof(Category),
+    categories: z.instanceof(Categories),
     classification: z.instanceof(Classification).optional(),
     country: z.instanceof(Country),
     frames: z.array(z.instanceof(ArticleFrame)).optional(),
@@ -28,7 +28,7 @@ export type ArticleProps = z.input<typeof articleSchema>;
 export class Article {
     public readonly authenticity: Authenticity;
     public readonly body: Body;
-    public readonly category: Category;
+    public readonly categories: Categories;
     public readonly classification?: Classification;
     public readonly country: Country;
     public readonly frames?: ArticleFrame[];
@@ -46,7 +46,7 @@ export class Article {
         }
 
         const validatedData = result.data;
-        this.category = validatedData.category;
+        this.categories = validatedData.categories;
         this.body = validatedData.body;
         this.country = validatedData.country;
         this.authenticity = validatedData.authenticity;

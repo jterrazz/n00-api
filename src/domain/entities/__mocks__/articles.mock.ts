@@ -10,6 +10,7 @@ import {
     AuthenticityStatusEnum,
 } from '../../value-objects/article/authenticity.vo.js';
 import { mockArticleFrames } from '../../value-objects/article-frame/__mocks__/article-frames.mock.js';
+import { Categories } from '../../value-objects/categories.vo.js';
 import { Article } from '../article.entity.js';
 
 /**
@@ -19,7 +20,7 @@ export function createMockArticle(index: number): Article {
     return new Article({
         authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
         body: getBody(index),
-        category: getCategory(index),
+        categories: new Categories([getCategory(index).value]),
         country: getCountry(index),
         frames: mockArticleFrames(2),
         headline: getHeadline(index),

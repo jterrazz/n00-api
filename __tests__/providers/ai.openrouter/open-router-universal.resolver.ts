@@ -35,7 +35,6 @@ function handleIngestion(model: string) {
             angles: [
                 {
                     corpus: 'This is a comprehensive corpus detailing the angle of the event from a mainstream perspective. It includes every significant argument, all supporting evidence, relevant statistics, quotes from key stakeholders, contextual background, chronological sequence of events, and potential implications. The corpus is written in bullet-point style, free of narrative fluff, focusing purely on delivering factual information that a writer can later transform into prose. Nothing is omitted; every pertinent data point gleaned from the articles is captured here for completeness.',
-                    discourse: 'MAINSTREAM',
                     stance: 'NEUTRAL',
                 },
             ],

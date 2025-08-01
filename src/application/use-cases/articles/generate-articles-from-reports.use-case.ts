@@ -10,7 +10,6 @@ import { Body } from '../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../domain/value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
-import { Discourse } from '../../../domain/value-objects/discourse.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { Stance } from '../../../domain/value-objects/stance.vo.js';
 
@@ -95,7 +94,6 @@ export class GenerateArticlesFromReportsUseCase {
                             (frameData) =>
                                 new ArticleFrame({
                                     body: new Body(frameData.body),
-                                    discourse: new Discourse(frameData.discourse),
                                     headline: new Headline(frameData.headline),
                                     stance: new Stance(frameData.stance),
                                 }),
@@ -104,7 +102,7 @@ export class GenerateArticlesFromReportsUseCase {
                         const article = new Article({
                             authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
                             body: new Body(compositionResult.body),
-                            category: report.category,
+                            categories: report.categories,
                             country,
                             frames,
                             headline: new Headline(compositionResult.headline),
@@ -295,7 +293,7 @@ export class GenerateArticlesFromReportsUseCase {
                                 fakeResult.clarification,
                             ),
                             body: new Body(fakeResult.body),
-                            category: fakeResult.category,
+                            categories: fakeResult.categories,
                             country,
                             headline: new Headline(fakeResult.headline),
                             id: randomUUID(),
@@ -305,7 +303,7 @@ export class GenerateArticlesFromReportsUseCase {
 
                         this.logger.info('Fake article composed', {
                             articleId: fakeArticle.id,
-                            category: fakeResult.category.toString(),
+                            category: fakeResult.categories.primary().toString(),
                             country: country.toString(),
                             headline: fakeArticle.headline.value,
                             language: language.toString(),

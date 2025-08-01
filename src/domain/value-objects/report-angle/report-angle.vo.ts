@@ -1,13 +1,11 @@
 import { z } from 'zod/v4';
 
-import { Discourse } from '../discourse.vo.js';
 import { Stance } from '../stance.vo.js';
 
 import { AngleCorpus } from './angle-corpus.vo.js';
 
 export const reportAngleSchema = z.object({
     angleCorpus: z.instanceof(AngleCorpus),
-    discourse: z.instanceof(Discourse),
     stance: z.instanceof(Stance),
 });
 
@@ -21,7 +19,6 @@ export type ReportAngleData = z.input<typeof reportAngleSchema>;
  */
 export class ReportAngle {
     public readonly angleCorpus: AngleCorpus;
-    public readonly discourse: Discourse;
     public readonly stance: Stance;
 
     constructor(data: ReportAngleData) {
@@ -34,6 +31,5 @@ export class ReportAngle {
         const validated = result.data;
         this.angleCorpus = validated.angleCorpus;
         this.stance = validated.stance;
-        this.discourse = validated.discourse;
     }
 }
