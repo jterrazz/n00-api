@@ -1,7 +1,7 @@
 import {
     type Article as PrismaArticle,
     type ArticleFrame as PrismaArticleFrame,
-    type ArticleQuizQuestion as PrismaArticleQuizQuestion,
+    type ArticleQuiz as PrismaArticleQuiz,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
     type Prisma,
@@ -65,7 +65,7 @@ export class ArticleMapper {
     toDomain(
         prisma: PrismaArticle & {
             frames?: PrismaArticleFrame[];
-            quizQuestions?: PrismaArticleQuizQuestion[];
+            quizQuestions?: PrismaArticleQuiz[];
             reports?: { classification: string; id: string }[];
         },
     ): Article {

@@ -95,8 +95,8 @@ model Article {
 
   // Relations
   frames        ArticleFrame[]
-  quizQuestions ArticleQuizQuestion[]
-  reports       Report[]              @relation("ReportArticles")
+  quizQuestions ArticleQuiz[]
+  reports       Report[]       @relation("ReportArticles")
 
   @@index([language, country])
   @@index([createdAt])
@@ -118,7 +118,7 @@ model ArticleFrame {
   @@index([articleId])
 }
 
-model ArticleQuizQuestion {
+model ArticleQuiz {
   id                 String @id @default(uuid())
   question           String // The quiz question text
   answers            Json // Array of possible answers ["Answer 1", "Answer 2", "Answer 3", "Answer 4"]
@@ -132,4 +132,5 @@ model ArticleQuizQuestion {
   createdAt DateTime @default(now())
 
   @@index([articleId])
+  @@map("ArticleQuizQuestion")
 }

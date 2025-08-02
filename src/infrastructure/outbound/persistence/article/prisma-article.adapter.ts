@@ -182,13 +182,13 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     typeof prismaData.quizQuestions === 'object' &&
                     'create' in prismaData.quizQuestions
                 ) {
-                    await tx.articleQuizQuestion.deleteMany({
+                    await tx.articleQuiz.deleteMany({
                         where: { articleId: article.id },
                     });
 
                     const quizData = prismaData.quizQuestions.create;
                     if (Array.isArray(quizData)) {
-                        await tx.articleQuizQuestion.createMany({
+                        await tx.articleQuiz.createMany({
                             data: quizData.map((quiz) => ({
                                 answers: quiz.answers,
                                 articleId: article.id,
