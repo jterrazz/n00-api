@@ -12,6 +12,7 @@ import {
 } from '../../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
@@ -271,7 +272,8 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 { length: 10 },
                 (_, i) =>
                     new Article({
-                        authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC), // Real articles only
+                        authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
+                        // Real articles only
                         body: new Body(
                             `This is existing real article body content number ${i + 1} with sufficient length for validation`,
                         ),
@@ -281,6 +283,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                         id: randomUUID(),
                         language: DEFAULT_LANGUAGE,
                         publishedAt: new Date(Date.now() - i * 1000 * 60 * 60),
+                        traits: new ArticleTraits(),
                     }),
             );
 
@@ -360,6 +363,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     id: randomUUID(),
                     language: DEFAULT_LANGUAGE,
                     publishedAt: new Date(Date.now() - 1000 * 60 * 60),
+                    traits: new ArticleTraits(),
                 }),
                 new Article({
                     authenticity: new Authenticity(
@@ -375,6 +379,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                     id: randomUUID(),
                     language: DEFAULT_LANGUAGE,
                     publishedAt: new Date(Date.now() - 2000 * 60 * 60),
+                    traits: new ArticleTraits(),
                 }),
             ];
 
@@ -420,6 +425,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                         id: randomUUID(),
                         language: DEFAULT_LANGUAGE,
                         publishedAt: new Date(Date.now() - i * 1000 * 60 * 60),
+                        traits: new ArticleTraits(),
                     }),
             );
 

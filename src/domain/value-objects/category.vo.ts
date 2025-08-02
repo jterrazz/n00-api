@@ -13,9 +13,7 @@ export const categorySchema = z
         'SPORTS',
         'OTHER',
     ])
-    .describe(
-        "Classifies the news report into a predefined category. If the report doesn't fit any of the specific categories, 'OTHER' must be used as a fallback.",
-    );
+    .describe('Classifies the news report by topic or subject matter.');
 
 export type CategoryEnum = z.infer<typeof categorySchema>;
 

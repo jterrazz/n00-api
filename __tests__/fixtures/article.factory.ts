@@ -13,6 +13,7 @@ import {
 } from '../../src/domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../src/domain/value-objects/article/body.vo.js';
 import { Headline } from '../../src/domain/value-objects/article/headline.vo.js';
+import { ArticleTraits } from '../../src/domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../src/domain/value-objects/categories.vo.js';
 import { Country } from '../../src/domain/value-objects/country.vo.js';
 import { Language } from '../../src/domain/value-objects/language.vo.js';
@@ -31,6 +32,7 @@ export class ArticleFactory {
         id: string;
         language: Language;
         publishedAt: Date;
+        traits: ArticleTraits;
     };
 
     constructor() {
@@ -43,6 +45,7 @@ export class ArticleFactory {
             id: crypto.randomUUID(),
             language: new Language('EN'),
             publishedAt: new Date('2024-03-01T12:00:00.000Z'),
+            traits: new ArticleTraits(),
         };
     }
 
@@ -74,6 +77,7 @@ export class ArticleFactory {
             id: this.data.id,
             language: this.data.language,
             publishedAt: this.data.publishedAt,
+            traits: this.data.traits,
         });
     }
 
@@ -90,6 +94,7 @@ export class ArticleFactory {
                 dateline: article.publishedAt,
                 facts: `Facts for ${article.headline.value}`,
                 sources: [],
+                traits: {},
             },
         });
 
@@ -108,6 +113,7 @@ export class ArticleFactory {
                 reports: {
                     connect: { id: report.id },
                 },
+                traits: {},
             } as unknown as Prisma.ArticleCreateInput,
         });
 

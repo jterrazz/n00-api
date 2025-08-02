@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
 import { Report } from '../../../../domain/entities/report.entity.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
@@ -41,6 +42,7 @@ const createMockReport = (
         facts: 'These are valid report facts that are definitely long enough for testing purposes. They detail the event and provide context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
         id: reportId,
         sourceReferences: ['source-1'],
+        traits: new ArticleTraits(),
         updatedAt: new Date(),
     });
 };

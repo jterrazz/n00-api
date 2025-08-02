@@ -38,6 +38,10 @@ type ArticleMetadata = {
     classification?: 'ARCHIVED' | 'NICHE' | 'STANDARD';
     country: Country;
     language: Language;
+    traits: {
+        smart: boolean;
+        uplifting: boolean;
+    };
 };
 
 type ArticleResponse = {
@@ -118,6 +122,10 @@ export class GetArticlesResponsePresenter {
                     | undefined,
                 country: article.country.toString() as Country,
                 language: article.language.toString() as Language,
+                traits: {
+                    smart: article.traits.smart,
+                    uplifting: article.traits.uplifting,
+                },
             },
             publishedAt: article.publishedAt.toISOString(),
         };

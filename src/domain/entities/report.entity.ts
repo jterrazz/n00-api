@@ -1,5 +1,6 @@
 import { z } from 'zod/v4';
 
+import { ArticleTraits } from '../value-objects/article-traits.vo.js';
 import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Classification } from '../value-objects/report/classification.vo.js';
@@ -37,6 +38,10 @@ export const anglesSchema = z
     .array(z.instanceof(ReportAngle))
     .describe('A list of different viewpoints or angles on the report.');
 
+export const traitsSchema = z
+    .instanceof(ArticleTraits)
+    .describe('Content traits such as smart and uplifting characteristics.');
+
 export const sourceReferencesSchema = z
     .array(z.string())
     .describe('A list of IDs from the original source articles used to create the report.');
@@ -53,6 +58,7 @@ export const reportSchema = z.object({
     facts: factsSchema,
     id: idSchema,
     sourceReferences: sourceReferencesSchema,
+    traits: traitsSchema,
     updatedAt: updatedAtSchema,
 });
 
@@ -71,6 +77,7 @@ export class Report {
     public readonly facts: string;
     public readonly id: string;
     public readonly sourceReferences: string[];
+    public readonly traits: ArticleTraits;
     public readonly updatedAt: Date;
 
     public constructor(data: ReportProps) {
@@ -83,6 +90,7 @@ export class Report {
         const validatedData = result.data;
         this.id = validatedData.id;
         this.facts = validatedData.facts;
+        this.traits = validatedData.traits;
         this.categories = validatedData.categories;
         this.angles = validatedData.angles;
         this.dateline = validatedData.dateline;

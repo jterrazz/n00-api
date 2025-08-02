@@ -15,8 +15,8 @@ import {
 import { type NewsReport } from '../../../application/ports/outbound/providers/news.port.js';
 
 import { factsSchema } from '../../../domain/entities/report.entity.js';
-import { Category } from '../../../domain/value-objects/category.vo.js';
-import { categorySchema } from '../../../domain/value-objects/category.vo.js';
+import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
+import { Categories, categoriesSchema } from '../../../domain/value-objects/categories.vo.js';
 import { angleCorpusSchema } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { stanceSchema } from '../../../domain/value-objects/stance.vo.js';
 
@@ -31,10 +31,19 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
                     stance: stanceSchema,
                 }),
             )
-            .min(1, 'At least one angle is required.')
-            .max(2, 'No more than two angles should be created.'),
-        category: categorySchema,
+            .max(3, 'No more than three angles should be created.'),
+        categories: categoriesSchema,
         facts: factsSchema,
+        traits: z.object({
+            smart: z
+                .boolean()
+                .default(false)
+                .describe('Content that improves understanding and intellectual growth'),
+            uplifting: z
+                .boolean()
+                .default(false)
+                .describe('Content that promotes positive emotions and hope'),
+        }),
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
@@ -72,17 +81,22 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             // Output Requirements
             'OUTPUT REQUIREMENTS:',
             '• facts → A neutral, exhaustive statement of who did what, where, and when. No speculation, opinion, or editorialising.',
+            '• categories → An array of at least one topic category: POLITICS, BUSINESS, TECHNOLOGY, SCIENCE, HEALTH, ENVIRONMENT, SOCIETY, ENTERTAINMENT, SPORTS, OTHER',
+            '• traits → Content characteristics (boolean flags):',
+            '    • smart → true if content improves understanding and intellectual growth (avoid superficial/clickbait)',
+            '    • uplifting → true if content promotes positive emotions and hope (not just "less bad" news)',
             '• angles → An array with **1-2** items. For each angle include:',
             '    • corpus → NOT a summary. Compile EVERY argument, fact, and piece of evidence supporting that viewpoint, focused solely on the subject. Exclude information about the publication or author.',
-            '    • stance → Reflects tone (e.g. SUPPORTIVE, CRITICAL, NEUTRAL).',
+            '    • stance → A metadata about the tone (e.g. SUPPORTIVE, CRITICAL, NEUTRAL).',
             '',
 
             // Analysis Framework
             'ANALYSIS FRAMEWORK:',
             '1. Extract the undisputed facts common to all.',
             '2. Identify every viewpoint expressed across articles and MERGE any that share the same core argument.',
-            '3. Select the 1-2 most dominant, clearly DIFFERENT angles.',
-            '4. For each selected angle, compile the full corpus and assign `stance` tag.',
+            '3. Select the 0-3 most dominant, clearly DIFFERENT angles.',
+            '4. For each selected angle, compile the full corpus',
+            '5. Assign the `stance` tag.',
             '',
 
             // Critical Rules
@@ -90,6 +104,11 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             '• Focus ONLY on the news subject; do NOT create angles about the publication or journalists.',
             '• Use ONLY the provided text—no external information.',
             '• Never produce more than 2 angles; merge redundant ones.',
+            '• ALWAYS include at least one topic category in the categories array.',
+            '• Trait flags are boolean - set to true only when content genuinely meets the criteria.',
+            '• smart flag should only be true for intellectually enriching content that helps understanding.',
+            '• uplifting flag should only be true for authentically positive content, not neutral or "less negative" stories.',
+            '• Traits are separate from categories - keep topic classification distinct from content characteristics.',
             '',
 
             // Data input
@@ -121,13 +140,15 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             this.logger.info(
                 `AI response parsed successfully with ${result.angles.length} angles`,
                 {
-                    category: result.category,
+                    categories: result.categories,
                     stances: result.angles.map((angle) => angle.stance),
+                    traits: result.traits,
                 },
             );
 
             // Create value objects from AI response
-            const category = new Category(result.category);
+            const categories = new Categories(result.categories);
+            const traits = new ArticleTraits(result.traits);
 
             // Create angle data from AI response (without creating full ReportAngle entities)
             const angles = result.angles.map((angleData) => ({
@@ -137,8 +158,9 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
 
             const ingestionResult: ReportIngestionResult = {
                 angles,
-                category,
+                categories,
                 facts: result.facts,
+                traits,
             };
 
             this.logger.info(

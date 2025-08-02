@@ -5,7 +5,6 @@ import { Category, type CategoryEnum, categorySchema } from './category.vo.js';
 export const categoriesSchema = z
     .array(categorySchema)
     .min(1, 'At least one category is required')
-    .max(3, 'Maximum 3 categories allowed')
     .refine((categories) => {
         // Remove duplicates and check if any were removed
         const unique = Array.from(new Set(categories));

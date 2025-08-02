@@ -54,6 +54,10 @@ describe('Server /articles route – integration', () => {
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',
+                        traits: {
+                            smart: false,
+                            uplifting: false,
+                        },
                     },
                     publishedAt: '<date>',
                 },
@@ -79,6 +83,10 @@ describe('Server /articles route – integration', () => {
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',
+                        traits: {
+                            smart: false,
+                            uplifting: false,
+                        },
                     },
                     publishedAt: '<date>',
                 },
@@ -104,6 +112,10 @@ describe('Server /articles route – integration', () => {
                         classification: 'STANDARD',
                         country: 'US',
                         language: 'EN',
+                        traits: {
+                            smart: false,
+                            uplifting: false,
+                        },
                     },
                     publishedAt: '<date>',
                 },

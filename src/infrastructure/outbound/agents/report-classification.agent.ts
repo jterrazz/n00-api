@@ -69,7 +69,7 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
             'CLASSIFICATION GUIDELINES:',
             '• STANDARD → National or international relevance with broad public interest; would appear on the front page of leading general-interest outlets (e.g., FIFA World Cup final, presidential election results, central-bank rate changes).',
             '• NICHE → Relevant primarily to a well-defined subgroup (region, industry, hobby, or demographic) with limited mainstream crossover (e.g., minor league transfers, specialised open-source framework update, niche hobby convention).',
-            '• ARCHIVED → Lacks real-world news value or is purely auxiliary content (e.g. game guides, listicles, promotions, opinion pieces without factual basis).',
+            '• ARCHIVED → Lacks real-world news value or is purely auxiliary content (e.g. game guides, listicles, promotions, opinion pieces without factual basis, horoscopes, astrology, pseudoscientific predictions, lifestyle advice without news basis).',
             '',
 
             // Analysis Framework
@@ -89,6 +89,8 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
             'CRITICAL RULES:',
             '• You MUST choose exactly one classification.',
             '• You MUST provide a reason that is clear, brief, and references the audience or content nature.',
+            '• You MUST classify any horoscopes, astrology, pseudoscientific predictions, or lifestyle guidance as ARCHIVED.',
+            '• Content must be factual news reporting to qualify for STANDARD or NICHE classification.',
             '',
 
             // Report to Analyse

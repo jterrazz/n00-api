@@ -57,6 +57,7 @@ model Report {
   id             String         @id @default(uuid())
   facts          String
   categories     Json // Array of Category enum values
+  traits         Json // Content traits: { smart: boolean, uplifting: boolean }
   classification Classification @default(PENDING_CLASSIFICATION)
 
   // Geographic and temporal context
@@ -101,6 +102,7 @@ model Article {
   headline      String
   body          String // Main neutral article presenting only facts from all sides
   categories    Json // Array of Category enum values  
+  traits        Json // Content traits: { smart: boolean, uplifting: boolean }
   authenticity  AuthenticityStatus @default(AUTHENTIC) // Whether the article is authentic or fabricated
   clarification String? // Explanation when authenticity is FABRICATED
   country       Country

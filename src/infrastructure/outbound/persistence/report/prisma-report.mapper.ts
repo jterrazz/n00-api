@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 
 import { Report } from '../../../../domain/entities/report.entity.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
@@ -98,6 +99,7 @@ export class ReportMapper {
             facts: prisma.facts,
             id: prisma.id,
             sourceReferences: Array.isArray(prisma.sources) ? (prisma.sources as string[]) : [],
+            traits: ArticleTraits.fromJSON(prisma.traits || {}),
             updatedAt: prisma.updatedAt,
         });
     }
@@ -115,6 +117,7 @@ export class ReportMapper {
             facts: report.facts,
             id: report.id,
             sources: report.sourceReferences,
+            traits: report.traits.toJSON(),
         };
     }
 }

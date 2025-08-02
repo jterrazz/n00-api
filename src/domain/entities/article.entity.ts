@@ -4,6 +4,7 @@ import { Authenticity } from '../value-objects/article/authenticity.vo.js';
 import { Body } from '../value-objects/article/body.vo.js';
 import { Headline } from '../value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../value-objects/article-frame/article-frame.vo.js';
+import { ArticleTraits } from '../value-objects/article-traits.vo.js';
 import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Language } from '../value-objects/language.vo.js';
@@ -21,6 +22,7 @@ export const articleSchema = z.object({
     language: z.instanceof(Language),
     publishedAt: z.date(),
     reportIds: z.array(z.string()).optional(),
+    traits: z.instanceof(ArticleTraits),
 });
 
 export type ArticleProps = z.input<typeof articleSchema>;
@@ -37,6 +39,7 @@ export class Article {
     public readonly language: Language;
     public readonly publishedAt: Date;
     public readonly reportIds?: string[];
+    public readonly traits: ArticleTraits;
 
     public constructor(data: ArticleProps) {
         const result = articleSchema.safeParse(data);
@@ -46,6 +49,7 @@ export class Article {
         }
 
         const validatedData = result.data;
+        this.traits = validatedData.traits;
         this.categories = validatedData.categories;
         this.body = validatedData.body;
         this.country = validatedData.country;

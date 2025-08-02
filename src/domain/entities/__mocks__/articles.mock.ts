@@ -10,6 +10,7 @@ import {
     AuthenticityStatusEnum,
 } from '../../value-objects/article/authenticity.vo.js';
 import { mockArticleFrames } from '../../value-objects/article-frame/__mocks__/article-frames.mock.js';
+import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { Categories } from '../../value-objects/categories.vo.js';
 import { Article } from '../article.entity.js';
 
@@ -28,6 +29,7 @@ export function createMockArticle(index: number): Article {
         language: getLanguage(index),
         publishedAt: new Date(),
         reportIds: [],
+        traits: new ArticleTraits(),
     });
 }
 

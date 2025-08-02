@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 
 import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
 import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
+import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { Categories } from '../../value-objects/categories.vo.js';
 import { getClassification } from '../../value-objects/report/__mocks__/classifications.mock.js';
 import { mockReportAngles } from '../../value-objects/report-angle/__mocks__/report-angles.mock.js';
@@ -38,6 +39,7 @@ export function getMockReport(options?: {
         facts: 'Mock Report Facts: A comprehensive list of key political developments across multiple regions, outlining actors, timelines, and data points that shape the public discourse on this evolving situation.',
         id: reportId,
         sourceReferences: ['worldnewsapi:mock-article-1', 'worldnewsapi:mock-article-2'],
+        traits: new ArticleTraits(),
         updatedAt: new Date(),
     });
 }
@@ -63,6 +65,7 @@ function createMockReport(index: number): Report {
         facts: `These are key facts for report ${index}. Topic: ${category.toString()}. It lists all major events, actors, and evidence in a concise factual format long enough to satisfy validation requirements.`,
         id: reportId,
         sourceReferences: [`source-ref-${index}`],
+        traits: new ArticleTraits(),
         updatedAt: new Date(),
     });
 }

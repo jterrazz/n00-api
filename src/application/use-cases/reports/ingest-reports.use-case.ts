@@ -2,7 +2,6 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
 import { Report } from '../../../domain/entities/report.entity.js';
-import { Categories } from '../../../domain/value-objects/categories.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { Classification } from '../../../domain/value-objects/report/classification.vo.js';
@@ -55,7 +54,7 @@ export class IngestReportsUseCase {
                 language,
             });
 
-            newsStories = newsStories.slice(0, 3);
+            newsStories = newsStories.slice(0, 7);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news reports fetched', {
@@ -163,7 +162,7 @@ export class IngestReportsUseCase {
 
                     const report = new Report({
                         angles,
-                        categories: new Categories([ingestionResult.category.toString()]),
+                        categories: ingestionResult.categories,
                         classification: new Classification('PENDING_CLASSIFICATION'),
                         country,
                         createdAt: now,
@@ -171,6 +170,7 @@ export class IngestReportsUseCase {
                         facts: ingestionResult.facts,
                         id: reportId,
                         sourceReferences: newsReport.articles.map((a) => a.id),
+                        traits: ingestionResult.traits,
                         updatedAt: now,
                     });
 

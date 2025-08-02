@@ -1,4 +1,5 @@
-import { type Category } from '../../../../domain/value-objects/category.vo.js';
+import { type ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
+import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type StanceValue } from '../../../../domain/value-objects/stance.vo.js';
 
 import { type NewsReport } from '../providers/news.port.js';
@@ -21,6 +22,7 @@ export interface ReportIngestionResult {
         corpus: string;
         stance: StanceValue;
     }>;
-    category: Category;
+    categories: Categories;
     facts: string;
+    traits: ArticleTraits;
 }

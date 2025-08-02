@@ -9,6 +9,7 @@ import {
 import { Body } from '../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../domain/value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
+import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 import { Stance } from '../../../domain/value-objects/stance.vo.js';
@@ -110,6 +111,7 @@ export class GenerateArticlesFromReportsUseCase {
                             language,
                             publishedAt: report.dateline,
                             reportIds: [report.id],
+                            traits: report.traits,
                         });
 
                         generatedArticles.push(article);
@@ -288,6 +290,7 @@ export class GenerateArticlesFromReportsUseCase {
 
                         // Create fake article entity
                         const fakeArticle = new Article({
+                            // Empty attributes for fabricated content
                             authenticity: new Authenticity(
                                 AuthenticityStatusEnum.FABRICATED,
                                 fakeResult.clarification,
@@ -299,6 +302,7 @@ export class GenerateArticlesFromReportsUseCase {
                             id: randomUUID(),
                             language,
                             publishedAt,
+                            traits: new ArticleTraits(),
                         });
 
                         this.logger.info('Fake article composed', {

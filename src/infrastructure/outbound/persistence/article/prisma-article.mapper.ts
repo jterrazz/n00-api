@@ -15,6 +15,7 @@ import {
 import { Body } from '../../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
 import { ArticleFrame } from '../../../../domain/value-objects/article-frame/article-frame.vo.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
@@ -99,6 +100,7 @@ export class ArticleMapper {
             language: new Language(prisma.language),
             publishedAt: prisma.publishedAt,
             reportIds: prisma.reports?.map((report) => report.id),
+            traits: ArticleTraits.fromJSON(prisma.traits || {}),
         });
     }
 
@@ -127,6 +129,7 @@ export class ArticleMapper {
                       connect: domain.reportIds.map((id) => ({ id })),
                   }
                 : undefined,
+            traits: domain.traits.toJSON(),
         } as unknown as Prisma.ArticleCreateInput;
     }
 }
