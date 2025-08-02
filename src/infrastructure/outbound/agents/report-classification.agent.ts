@@ -15,6 +15,7 @@ import {
     type ReportClassificationResult,
 } from '../../../application/ports/outbound/agents/report-classification.agent.js';
 
+import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { Classification as ClassificationVO } from '../../../domain/value-objects/report/classification.vo.js';
 
 export class ReportClassificationAgentAdapter implements ReportClassificationAgentPort {
@@ -23,6 +24,18 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
         reason: z
             .string()
             .describe('A brief, clear justification for your classification selection.'),
+        traits: z.object({
+            smart: z
+                .boolean()
+                .default(false)
+                .describe(
+                    'Reserved for content that helps understand world dynamics, geopolitics, economics, systemic issues, or deep mechanisms - for readers who genuinely want to comprehend how the world works',
+                ),
+            uplifting: z
+                .boolean()
+                .default(false)
+                .describe('Content that promotes positive emotions and hope'),
+        }),
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
@@ -82,6 +95,9 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
             'OUTPUT REQUIREMENTS:',
             '• classification → One of: STANDARD | NICHE | ARCHIVED.',
             '• reason → One concise sentence explaining the decision.',
+            '• traits → Content characteristics (boolean flags):',
+            '    • smart → true ONLY for content that helps understand world dynamics, geopolitics, economics, or systemic mechanisms - reserved for readers who genuinely want to comprehend how the world works (avoid superficial/clickbait)',
+            '    • uplifting → true if content promotes positive emotions and hope (not just "less bad" news)',
             '',
 
             // Critical Rules
@@ -90,6 +106,10 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
             '• You MUST provide a reason that is clear, brief, and references the audience or content nature.',
             '• You MUST classify any horoscopes, astrology, pseudoscientific predictions, or lifestyle guidance as ARCHIVED.',
             '• Content must be factual news reporting to qualify for STANDARD or NICHE classification.',
+            '• Trait flags are boolean - set to true only when content genuinely meets the criteria.',
+            '• smart flag should only be true for content that genuinely helps understand world dynamics, geopolitics, economics, or systemic mechanisms - not just general knowledge or surface-level insights.',
+            '• uplifting flag should only be true for authentically positive content, not neutral or "less negative" stories.',
+            '• Traits are separate from classification - keep priority assessment distinct from content characteristics.',
             '',
 
             // Report to Analyse
@@ -119,11 +139,13 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
                 classification: result.classification,
                 reason: result.reason,
                 reportId: input.report.id,
+                traits: result.traits,
             });
 
             return {
                 classification: new ClassificationVO(result.classification),
                 reason: result.reason,
+                traits: new ArticleTraits(result.traits),
             };
         } catch (error) {
             this.logger.error('Error during report classification', {

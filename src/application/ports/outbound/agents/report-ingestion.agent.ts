@@ -1,4 +1,3 @@
-import { type ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 
 import { type NewsReport } from '../providers/news.port.js';
@@ -22,5 +21,4 @@ export interface ReportIngestionResult {
     }>;
     categories: Categories;
     facts: string;
-    traits: ArticleTraits;
 }

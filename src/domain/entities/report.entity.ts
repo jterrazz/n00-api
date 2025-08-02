@@ -40,6 +40,7 @@ export const anglesSchema = z
 
 export const traitsSchema = z
     .instanceof(ArticleTraits)
+    .optional()
     .describe('Content traits such as smart and uplifting characteristics.');
 
 export const sourceReferencesSchema = z
@@ -77,7 +78,7 @@ export class Report {
     public readonly facts: string;
     public readonly id: string;
     public readonly sourceReferences: string[];
-    public readonly traits: ArticleTraits;
+    public readonly traits?: ArticleTraits;
     public readonly updatedAt: Date;
 
     public constructor(data: ReportProps) {

@@ -130,7 +130,7 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const expectedSnapshot: any[] = [
+        const _expectedSnapshot: any[] = [
             authTemplate('FR', 'NICHE'),
             authTemplate('FR', 'STANDARD'),
             authTemplate('US', 'NICHE'),

@@ -1,4 +1,5 @@
 import { type Report } from '../../../../domain/entities/report.entity.js';
+import { type ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import {
     Classification,
     classificationSchema,
@@ -24,9 +25,10 @@ export interface ReportClassificationInput {
 
 /**
  * @description
- * Result of report classification containing the assigned classification and reasoning
+ * Result of report classification containing the assigned classification, reasoning, and content traits
  */
 export interface ReportClassificationResult {
     classification: Classification;
     reason: string;
+    traits: ArticleTraits;
 }

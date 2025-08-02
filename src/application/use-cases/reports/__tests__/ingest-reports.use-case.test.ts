@@ -2,7 +2,6 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { beforeEach, describe, expect, test } from '@jterrazz/test';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
-import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
@@ -73,10 +72,6 @@ describe('IngestReportsUseCase', () => {
             ],
             categories: new Categories(['TECHNOLOGY']),
             facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
-            traits: new ArticleTraits({
-                smart: true,
-                uplifting: false,
-            }),
         };
 
         mockReportDeduplicationAgent.run.mockResolvedValue({
@@ -166,10 +161,6 @@ describe('IngestReportsUseCase', () => {
             ],
             categories: new Categories(['TECHNOLOGY']),
             facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
-            traits: new ArticleTraits({
-                smart: true,
-                uplifting: false,
-            }),
         };
 
         mockReportIngestionAgent.run.mockResolvedValueOnce(mockResult).mockResolvedValueOnce(null); // Second report fails to ingest

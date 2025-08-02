@@ -100,12 +100,12 @@ export class ArticleFactory {
 
         await prisma.article.create({
             data: {
-                fabricated: article.isFabricated(),
                 body: article.body.value,
                 categories: article.categories.toArray(),
-                fabricatedReason: article.authenticity.clarification,
                 country: article.country.toString() as PrismaCountry,
                 createdAt: article.publishedAt,
+                fabricated: article.isFabricated(),
+                fabricatedReason: article.authenticity.clarification,
                 headline: article.headline.value,
                 id: article.id,
                 language: article.language.toString() as PrismaLanguage,

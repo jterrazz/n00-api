@@ -189,7 +189,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     const quizData = prismaData.quizQuestions.create;
                     if (Array.isArray(quizData)) {
                         await tx.articleQuizQuestion.createMany({
-                            data: quizData.map((quiz: any) => ({
+                            data: quizData.map((quiz) => ({
                                 answers: quiz.answers,
                                 articleId: article.id,
                                 correctAnswerIndex: quiz.correctAnswerIndex,
@@ -212,7 +212,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     const frameData = prismaData.frames.create;
                     if (Array.isArray(frameData)) {
                         await tx.articleFrame.createMany({
-                            data: frameData.map((frame: any) => ({
+                            data: frameData.map((frame) => ({
                                 articleId: article.id,
                                 body: frame.body,
                                 headline: frame.headline,

@@ -52,15 +52,9 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
     static readonly USER_PROMPT = (input: ArticleQuizGenerationInput) => {
         const framesContent =
             input.frames && input.frames.length > 0
-                ? `\n\nALTERNATIVE FRAMES/PERSPECTIVES:
-${input.frames
-    .map(
-        (frame, index) =>
-            `Frame ${index + 1}:
-    Headline: ${frame.headline.toString()}
-    Content: ${frame.body.toString()}`,
-    )
-    .join('\n\n')}`
+                ? input.frames
+                      .map((frame) => `\n\n${frame.headline.toString()}\n${frame.body.toString()}`)
+                      .join('')
                 : '';
 
         return new UserPromptAdapter(

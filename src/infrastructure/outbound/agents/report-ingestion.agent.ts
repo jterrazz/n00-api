@@ -15,7 +15,6 @@ import {
 import { type NewsReport } from '../../../application/ports/outbound/providers/news.port.js';
 
 import { factsSchema } from '../../../domain/entities/report.entity.js';
-import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { Categories, categoriesSchema } from '../../../domain/value-objects/categories.vo.js';
 import { angleCorpusSchema } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 
@@ -32,16 +31,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             .max(3, 'No more than three angles should be created.'),
         categories: categoriesSchema,
         facts: factsSchema,
-        traits: z.object({
-            smart: z
-                .boolean()
-                .default(false)
-                .describe('Reserved for content that helps understand world dynamics, geopolitics, economics, systemic issues, or deep mechanisms - for readers who genuinely want to comprehend how the world works'),
-            uplifting: z
-                .boolean()
-                .default(false)
-                .describe('Content that promotes positive emotions and hope'),
-        }),
     });
 
     static readonly SYSTEM_PROMPT = new SystemPromptAdapter(
@@ -80,9 +69,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             'OUTPUT REQUIREMENTS:',
             '• facts → A neutral, exhaustive statement of who did what, where, and when. No speculation, opinion, or editorialising.',
             '• categories → An array of at least one topic category: POLITICS, BUSINESS, TECHNOLOGY, SCIENCE, HEALTH, ENVIRONMENT, SOCIETY, ENTERTAINMENT, SPORTS, OTHER',
-            '• traits → Content characteristics (boolean flags):',
-            '    • smart → true ONLY for content that helps understand world dynamics, geopolitics, economics, or systemic mechanisms - reserved for readers who genuinely want to comprehend how the world works (avoid superficial/clickbait)',
-            '    • uplifting → true if content promotes positive emotions and hope (not just "less bad" news)',
             '• angles → An array with **1-2** items. For each angle include:',
             '    • corpus → NOT a summary. Compile EVERY argument, fact, and piece of evidence supporting that viewpoint, focused solely on the subject. Exclude information about the publication or author.',
 
@@ -103,10 +89,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             '• Use ONLY the provided text—no external information.',
             '• Never produce more than 2 angles; merge redundant ones.',
             '• ALWAYS include at least one topic category in the categories array.',
-            '• Trait flags are boolean - set to true only when content genuinely meets the criteria.',
-            '• smart flag should only be true for content that genuinely helps understand world dynamics, geopolitics, economics, or systemic mechanisms - not just general knowledge or surface-level insights.',
-            '• uplifting flag should only be true for authentically positive content, not neutral or "less negative" stories.',
-            '• Traits are separate from categories - keep topic classification distinct from content characteristics.',
             '',
 
             // Data input
@@ -139,13 +121,11 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
                 `AI response parsed successfully with ${result.angles.length} angles`,
                 {
                     categories: result.categories,
-                    traits: result.traits,
                 },
             );
 
             // Create value objects from AI response
             const categories = new Categories(result.categories);
-            const traits = new ArticleTraits(result.traits);
 
             // Create angle data from AI response (without creating full ReportAngle entities)
             const angles = result.angles.map((angleData) => ({
@@ -156,7 +136,6 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
                 angles,
                 categories,
                 facts: result.facts,
-                traits,
             };
 
             this.logger.info(

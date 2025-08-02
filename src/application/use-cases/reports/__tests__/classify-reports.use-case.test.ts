@@ -78,6 +78,7 @@ describe('ClassifyReportsUseCase', () => {
             const classificationResult: ReportClassificationResult = {
                 classification: new Classification('STANDARD'),
                 reason: 'A solid, well-written report with broad appeal.',
+                traits: new ArticleTraits({ smart: true, uplifting: false }),
             };
             mockReportClassificationAgent.run.mockResolvedValue(classificationResult);
 
@@ -130,6 +131,7 @@ describe('ClassifyReportsUseCase', () => {
                 .mockResolvedValueOnce({
                     classification: new Classification('NICHE'),
                     reason: 'Interesting but for a specific audience.',
+                    traits: new ArticleTraits({ smart: false, uplifting: true }),
                 })
                 .mockResolvedValueOnce(null); // Second report fails
 

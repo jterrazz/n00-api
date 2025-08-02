@@ -109,7 +109,7 @@ export class ReportMapper {
             facts: report.facts,
             id: report.id,
             sources: report.sourceReferences,
-            traits: report.traits.toJSON(),
+            traits: report.traits?.toJSON() || { smart: false, uplifting: false },
         };
     }
 }

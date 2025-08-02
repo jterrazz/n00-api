@@ -7,7 +7,7 @@ const CATEGORY_VALUES: Category['value'][] = [
     'SCIENCE',
     'HEALTH',
     'ENVIRONMENT',
-    'SOCIETY',
+    'LIFESTYLE',
     'ENTERTAINMENT',
     'SPORTS',
     'OTHER',

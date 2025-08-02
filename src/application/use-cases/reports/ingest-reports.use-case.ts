@@ -168,7 +168,7 @@ export class IngestReportsUseCase {
                         facts: ingestionResult.facts,
                         id: reportId,
                         sourceReferences: newsReport.articles.map((a) => a.id),
-                        traits: ingestionResult.traits,
+                        // traits: undefined - will be set during classification
                         updatedAt: now,
                     });
 

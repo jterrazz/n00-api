@@ -109,7 +109,7 @@ export class GenerateArticlesFromReportsUseCase {
                             language,
                             publishedAt: report.dateline,
                             reportIds: [report.id],
-                            traits: report.traits,
+                            traits: report.traits || new ArticleTraits(), // Use report traits if available, otherwise default
                         });
 
                         generatedArticles.push(article);
