@@ -4,34 +4,33 @@ import { type GetArticlesResult } from '../../../../application/use-cases/articl
 
 import { type Article } from '../../../../domain/entities/article.entity.js';
 
+type ArticleChallenges = {
+    authenticity: {
+        enable: boolean;
+        explanation: string;
+    };
+    quiz: {
+        enable: boolean;
+        questions: Array<{
+            answers: string[];
+            correctAnswerIndex: number;
+            question: string;
+        }>;
+    };
+};
+
 type ArticleFrameResponse = {
     body: string;
     headline: string;
 };
 
-type ArticleInteractions = {
-    challenges: {
-        authenticity: {
-            enable: boolean;
-            explanation: string;
-        };
-        quiz: {
-            enable: boolean;
-            questions: Array<{
-                answers: string[];
-                correctAnswerIndex: number;
-                question: string;
-            }>;
-        };
-    };
-    insights: Array<{
-        agent: string;
-        analysis: string;
-        duration: string;
-        enable: boolean;
-        publishedAt: string;
-    }>;
-};
+type ArticleInsights = Array<{
+    agent: string;
+    analysis: string;
+    duration: string;
+    enable: boolean;
+    publishedAt: string;
+}>;
 
 type ArticleMetadata = {
     categories: Category[];
@@ -47,10 +46,11 @@ type ArticleMetadata = {
 
 type ArticleResponse = {
     body: string;
+    challenges: ArticleChallenges;
     frames: ArticleFrameResponse[];
     headline: string;
     id: string;
-    interactions: ArticleInteractions;
+    insights: ArticleInsights;
     metadata: ArticleMetadata;
     publishedAt: string;
 };
@@ -98,22 +98,20 @@ export class GetArticlesResponsePresenter {
 
         return {
             body: displayBody,
+            challenges: {
+                authenticity: {
+                    enable: false,
+                    explanation: '',
+                },
+                quiz: {
+                    enable: false,
+                    questions: [],
+                },
+            },
             frames,
             headline: article.headline.toString(),
             id: article.id,
-            interactions: {
-                challenges: {
-                    authenticity: {
-                        enable: false,
-                        explanation: '',
-                    },
-                    quiz: {
-                        enable: false,
-                        questions: [],
-                    },
-                },
-                insights: [],
-            },
+            insights: [],
             metadata: {
                 categories: article.categories.toArray() as Category[],
                 classification: article.classification?.toString() as

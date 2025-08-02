@@ -34,22 +34,20 @@ describe('Server /articles route – integration', () => {
             items: [
                 {
                     body: 'Breaking %%[(FABRICATED)]( sensational ) news about an invented event.',
+                    challenges: {
+                        authenticity: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     frames: [],
                     headline: 'Invented Event Shocks World',
                     id: '<uuid>',
-                    interactions: {
-                        challenges: {
-                            authenticity: {
-                                enable: false,
-                                explanation: '',
-                            },
-                            quiz: {
-                                enable: false,
-                                questions: [],
-                            },
-                        },
-                        insights: [],
-                    },
+                    insights: [],
                     metadata: {
                         categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
@@ -65,22 +63,20 @@ describe('Server /articles route – integration', () => {
                 },
                 {
                     body: 'Default test article body with detailed information about the topic.',
+                    challenges: {
+                        authenticity: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     frames: [],
                     headline: 'Default Test Article',
                     id: '<uuid>',
-                    interactions: {
-                        challenges: {
-                            authenticity: {
-                                enable: false,
-                                explanation: '',
-                            },
-                            quiz: {
-                                enable: false,
-                                questions: [],
-                            },
-                        },
-                        insights: [],
-                    },
+                    insights: [],
                     metadata: {
                         categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
@@ -96,22 +92,20 @@ describe('Server /articles route – integration', () => {
                 },
                 {
                     body: 'Default test article body with detailed information about the topic.',
+                    challenges: {
+                        authenticity: {
+                            enable: false,
+                            explanation: '',
+                        },
+                        quiz: {
+                            enable: false,
+                            questions: [],
+                        },
+                    },
                     frames: [],
                     headline: 'Default Test Article',
                     id: '<uuid>',
-                    interactions: {
-                        challenges: {
-                            authenticity: {
-                                enable: false,
-                                explanation: '',
-                            },
-                            quiz: {
-                                enable: false,
-                                questions: [],
-                            },
-                        },
-                        insights: [],
-                    },
+                    insights: [],
                     metadata: {
                         categories: ['TECHNOLOGY'],
                         classification: 'STANDARD',
