@@ -21,7 +21,7 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionResult,
 } from '../../../ports/outbound/agents/article-composition.agent.js';
-import { type ArticleFalsificationAgentPort } from '../../../ports/outbound/agents/article-falsification.agent.js';
+import { type ArticleFabricationAgentPort } from '../../../ports/outbound/agents/article-fabrication.agent.js';
 import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
 import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
 
@@ -35,7 +35,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
     // Test fixtures
     let mockArticleCompositionAgent: DeepMockProxy<ArticleCompositionAgentPort>;
-    let mockArticleFalsificationAgent: DeepMockProxy<ArticleFalsificationAgentPort>;
+    let mockArticleFabricationAgent: DeepMockProxy<ArticleFabricationAgentPort>;
     let mockLogger: DeepMockProxy<LoggerPort>;
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
     let mockArticleRepository: DeepMockProxy<ArticleRepositoryPort>;
@@ -45,14 +45,14 @@ describe('GenerateArticlesFromReportsUseCase', () => {
 
     beforeEach(() => {
         mockArticleCompositionAgent = mock<ArticleCompositionAgentPort>();
-        mockArticleFalsificationAgent = mock<ArticleFalsificationAgentPort>();
+        mockArticleFabricationAgent = mock<ArticleFabricationAgentPort>();
         mockLogger = mock<LoggerPort>();
         mockReportRepository = mock<ReportRepositoryPort>();
         mockArticleRepository = mock<ArticleRepositoryPort>();
 
         useCase = new GenerateArticlesFromReportsUseCase(
             mockArticleCompositionAgent,
-            mockArticleFalsificationAgent,
+            mockArticleFabricationAgent,
             mockLogger,
             mockReportRepository,
             mockArticleRepository,
@@ -79,7 +79,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
         mockArticleRepository.createMany.mockResolvedValue();
 
         // Mock fake article agent to return null by default for predictable testing
-        mockArticleFalsificationAgent.run.mockResolvedValue(null);
+        mockArticleFabricationAgent.run.mockResolvedValue(null);
 
         // Mock findMany to return empty array by default (no existing articles)
         mockArticleRepository.findMany.mockResolvedValue([]);
@@ -289,7 +289,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             mockArticleRepository.findMany.mockResolvedValue(existingRealArticles);
 
             // Mock fake article generation to succeed
-            mockArticleFalsificationAgent.run.mockResolvedValue({
+            mockArticleFabricationAgent.run.mockResolvedValue({
                 body: 'In a shocking turn of events that has left residents bewildered, a domestic cat named Whiskers has been elected mayor of the fictional town of Nowheresville.',
                 categories: new Categories(['POLITICS']),
                 clarification:
@@ -322,8 +322,8 @@ describe('GenerateArticlesFromReportsUseCase', () => {
                 limit: 10,
             });
 
-            // Should have called falsification agent with context from recent articles
-            expect(mockArticleFalsificationAgent.run).toHaveBeenCalledWith(
+            // Should have called fabrication agent with context from recent articles
+            expect(mockArticleFabricationAgent.run).toHaveBeenCalledWith(
                 expect.objectContaining({
                     context: expect.objectContaining({
                         currentDate: expect.any(Date),
@@ -400,7 +400,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             });
 
             // Should not have called faker agent due to recent fake found
-            expect(mockArticleFalsificationAgent.run).not.toHaveBeenCalled();
+            expect(mockArticleFabricationAgent.run).not.toHaveBeenCalled();
         });
 
         test('should handle fake article generation failures gracefully', async () => {
@@ -431,7 +431,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             mockArticleRepository.findMany.mockResolvedValue(existingRealArticles);
 
             // Mock fake article generation to fail
-            mockArticleFalsificationAgent.run.mockRejectedValue(
+            mockArticleFabricationAgent.run.mockRejectedValue(
                 new Error('Fake article generation failed'),
             );
 
@@ -443,8 +443,8 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             expect(result[0].isFabricated()).toBe(false);
             expect(result[0].reportIds).toEqual([testReport.id]);
 
-            // Should have called falsification agent with context from recent articles
-            expect(mockArticleFalsificationAgent.run).toHaveBeenCalledWith(
+            // Should have called fabrication agent with context from recent articles
+            expect(mockArticleFabricationAgent.run).toHaveBeenCalledWith(
                 expect.objectContaining({
                     context: expect.objectContaining({
                         currentDate: expect.any(Date),
@@ -502,7 +502,7 @@ describe('GenerateArticlesFromReportsUseCase', () => {
             );
 
             // Should not have called faker agent due to repository failure
-            expect(mockArticleFalsificationAgent.run).not.toHaveBeenCalled();
+            expect(mockArticleFabricationAgent.run).not.toHaveBeenCalled();
         });
     });
 });

@@ -17,7 +17,7 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionInput,
 } from '../../ports/outbound/agents/article-composition.agent.js';
-import { type ArticleFalsificationAgentPort } from '../../ports/outbound/agents/article-falsification.agent.js';
+import { type ArticleFabricationAgentPort } from '../../ports/outbound/agents/article-fabrication.agent.js';
 import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 
@@ -28,7 +28,7 @@ import { type ReportRepositoryPort } from '../../ports/outbound/persistence/repo
 export class GenerateArticlesFromReportsUseCase {
     constructor(
         private readonly articleCompositionAgent: ArticleCompositionAgentPort,
-        private readonly articleFalsificationAgent: ArticleFalsificationAgentPort,
+        private readonly articleFabricationAgent: ArticleFabricationAgentPort,
         private readonly logger: LoggerPort,
         private readonly reportRepository: ReportRepositoryPort,
         private readonly articleRepository: ArticleRepositoryPort,
@@ -229,7 +229,7 @@ export class GenerateArticlesFromReportsUseCase {
                 for (let i = 0; i < generateCount; i++) {
                     try {
                         // Let AI choose the category based on recent articles context
-                        const fakeResult = await this.articleFalsificationAgent.run({
+                        const fakeResult = await this.articleFabricationAgent.run({
                             context: {
                                 currentDate: new Date(),
                                 recentArticles: recentArticlesContext,
@@ -240,7 +240,7 @@ export class GenerateArticlesFromReportsUseCase {
                         });
 
                         if (!fakeResult) {
-                            this.logger.warn('Falsification agent returned no result', {
+                            this.logger.warn('Fabrication agent returned no result', {
                                 country: country.toString(),
                                 language: language.toString(),
                             });

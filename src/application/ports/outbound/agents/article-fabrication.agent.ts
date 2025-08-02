@@ -4,17 +4,17 @@ import { type Language } from '../../../../domain/value-objects/language.vo.js';
 
 /**
  * @description
- * Port for the Article Falsification Agent that generates convincing but fake news articles
+ * Port for the Article Fabrication Agent that generates convincing but fake news articles
  */
-export interface ArticleFalsificationAgentPort {
-    run(input: ArticleFalsificationInput): Promise<ArticleFalsificationResult | null>;
+export interface ArticleFabricationAgentPort {
+    run(input: ArticleFabricationInput): Promise<ArticleFabricationResult | null>;
 }
 
 /**
  * @description
  * Input data required for fabricated article generation
  */
-export interface ArticleFalsificationInput {
+export interface ArticleFabricationInput {
     context?: {
         currentDate?: Date;
         recentArticles?: Array<{
@@ -32,7 +32,7 @@ export interface ArticleFalsificationInput {
  * @description
  * Result of fabricated article generation containing the article content and metadata
  */
-export interface ArticleFalsificationResult {
+export interface ArticleFabricationResult {
     body: string;
     categories: Categories;
     clarification: string;

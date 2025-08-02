@@ -9,17 +9,17 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
 import {
-    type ArticleFalsificationAgentPort,
-    type ArticleFalsificationInput,
-    type ArticleFalsificationResult,
-} from '../../../application/ports/outbound/agents/article-falsification.agent.js';
+    type ArticleFabricationAgentPort,
+    type ArticleFabricationInput,
+    type ArticleFabricationResult,
+} from '../../../application/ports/outbound/agents/article-fabrication.agent.js';
 
 import { bodySchema } from '../../../domain/value-objects/article/body.vo.js';
 import { headlineSchema } from '../../../domain/value-objects/article/headline.vo.js';
 import { Categories } from '../../../domain/value-objects/categories.vo.js';
 import { categorySchema } from '../../../domain/value-objects/category.vo.js';
 
-export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAgentPort {
+export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPort {
     static readonly SCHEMA = z.object({
         body: bodySchema,
         category: categorySchema,
@@ -45,9 +45,9 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
         PROMPT_LIBRARY.FOUNDATIONS.CONTEXTUAL_ONLY,
     );
 
-    public readonly name = 'ArticleFalsificationAgent';
+    public readonly name = 'ArticleFabricationAgent';
 
-    private readonly agent: BasicAgent<z.infer<typeof ArticleFalsificationAgentAdapter.SCHEMA>>;
+    private readonly agent: BasicAgent<z.infer<typeof ArticleFabricationAgentAdapter.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -56,12 +56,12 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
         this.agent = new BasicAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ArticleFalsificationAgentAdapter.SCHEMA,
-            systemPrompt: ArticleFalsificationAgentAdapter.SYSTEM_PROMPT,
+            schema: ArticleFabricationAgentAdapter.SCHEMA,
+            systemPrompt: ArticleFabricationAgentAdapter.SYSTEM_PROMPT,
         });
     }
 
-    static readonly USER_PROMPT = (input: ArticleFalsificationInput) => {
+    static readonly USER_PROMPT = (input: ArticleFabricationInput) => {
         const currentDate = input.context?.currentDate || new Date();
         const recentArticles = input.context?.recentArticles || [];
         const toneInstruction =
@@ -140,19 +140,17 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
         );
     };
 
-    async run(input: ArticleFalsificationInput): Promise<ArticleFalsificationResult | null> {
+    async run(input: ArticleFabricationInput): Promise<ArticleFabricationResult | null> {
         try {
             this.logger.info('Generating fabricated article', {
                 country: input.targetCountry.toString(),
                 language: input.targetLanguage.toString(),
             });
 
-            const result = await this.agent.run(
-                ArticleFalsificationAgentAdapter.USER_PROMPT(input),
-            );
+            const result = await this.agent.run(ArticleFabricationAgentAdapter.USER_PROMPT(input));
 
             if (!result) {
-                this.logger.warn('Falsification agent returned no result');
+                this.logger.warn('Fabrication agent returned no result');
                 return null;
             }
 
@@ -163,7 +161,7 @@ export class ArticleFalsificationAgentAdapter implements ArticleFalsificationAge
                 headline: result.headline,
             });
 
-            const fakerResult: ArticleFalsificationResult = {
+            const fakerResult: ArticleFabricationResult = {
                 body: result.body,
                 categories: new Categories([result.category]),
                 clarification: result.clarification,

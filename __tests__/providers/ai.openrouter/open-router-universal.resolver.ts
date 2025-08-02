@@ -103,7 +103,7 @@ function handleDeduplication(model: string) {
         }),
     );
 }
-function handleFalsification(model: string) {
+function handleFabrication(model: string) {
     return HttpResponse.json(
         buildCompletion('mock-fake-article-id', model, {
             body: 'Satirical article body exaggerating the discovery of unicorn fossil fuels capable of infinite clean energy, clearly fictional.',
@@ -195,7 +195,7 @@ export const openRouterUniversalResolver = http.post(
             userPrompt.includes('fake-news-detection game') ||
             userPrompt.includes('entirely fake news article')
         ) {
-            return handleFalsification(model);
+            return handleFabrication(model);
         }
 
         if (
