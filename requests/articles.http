@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:3000
+@country = fr
+@category = sports
+
+### Get Articles
+GET {{baseUrl}}/articles?country={{country}}&category={{category}} HTTP/1.1
+
+### Get Articles (without category)
+GET {{baseUrl}}/articles?country={{country}} HTTP/1.1
