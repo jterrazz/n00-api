@@ -1,6 +1,5 @@
 ---
 description: Testing guidelines for unit, integration, and e2e tests
-globs:
 alwaysApply: true
 ---
 
@@ -96,34 +95,34 @@ Every test file follows this order:
 
 ```typescript
 // 1. Imports (with .js extensions for ESM)
-import { describe, it, expect, beforeAll, afterEach } from "@jterrazz/test";
-import { UserFactory } from "../fixtures/user.factory.js";
+import { describe, it, expect, beforeAll, afterEach } from '@jterrazz/test';
+import { UserFactory } from '../fixtures/user.factory.js';
 
 // 2. Test data setup & MSW handlers
 const mockUserData = UserFactory.build();
 
 // 3. Test hooks
 beforeAll(async () => {
-  /* setup */
+    /* setup */
 });
 afterEach(async () => {
-  /* cleanup */
+    /* cleanup */
 });
 
 // 4. Test suites
-describe("User Entity", () => {
-  describe("validation", () => {
-    it("accepts valid email formats", () => {
-      // Given – valid email input
-      const email = "user@example.com";
+describe('User Entity', () => {
+    describe('validation', () => {
+        it('accepts valid email formats', () => {
+            // Given – valid email input
+            const email = 'user@example.com';
 
-      // When – creating user
-      const user = User.create({ email, name: "Test User" });
+            // When – creating user
+            const user = User.create({ email, name: 'Test User' });
 
-      // Then – user is valid
-      expect(user.isValid()).toBe(true);
+            // Then – user is valid
+            expect(user.isValid()).toBe(true);
+        });
     });
-  });
 });
 ```
 
@@ -141,33 +140,30 @@ describe("User Entity", () => {
 ### Integration Test Example
 
 ```typescript
-import { describe, it, expect, beforeAll } from "@jterrazz/test";
-import {
-  createIntegrationContext,
-  executeRequest,
-} from "../setup/integration.js";
+import { describe, it, expect, beforeAll } from '@jterrazz/test';
+import { createIntegrationContext, executeRequest } from '../setup/integration.js';
 
-describe("User Registration API", () => {
-  let context: IntegrationContext;
+describe('User Registration API', () => {
+    let context: IntegrationContext;
 
-  beforeAll(async () => {
-    context = await createIntegrationContext();
-  });
-
-  it("creates user and returns confirmation", async () => {
-    // Given – valid registration data
-    const userData = { email: "test@example.com", password: "secure123" };
-
-    // When – submitting registration
-    const response = await executeRequest(context, "POST", "/users", userData);
-
-    // Then – user is created successfully
-    expect(response.status).toBe(201);
-    expect(response.body).toMatchObject({
-      id: expect.any(String),
-      email: userData.email,
+    beforeAll(async () => {
+        context = await createIntegrationContext();
     });
-  });
+
+    it('creates user and returns confirmation', async () => {
+        // Given – valid registration data
+        const userData = { email: 'test@example.com', password: 'secure123' };
+
+        // When – submitting registration
+        const response = await executeRequest(context, 'POST', '/users', userData);
+
+        // Then – user is created successfully
+        expect(response.status).toBe(201);
+        expect(response.body).toMatchObject({
+            id: expect.any(String),
+            email: userData.email,
+        });
+    });
 });
 ```
 
@@ -180,13 +176,13 @@ describe("User Registration API", () => {
 ```typescript
 // __tests__/setup/integration.ts
 export interface IntegrationContext {
-  db: Database;
-  server: TestServer;
-  msw: SetupServer;
+    db: Database;
+    server: TestServer;
+    msw: SetupServer;
 }
 
 export async function createIntegrationContext(): Promise<IntegrationContext> {
-  // Setup temporary database, test server, MSW handlers
+    // Setup temporary database, test server, MSW handlers
 }
 ```
 
@@ -195,15 +191,15 @@ export async function createIntegrationContext(): Promise<IntegrationContext> {
 ```typescript
 // __tests__/fixtures/user.factory.ts
 export class UserFactory {
-  static build(overrides?: Partial<User>): User {
-    return {
-      id: crypto.randomUUID(),
-      email: "test@example.com",
-      name: "Test User",
-      createdAt: new Date(),
-      ...overrides,
-    };
-  }
+    static build(overrides?: Partial<User>): User {
+        return {
+            id: crypto.randomUUID(),
+            email: 'test@example.com',
+            name: 'Test User',
+            createdAt: new Date(),
+            ...overrides,
+        };
+    }
 }
 ```
 
@@ -211,12 +207,12 @@ export class UserFactory {
 
 ```typescript
 // __tests__/providers/com.auth.api/auth-service-endpoint.resolver.ts
-import { http, setupServer } from "msw";
+import { http, setupServer } from 'msw';
 
 export const authServiceHandlers = [
-  http.post("/api/auth/login", ({ request }) => {
-    return new Response(JSON.stringify({ token: "mock-jwt-token" }));
-  }),
+    http.post('/api/auth/login', ({ request }) => {
+        return new Response(JSON.stringify({ token: 'mock-jwt-token' }));
+    }),
 ];
 
 // Setup MSW server for integration tests

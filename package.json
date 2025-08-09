@@ -15,7 +15,7 @@
     "lint:fix": "quality-fix"
   },
   "devDependencies": {
-    "@jterrazz/quality": "3.0.3",
+    "@jterrazz/quality": "3.0.5",
     "@jterrazz/test": "3.0.0",
     "@jterrazz/typescript": "3.0.0",
     "@types/config": "^3.3.5",
