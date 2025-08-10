@@ -137,6 +137,11 @@ export class ArticleFactory {
         return this;
     }
 
+    public withId(id: string): ArticleFactory {
+        this.data.id = id;
+        return this;
+    }
+
     public withLanguage(language: Language | string): ArticleFactory {
         this.data.language = typeof language === 'string' ? new Language(language) : language;
         return this;
@@ -182,11 +187,13 @@ export class ArticleTestScenarios {
             new ArticleFactory()
                 .withCountry('US')
                 .withLanguage('EN')
+                .withId('11111111-1111-4111-8111-111111111111')
                 .withPublishedAt(subDays(baseDate, 1))
                 .createInDatabase(prisma),
             new ArticleFactory()
                 .withCountry('US')
                 .withLanguage('EN')
+                .withId('22222222-2222-4222-8222-222222222222')
                 .withPublishedAt(baseDate)
                 .createInDatabase(prisma),
 
@@ -194,6 +201,7 @@ export class ArticleTestScenarios {
             new ArticleFactory()
                 .withCountry('FR')
                 .withLanguage('FR')
+                .withId('33333333-3333-4333-8333-333333333333')
                 .withPublishedAt(addDays(baseDate, 1))
                 .createInDatabase(prisma),
         ]);

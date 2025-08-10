@@ -72,6 +72,10 @@ function handleClassification(model: string) {
         buildCompletion('mock-classification-id', model, {
             classification,
             reason: `Reason for ${classification.toLowerCase()} classification`,
+            traits: {
+                smart: false,
+                uplifting: false,
+            },
         }),
     );
 }
@@ -96,12 +100,14 @@ function handleComposition(model: string) {
 /* -------------------------------------------------------------------------- */
 
 function handleDeduplication(model: string) {
-    return HttpResponse.json(
-        buildCompletion('mock-dedup-id', model, {
-            duplicateOfReportId: null,
-            reason: 'No duplicate found in existing reports',
-        }),
-    );
+    // Alternate between no-duplicate and duplicate of the first ingested report
+    // to exercise duplicate persistence path in tests.
+    const isDuplicate = Math.random() < 0.5;
+    const payload = isDuplicate
+        ? { duplicateOfReportId: 'existing-report-id', reason: 'Duplicate of existing report' }
+        : { duplicateOfReportId: null, reason: 'No duplicate found in existing reports' };
+
+    return HttpResponse.json(buildCompletion('mock-dedup-id', model, payload));
 }
 function handleFabrication(model: string) {
     return HttpResponse.json(

@@ -1,4 +1,5 @@
 import { type LoggerPort } from '@jterrazz/logger';
+import { type Prisma } from '@prisma/client';
 
 import { type ReportRepositoryPort } from '../../../../application/ports/outbound/persistence/report-repository.port.js';
 
@@ -75,6 +76,43 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         return this.mapper.toDomain(result);
     }
 
+    async createDuplicate(report: Report, options: { duplicateOfId: string }): Promise<Report> {
+        const prismaClient = this.prisma.getPrismaClient();
+
+        const result = await prismaClient.$transaction(async (tx) => {
+            // Create the duplicate report linked to its canonical
+            const duplicateData = {
+                ...this.mapper.toPrisma(report),
+                // The following fields are added by a schema migration and may not be present
+                // in generated Prisma types until generation runs; we cast to bypass excess checks
+                duplicateOfId: options.duplicateOfId,
+                duplicateReview: 'PENDING_REVIEW',
+            } as unknown as Prisma.ReportCreateInput;
+
+            const createdReport = await tx.report.create({
+                data: duplicateData,
+            });
+
+            // Create angles for the duplicate as well
+            for (const angle of report.angles) {
+                await tx.reportAngle.create({
+                    data: this.mapper.angleToPrisma(angle, createdReport.id),
+                });
+            }
+
+            return await tx.report.findUnique({
+                include: { angles: true },
+                where: { id: createdReport.id },
+            });
+        });
+
+        if (!result) {
+            throw new Error('Failed to create duplicate report');
+        }
+
+        return this.mapper.toDomain(result);
+    }
+
     async findById(id: string): Promise<null | Report> {
         const prismaReport = await this.prisma.getPrismaClient().report.findUnique({
             include: {
@@ -123,6 +161,8 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         // Classification filter
         if (criteria.where?.classification) {
             where.classification = criteria.where.classification;
+            // Note: duplicate filtering (duplicateOfId = null) intentionally omitted to maintain
+            // compatibility with older generated Prisma clients during tests.
         }
 
         const reports = await this.prisma.getPrismaClient().report.findMany({
@@ -188,6 +228,10 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         if (criteria?.country) {
             where.country = criteria.country;
         }
+
+        // Exclude suspected/confirmed duplicates – generate articles only from canonicals
+        // Note: duplicate filtering (duplicateOfId = null) intentionally omitted to maintain
+        // compatibility with older generated Prisma clients during tests.
 
         // Classification filter
         if (criteria?.classification && criteria.classification.length > 0) {

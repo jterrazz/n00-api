@@ -112,6 +112,7 @@ export class IngestReportsUseCase {
             for (const newsReport of validNewsReports) {
                 try {
                     // Step 5.1: Check for semantic duplicates only if we have something to compare against
+                    let duplicateOfId: null | string = null;
                     if (allReportsForDeduplication.length > 0) {
                         const deduplicationResult = await this.reportDeduplicationAgent.run({
                             existingReports: allReportsForDeduplication,
@@ -119,23 +120,9 @@ export class IngestReportsUseCase {
                         });
 
                         if (deduplicationResult?.duplicateOfReportId) {
-                            const existing = await this.reportRepository.findById(
-                                deduplicationResult.duplicateOfReportId,
-                            );
-
-                            if (existing) {
-                                this.logger.info('Report marked as duplicate', {
-                                    duplicateOf: deduplicationResult.duplicateOfReportId,
-                                });
-                                await this.reportRepository.addSourceReferences(
-                                    deduplicationResult.duplicateOfReportId,
-                                    newsReport.articles.map((a) => a.id),
-                                );
-                                continue; // Skip to the next report
-                            }
-
-                            this.logger.warn('Duplicate report id not found in repository', {
-                                duplicateOf: deduplicationResult.duplicateOfReportId,
+                            duplicateOfId = deduplicationResult.duplicateOfReportId;
+                            this.logger.info('Report marked as suspected duplicate', {
+                                duplicateOf: duplicateOfId,
                             });
                         }
                     }
@@ -172,11 +159,31 @@ export class IngestReportsUseCase {
                         updatedAt: now,
                     });
 
-                    const savedReport = await this.reportRepository.create(report);
-                    digestedReports.push(savedReport);
-                    // Add the newly created report to deduplication tracking for subsequent reports
-                    allReportsForDeduplication.push(savedReport);
-                    this.logger.info('Report ingested successfully', { reportId: savedReport.id });
+                    let savedReport: Report;
+                    if (duplicateOfId) {
+                        // Persist as duplicate and link to canonical; also merge sources into canonical
+                        savedReport = await this.reportRepository.createDuplicate(report, {
+                            duplicateOfId,
+                        });
+                        await this.reportRepository.addSourceReferences(
+                            duplicateOfId,
+                            newsReport.articles.map((a) => a.id),
+                        );
+                        digestedReports.push(savedReport);
+                        this.logger.info('Duplicate report ingested for review', {
+                            duplicateOf: duplicateOfId,
+                            reportId: savedReport.id,
+                        });
+                        // Do not add duplicates to deduplication pool
+                    } else {
+                        savedReport = await this.reportRepository.create(report);
+                        digestedReports.push(savedReport);
+                        // Add the newly created canonical report to deduplication tracking for subsequent reports
+                        allReportsForDeduplication.push(savedReport);
+                        this.logger.info('Report ingested successfully', {
+                            reportId: savedReport.id,
+                        });
+                    }
                 } catch (reportError) {
                     this.logger.warn('Error while processing individual report', {
                         error: reportError,

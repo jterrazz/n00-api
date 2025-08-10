@@ -38,6 +38,13 @@ enum Classification {
   ARCHIVED
 }
 
+// Review status for duplicate lineage
+enum DuplicateReviewStatus {
+  PENDING_REVIEW
+  CONFIRMED_DUPLICATE
+  REJECTED
+}
+
 model Report {
   id             String         @id @default(uuid())
   facts          String
@@ -52,6 +59,12 @@ model Report {
   // Sources
   sources Json
 
+  // Deduplication lineage & review
+  duplicateOfId   String?
+  duplicateOf     Report?                @relation("ReportDuplicateOf", fields: [duplicateOfId], references: [id])
+  duplicates      Report[]               @relation("ReportDuplicateOf")
+  duplicateReview DuplicateReviewStatus?
+
   // Relations
   angles   ReportAngle[]
   articles Article[]     @relation("ReportArticles")
@@ -60,6 +73,8 @@ model Report {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([duplicateOfId])
+  @@index([duplicateReview])
   @@index([country])
   @@index([dateline])
   @@index([createdAt])

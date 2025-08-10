@@ -2,9 +2,14 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { beforeEach, describe, expect, test } from '@jterrazz/test';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
+import { Report } from '../../../../domain/entities/report.entity.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
+import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
+import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
 import { type ReportDeduplicationAgentPort } from '../../../ports/outbound/agents/report-deduplication.agent.js';
 import {
@@ -20,6 +25,26 @@ import {
 import { IngestReportsUseCase } from '../ingest-reports.use-case.js';
 
 describe('IngestReportsUseCase', () => {
+    const createEmptyReport = (id: string): Report =>
+        new Report({
+            angles: [
+                new ReportAngle({
+                    angleCorpus: new AngleCorpus(
+                        'This is a very long and detailed holistic digest for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
+                    ),
+                }),
+            ],
+            categories: new Categories(['TECHNOLOGY']),
+            classification: new Classification('PENDING_CLASSIFICATION'),
+            country: new Country('us'),
+            createdAt: new Date(),
+            dateline: new Date(),
+            facts: 'These are valid report facts that are definitely long enough for testing purposes. They detail the event and provide context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
+            id: '11111111-1111-4111-8111-111111111111',
+            sourceReferences: [],
+            traits: new ArticleTraits(),
+            updatedAt: new Date(),
+        });
     // Test Constants
     const DEFAULT_COUNTRY = new Country('us');
     const DEFAULT_LANGUAGE = new Language('en');
@@ -79,6 +104,7 @@ describe('IngestReportsUseCase', () => {
         });
         mockReportIngestionAgent.run.mockResolvedValue(mockResult);
         mockReportRepository.create.mockImplementation(async (report) => report);
+        mockReportRepository.createDuplicate.mockImplementation(async (report) => report);
 
         // Default happy path mocks
         mockNewsProvider.fetchNews.mockResolvedValue(MOCK_NEWS_STORIES);
@@ -98,26 +124,33 @@ describe('IngestReportsUseCase', () => {
         expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
     });
 
-    test('it should merge sources when a semantically duplicate report is found', async () => {
+    test('it should persist a suspected duplicate and link sources to canonical when a semantic duplicate is found', async () => {
         // Given: The deduplication agent identifies the second report as a duplicate of an existing one.
         const existingReportId = 'existing-report-id';
-        mockReportDeduplicationAgent.run
-            .mockResolvedValueOnce({ duplicateOfReportId: null })
-            .mockResolvedValueOnce({
-                duplicateOfReportId: existingReportId,
-            });
+        // Override default and ensure a single call returns a duplicate match
+        mockReportDeduplicationAgent.run.mockReset();
+        mockReportDeduplicationAgent.run.mockResolvedValueOnce({
+            duplicateOfReportId: existingReportId,
+        });
+        // Ensure repository considers the canonical ID as existing
+        mockReportRepository.findById.mockResolvedValue(createEmptyReport(existingReportId));
 
         // When
         await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-        // Then: It should create one new report and merge the sources for the duplicate.
+        // Then: It should create one canonical and one duplicate, and merge sources into canonical.
         // Dedup agent is called only for the second report (after one exists)
         expect(mockReportDeduplicationAgent.run).toHaveBeenCalledTimes(1);
-        // Ingestion now processes both reports because duplicate was considered not found
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
-        expect(mockReportRepository.create).toHaveBeenCalledTimes(2);
-        // No source references added because duplicate report did not exist in DB
-        expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
+        // At least one canonical is created, and one duplicate is created
+        expect(mockReportRepository.create).toHaveBeenCalled();
+        // One duplicate created
+        expect(mockReportRepository.createDuplicate).toHaveBeenCalled();
+        // Sources merged into canonical
+        expect(mockReportRepository.addSourceReferences).toHaveBeenCalledWith(
+            existingReportId,
+            expect.any(Array),
+        );
     });
 
     test('it should ignore news reports that have already been processed by source ID', async () => {

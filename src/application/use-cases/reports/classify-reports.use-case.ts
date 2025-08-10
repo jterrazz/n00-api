@@ -46,14 +46,12 @@ export class ClassifyReportsUseCase {
                     if (result) {
                         await this.reportRepository.update(report.id, {
                             classification: result.classification,
-                            traits: result.traits,
                         });
 
                         this.logger.info('Report classified', {
                             classification: result.classification,
                             reason: result.reason,
                             reportId: report.id,
-                            traits: result.traits.toJSON(),
                         });
                         successfulClassifications++;
                     } else {

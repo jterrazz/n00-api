@@ -19,6 +19,11 @@ export interface ReportRepositoryPort {
     create(report: Report): Promise<Report>;
 
     /**
+     * Create a new report marked as a suspected duplicate of a canonical report.
+     */
+    createDuplicate(report: Report, options: { duplicateOfId: string }): Promise<Report>;
+
+    /**
      * Find a report by ID
      */
     findById(id: string): Promise<null | Report>;
