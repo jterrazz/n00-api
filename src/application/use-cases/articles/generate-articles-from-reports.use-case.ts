@@ -186,6 +186,22 @@ export class GenerateArticlesFromReportsUseCase {
         const fakeArticles: Article[] = [];
 
         try {
+            // Require a minimum baseline of existing articles for this locale before fabricating
+            const totalForLocale = await this.articleRepository.countMany({
+                country,
+                language,
+            });
+
+            if (totalForLocale < 10) {
+                this.logger.info('Skipping fake article generation', {
+                    country: country.toString(),
+                    language: language.toString(),
+                    reason: 'Insufficient baseline articles',
+                    totalForLocale,
+                });
+                return fakeArticles;
+            }
+
             // Get recent articles to check if we need fake ones
             const recentArticles = await this.articleRepository.findMany({
                 country,
@@ -326,7 +342,7 @@ export class GenerateArticlesFromReportsUseCase {
                 this.logger.info('Skipping fake article generation', {
                     country: country.toString(),
                     language: language.toString(),
-                    reason: 'Recent fake article found',
+                    reason: 'Recent fake article ratio already satisfied',
                 });
             }
         } catch (error) {
