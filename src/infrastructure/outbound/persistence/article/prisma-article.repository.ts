@@ -126,7 +126,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
 
         const items = await this.prisma.getPrismaClient().article.findMany({
             include: {
-                articleCategories: true,
+                categories: true,
                 frames: true,
                 quizQuestions: true,
                 reports: {

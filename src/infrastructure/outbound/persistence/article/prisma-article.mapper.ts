@@ -31,7 +31,7 @@ export class ArticleMapper {
     createCategoryFilter(category?: Category, categories?: Categories): object | undefined {
         if (categories && categories.toArray().length > 0) {
             return {
-                articleCategories: {
+                categories: {
                     some: {
                         category: { in: categories.toArray() },
                     },
@@ -41,7 +41,7 @@ export class ArticleMapper {
 
         if (category) {
             return {
-                articleCategories: {
+                categories: {
                     some: {
                         category: category.value,
                     },
@@ -100,8 +100,8 @@ export class ArticleMapper {
             body: new Body(prisma.body),
             categories: (() => {
                 const joinCats = (
-                    prisma as unknown as { articleCategories?: Array<{ category: string }> }
-                ).articleCategories;
+                    prisma as unknown as { categories?: Array<{ category: string }> }
+                ).categories;
                 const values = Array.isArray(joinCats)
                     ? (joinCats.map((c) => c.category) as string[])
                     : [];
@@ -130,7 +130,7 @@ export class ArticleMapper {
 
     toPrisma(domain: Article): Prisma.ArticleCreateInput {
         return {
-            articleCategories: {
+            categories: {
                 create: domain.categories.toArray().map((c) => ({ category: c })),
             },
             body: domain.body.value,

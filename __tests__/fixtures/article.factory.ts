@@ -92,7 +92,7 @@ export class ArticleFactory {
                 country: article.country.toString() as PrismaCountry,
                 dateline: article.publishedAt,
                 facts: `Facts for ${article.headline.value}`,
-                reportCategories: {
+                categories: {
                     create: article.categories.toArray().map((c) => ({ category: c })),
                 },
                 sources: [],
@@ -103,7 +103,7 @@ export class ArticleFactory {
 
         await prisma.article.create({
             data: {
-                articleCategories: {
+                categories: {
                     create: article.categories.toArray().map((c) => ({ category: c })),
                 },
                 body: article.body.value,

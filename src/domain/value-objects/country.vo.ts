@@ -1,9 +1,9 @@
 import { z } from 'zod/v4';
 
 export const countrySchema = z
-    .enum(['FR', 'US', 'GLOBAL'])
+    .enum(['FR', 'US'])
     .describe(
-        "Identifies the target countries where the report is relevant and should be surfaced. Use the two-letter ISO code in uppercase for specific countries. The value 'GLOBAL' is for reports with broad international relevance and should not be combined with other country codes.",
+        'Identifies the target countries where the report is relevant and should be surfaced. Use the two-letter ISO code in uppercase for specific countries.',
     );
 
 export type CountryEnum = z.infer<typeof countrySchema>;
@@ -25,7 +25,7 @@ export class Country {
     }
 
     public isGlobal(): boolean {
-        return this.value === 'GLOBAL';
+        return false;
     }
 
     public toString(): CountryEnum {

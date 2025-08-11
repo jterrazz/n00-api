@@ -16,7 +16,6 @@ datasource db {
 // =============================================================================
 
 enum Country {
-  GLOBAL
   US
   FR
 }
@@ -209,9 +208,9 @@ model Report {
   angles ReportAngle[]
 
   // Context & sources
-  country          Country
-  dateline         DateTime
-  reportCategories ReportCategory[]
+  country    Country
+  dateline   DateTime
+  categories ReportCategory[]
 
   // Workflow — Classification
   classificationState ClassificationState @default(PENDING)
@@ -277,9 +276,9 @@ model Article {
   language Language
 
   // Classification
-  articleCategories ArticleCategory[]
-  traitsSmart       Boolean           @default(false)
-  traitsUplifting   Boolean           @default(false)
+  categories      ArticleCategory[]
+  traitsSmart     Boolean           @default(false)
+  traitsUplifting Boolean           @default(false)
 
   // Fabrication
   fabricated       Boolean @default(false)

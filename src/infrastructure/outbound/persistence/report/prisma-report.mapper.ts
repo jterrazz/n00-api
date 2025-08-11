@@ -32,7 +32,7 @@ export class ReportMapper {
     createCategoryFilter(category?: string, categories?: string[]): object | undefined {
         if (categories && categories.length > 0) {
             return {
-                reportCategories: {
+                categories: {
                     some: {
                         category: { in: categories },
                     },
@@ -42,7 +42,7 @@ export class ReportMapper {
 
         if (category) {
             return {
-                reportCategories: {
+                categories: {
                     some: {
                         category,
                     },
@@ -64,7 +64,7 @@ export class ReportMapper {
     toDomain(
         prisma: PrismaReport & {
             angles: PrismaReportAngle[];
-            reportCategories?: Array<{ category: string }>;
+            categories?: Array<{ category: string }>;
         },
     ): Report {
         const angles = prisma.angles.map(
@@ -77,8 +77,8 @@ export class ReportMapper {
         return new Report({
             angles,
             categories: new Categories(
-                Array.isArray(prisma.reportCategories)
-                    ? (prisma.reportCategories.map((c) => c.category) as string[])
+                Array.isArray(prisma.categories)
+                    ? (prisma.categories.map((c) => c.category) as string[])
                     : [],
             ),
             classification: prisma.classification
@@ -118,7 +118,7 @@ export class ReportMapper {
             deduplicationState: report.deduplicationState.toString() as 'COMPLETE' | 'PENDING',
             facts: report.facts,
             id: report.id,
-            reportCategories: {
+            categories: {
                 create: report.categories.toArray().map((c) => ({ category: c })),
             },
             sources: report.sourceReferences,

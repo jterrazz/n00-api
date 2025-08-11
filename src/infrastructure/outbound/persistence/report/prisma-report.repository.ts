@@ -52,7 +52,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
                 });
             }
             return await tx.report.findUnique({
-                include: { angles: true, reportCategories: true },
+                include: { angles: true, categories: true },
                 where: { id: createdReport.id },
             });
         });
@@ -80,7 +80,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
                 });
             }
             return await tx.report.findUnique({
-                include: { angles: true, reportCategories: true },
+                include: { angles: true, categories: true },
                 where: { id: createdReport.id },
             });
         });
@@ -93,7 +93,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
 
     async findById(id: string): Promise<null | Report> {
         const prismaReport = await this.prisma.getPrismaClient().report.findUnique({
-            include: { angles: true, reportCategories: true },
+            include: { angles: true, categories: true },
             where: { id },
         });
         return prismaReport ? this.mapper.toDomain(prismaReport) : null;
@@ -121,7 +121,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             where.classificationState = criteria.where.classificationState;
         }
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            include: { angles: true, reportCategories: true },
+            include: { angles: true, categories: true },
             orderBy: { dateline: 'desc' },
             skip: criteria.offset,
             take: criteria.limit,
@@ -165,7 +165,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             where.classification = { in: criteria.classification };
         }
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            include: { angles: true, reportCategories: true },
+            include: { angles: true, categories: true },
             orderBy: { dateline: 'desc' },
             take: criteria?.limit || 50,
             where,
@@ -200,7 +200,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         }
         const updatedReport = await this.prisma.getPrismaClient().report.update({
             data: updateData,
-            include: { angles: true, reportCategories: true },
+            include: { angles: true, categories: true },
             where: { id },
         });
         return this.mapper.toDomain(updatedReport);

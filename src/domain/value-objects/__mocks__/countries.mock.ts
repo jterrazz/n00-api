@@ -1,6 +1,6 @@
 import { Country } from '../country.vo.js';
 
-const COUNTRY_VALUES: Country['value'][] = ['US', 'FR', 'GLOBAL'];
+const COUNTRY_VALUES: Country['value'][] = ['US', 'FR'];
 
 export const COUNTRY_FIXTURES: Country[] = COUNTRY_VALUES.map((c) => new Country(c));
 
