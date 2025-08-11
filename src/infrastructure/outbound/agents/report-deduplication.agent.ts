@@ -1,4 +1,10 @@
-import { ChatAgent, type ModelPort, SystemPrompt, UserPrompt } from '@jterrazz/intelligence';
+import {
+    ChatAgent,
+    type ModelPort,
+    PROMPTS,
+    SystemPrompt,
+    UserPrompt,
+} from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
@@ -8,61 +14,13 @@ import {
 } from '../../../application/ports/outbound/agents/report-deduplication.agent.js';
 import { type NewsReport } from '../../../application/ports/outbound/providers/news.port.js';
 
-/**
- * @description
- * This is a placeholder implementation for the Report Deduplication Agent.
- * In a real application, this would connect to a language model to perform
- * semantic analysis. For now, it always returns 'not a duplicate'.
- */
 export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgentPort {
-    // New reusable prompt template containing detailed instructions and real-world examples.
-    static readonly BASE_PROMPT_PARTS: readonly string[] = [
-        // Core Mission
-        'Perform a deep semantic comparison to decide whether the incoming report describes the SAME underlying event—who did what, where, and when—as any report already stored. This must go beyond surface-level keyword matching. Keep in mind we ingest raw internet sources that commonly report on the *same* events from slightly different angles.',
-        '',
-        // Decision Framework
-        'DECISION FRAMEWORK:',
-        '1. Identify ACTORS (people, organisations), ACTION (what happened), LOCATION (where), and TIMEFRAME (when) for the NEW report.',
-        '2. Do the same for EACH EXISTING report.',
-        "3. If MOST essential elements (actors + action + either location OR timeframe) align for ANY existing report, classify the new report as a duplicate of that report's id.",
-        '4. If the overlap is weak (e.g., only one element matches) or conflicting details dominate, classify the new report as unique.',
-        '',
-        // Normalisation Tips
-        'NORMALISATION TIPS:',
-        '• Ignore minor wording differences, synonyms, or grammatical variations.',
-        '• Normalise dates ("July 13th" ↔ "13 July 2025") and times ("9 AM" ↔ "09:00").',
-        '• Convert accents/diacritics ("Corsica" ≅ "Corse").',
-        '• Treat equivalent units ("over 100 km/h" ≅ ">100 km/h").',
-        '',
-        // Real-world Examples
-        'EXAMPLES:',
-        '• DUPLICATE — New: "Météo-France issued an orange alert for Corsica on Sunday, July 13th, from 9 AM to 12 PM, anticipating "brief but active" thunderstorms with gusts potentially exceeding 100 km/h." Existing: "Météo-France issued an orange alert for Corsica on Sunday, July 13, 2025, forecasting a brief but active thunderstorm episode between 9 AM and 12 PM with gusts over 100 km/h."',
-        '• DUPLICATE — New: "Torrential rains in Catalonia, Spain, on Saturday evening caused localised flooding. Two people are missing in Cubelles." Existing: "Torrential rains battered Catalonia, Spain, on Saturday evening, causing floods and infrastructure disruption. Two people are missing near Cubelles."',
-        '• UNIQUE   — New: "Star player from Team A injures knee during practice." Existing: "Team A beats Team B 3-1 in championship final."',
-        '',
-        // Safety Rule
-        '**SAFETY RULE:** When there is substantial overlap but minor discrepancies, lean toward marking as DUPLICATE. Only mark as UNIQUE when clearly describing a distinct event.',
-        '',
-        // Output Requirements
-        'OUTPUT REQUIREMENTS:',
-        '• duplicateOfReportId → id of existing duplicate OR null.',
-        '• reason → one concise sentence explaining the decision.',
-        '',
-    ];
-
     static readonly SCHEMA = z.object({
-        duplicateOfReportId: z
-            .string()
-            .nullable()
-            .describe("The ID of the existing report if it's a duplicate, otherwise null."),
-        reason: z.string().describe('A brief, clear justification for your decision.'),
+        duplicateOfReportId: z.string().nullable(),
+        reason: z.string(),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt(
-        'You are a senior editorial gatekeeper for a global news organisation.',
-        'Your mission is to decide whether an incoming news report describes the exact same core information as any report that already exists in our database.',
-        'If two reports describe the identical event, flag the new one as a duplicate; otherwise mark it as unique. Differences in wording, headline, publisher, language, or minor details do NOT create uniqueness. When in doubt, prefer uniqueness.',
-    );
+    static readonly SYSTEM_PROMPT = new SystemPrompt();
 
     public readonly name = 'ReportDeduplicationAgent';
 
@@ -87,12 +45,81 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
         const { existingReports, newReport } = input;
 
         return new UserPrompt(
-            ...ReportDeduplicationAgentAdapter.BASE_PROMPT_PARTS,
-            // Data to Analyse
-            'EXISTING REPORTS (ID and Facts):',
+            // Role & Mission
+            'You are a senior editorial gatekeeper for a global news organization. Your mission: determine whether an incoming news report describes the same underlying event as any existing report in our database.',
+            '',
+            'Perform deep semantic comparison beyond surface-level keywords. Focus on core event identity: who did what, where, and when. Remember that internet sources commonly report the same events from different angles.',
+            '',
+
+            // Language & Style Requirements
+            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            '',
+
+            // Analysis Framework
+            '=== ANALYSIS FRAMEWORK ===',
+            '',
+            '**Step 1: Event Decomposition**',
+            '- Extract ACTORS (people, organizations) from new report',
+            '- Identify ACTION (what happened) from new report',
+            '- Note LOCATION (where) and TIMEFRAME (when) from new report',
+            '',
+            '**Step 2: Comparative Analysis**',
+            '- Apply same decomposition to each existing report',
+            '- Compare essential elements across reports',
+            '- Look for substantial overlap in core event details',
+            '',
+            '**Step 3: Duplication Decision**',
+            '- If MOST essential elements align → DUPLICATE',
+            '- If weak overlap or conflicting details dominate → UNIQUE',
+            '- When substantial overlap but minor discrepancies → lean toward DUPLICATE',
+            '',
+
+            // Normalization Guidelines
+            '=== NORMALIZATION GUIDELINES ===',
+            '',
+            '• **Language Variations**: Ignore wording differences, synonyms, grammatical variations',
+            '• **Date/Time Formats**: Normalize formats ("July 13th" ↔ "13 July 2025", "9 AM" ↔ "09:00")',
+            '• **Geographic Names**: Handle accents/diacritics ("Corsica" ≅ "Corse")',
+            '• **Units & Numbers**: Treat equivalent expressions ("over 100 km/h" ≅ ">100 km/h")',
+            '',
+
+            // Decision Examples
+            '=== DECISION EXAMPLES ===',
+            '',
+            '**DUPLICATE Cases:**',
+            '• Weather alerts for same region, date, and phenomenon (despite wording differences)',
+            '• Natural disasters affecting same area and timeframe (despite different details)',
+            '• Official announcements with same core content (despite source variations)',
+            '',
+            '**UNIQUE Cases:**',
+            '• Different events involving same entities (injury vs. game result)',
+            '• Sequential events in ongoing situations (different developments)',
+            '• Related but distinct incidents (different locations or times)',
+            '',
+
+            // Output Requirements
+            '=== OUTPUT REQUIREMENTS ===',
+            '',
+            '• **duplicateOfReportId** → ID of existing duplicate report OR null if unique',
+            '• **reason** → One concise sentence explaining the duplication decision',
+            '',
+
+            // Critical Standards
+            '=== CRITICAL STANDARDS ===',
+            '',
+            '• **Core Event Focus**: Base decision on fundamental event identity, not presentation',
+            '• **Semantic Depth**: Go beyond keyword matching to understand meaning',
+            '• **Conservative Approach**: When in doubt about substantial overlap, mark as duplicate',
+            '• **Clear Reasoning**: Explain decision based on event element comparison',
+            '',
+
+            // Data Input
+            '=== DATA TO ANALYZE ===',
+            '',
+            '**EXISTING REPORTS:**',
             JSON.stringify(existingReports, null, 2),
             '',
-            'NEW REPORT (Full Content):',
+            '**NEW INCOMING REPORT:**',
             JSON.stringify(newReport, null, 2),
         );
     };

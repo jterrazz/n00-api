@@ -1,6 +1,7 @@
 import { type ModelPort, OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
 
 export interface ModelsPort {
+    deepseekV3: ModelPort;
     gemini25Flash: ModelPort;
     gemini25FlashLite: ModelPort;
     glm45: ModelPort;
@@ -118,7 +119,13 @@ const providerFactory = Injectable(
 const selectModelByBudget = (
     models: ModelsPort,
     budget: 'high' | 'low' | 'medium',
-    preferredModel: 'gemini25Flash' | 'gemini25FlashLite' | 'glm45' | 'gptOSS' | 'grok4',
+    preferredModel:
+        | 'deepseekV3'
+        | 'gemini25Flash'
+        | 'gemini25FlashLite'
+        | 'glm45'
+        | 'gptOSS'
+        | 'grok4',
 ): ModelPort => {
     // if (budget === 'low') {
     //     return models.gemini25FlashLite;
@@ -130,6 +137,13 @@ const modelsFactory = Injectable(
     'Models',
     ['Provider'] as const,
     (provider: ProviderPort): ModelsPort => ({
+        deepseekV3: provider.getModel('deepseek/deepseek-chat-v3-0324', {
+            maxTokens: 150_000,
+            reasoning: {
+                effort: 'high',
+                exclude: true,
+            },
+        }),
         gemini25Flash: provider.getModel('google/gemini-2.5-flash', {
             maxTokens: 256_000,
             reasoning: {
@@ -168,6 +182,7 @@ const modelsFactory = Injectable(
     }),
 );
 
+// Ingestion requires a mix of: long context, reasoning, and text generation.
 const reportIngestionAgentFactory = Injectable(
     'ReportIngestionAgent',
     ['Models', 'Configuration', 'Logger'] as const,
@@ -177,6 +192,36 @@ const reportIngestionAgentFactory = Injectable(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
                 'gptOSS',
+            ),
+            logger,
+        ),
+);
+
+// Deduplication requires: reasoning and long context.
+const reportDeduplicationAgentFactory = Injectable(
+    'ReportDeduplicationAgent',
+    ['Models', 'Configuration', 'Logger'] as const,
+    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
+        new ReportDeduplicationAgentAdapter(
+            selectModelByBudget(
+                models,
+                config.getOutboundConfiguration().openRouter.budget,
+                'deepseekV3',
+            ),
+            logger,
+        ),
+);
+
+// Classification requires: reasoning.
+const reportClassificationAgentFactory = Injectable(
+    'ReportClassificationAgent',
+    ['Models', 'Configuration', 'Logger'] as const,
+    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
+        new ReportClassificationAgentAdapter(
+            selectModelByBudget(
+                models,
+                config.getOutboundConfiguration().openRouter.budget,
+                'deepseekV3',
             ),
             logger,
         ),
@@ -215,34 +260,6 @@ const articleQuizGenerationAgentFactory = Injectable(
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
         new ArticleQuizGenerationAgentAdapter(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
-            ),
-            logger,
-        ),
-);
-
-const reportClassificationAgentFactory = Injectable(
-    'ReportClassificationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportClassificationAgentAdapter(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gemini25FlashLite',
-            ),
-            logger,
-        ),
-);
-
-const reportDeduplicationAgentFactory = Injectable(
-    'ReportDeduplicationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportDeduplicationAgentAdapter(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,

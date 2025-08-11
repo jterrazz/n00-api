@@ -291,10 +291,16 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             updateData.classification = data.classification.toString();
         }
 
+        if (data.traits) {
+            updateData.traitsSmart = data.traits.smart;
+            updateData.traitsUplifting = data.traits.uplifting;
+        }
+
         const updatedReport = await this.prisma.getPrismaClient().report.update({
             data: updateData,
             include: {
                 angles: true,
+                reportCategories: true,
             },
             where: { id },
         });
