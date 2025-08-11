@@ -161,16 +161,12 @@ export class IngestReportsUseCase {
 
                     let savedReport: Report;
                     if (duplicateOfId) {
-                        // Persist as duplicate and link to canonical; also merge sources into canonical
+                        // Persist as duplicate and link to canonical
                         savedReport = await this.reportRepository.createDuplicate(report, {
                             duplicateOfId,
                         });
-                        await this.reportRepository.addSourceReferences(
-                            duplicateOfId,
-                            newsReport.articles.map((a) => a.id),
-                        );
                         digestedReports.push(savedReport);
-                        this.logger.info('Duplicate report ingested for review', {
+                        this.logger.info('Duplicate report ingested and confirmed', {
                             duplicateOf: duplicateOfId,
                             reportId: savedReport.id,
                         });

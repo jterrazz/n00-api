@@ -48,7 +48,7 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
             // Role & Mission
             'You are a senior editorial gatekeeper for a global news organization. Your mission: determine whether an incoming news report describes the same underlying event as any existing report in our database.',
             '',
-            'Perform deep semantic comparison beyond surface-level keywords. Focus on core event identity: who did what, where, and when. Remember that internet sources commonly report the same events from different angles.',
+            'Perform deep comparison beyond surface-level keywords. Focus on core event.',
             '',
 
             // Language & Style Requirements
@@ -59,8 +59,7 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
             '=== ANALYSIS FRAMEWORK ===',
             '',
             '**Step 1: Event Decomposition**',
-            '- Extract ACTORS (people, organizations) from new report',
-            '- Identify ACTION (what happened) from new report',
+            '- Extract every element from new report',
             '- Note LOCATION (where) and TIMEFRAME (when) from new report',
             '',
             '**Step 2: Comparative Analysis**',
@@ -69,9 +68,8 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
             '- Look for substantial overlap in core event details',
             '',
             '**Step 3: Duplication Decision**',
-            '- If MOST essential elements align → DUPLICATE',
-            '- If weak overlap or conflicting details dominate → UNIQUE',
-            '- When substantial overlap but minor discrepancies → lean toward DUPLICATE',
+            '- If essential elements align → DUPLICATE',
+            '- If weak overlap or conflicting details → UNIQUE',
             '',
 
             // Normalization Guidelines
@@ -89,7 +87,6 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
             '**DUPLICATE Cases:**',
             '• Weather alerts for same region, date, and phenomenon (despite wording differences)',
             '• Natural disasters affecting same area and timeframe (despite different details)',
-            '• Official announcements with same core content (despite source variations)',
             '',
             '**UNIQUE Cases:**',
             '• Different events involving same entities (injury vs. game result)',

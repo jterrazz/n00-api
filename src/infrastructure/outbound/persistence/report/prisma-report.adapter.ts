@@ -87,7 +87,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
                 // The following fields are added by a schema migration and may not be present
                 // in generated Prisma types until generation runs; we cast to bypass excess checks
                 duplicateOfId: options.duplicateOfId,
-                duplicateReview: 'PENDING_REVIEW',
+                duplicateReview: 'CONFIRMED_DUPLICATE',
             } as unknown as Prisma.ReportCreateInput;
 
             const createdReport = await tx.report.create({
