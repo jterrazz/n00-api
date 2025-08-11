@@ -20,16 +20,12 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
             z.object({
                 answers: z.array(z.string()).length(4),
                 correctAnswerIndex: z.number().int().min(0).max(3),
-                question: z.string().min(10),
+                question: z.string(),
             }),
         ),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt(
-        'You are an expert quiz generator that creates engaging, educational questions based on news articles. Your goal is to help readers test their comprehension and engagement with the content.',
-        'Create 2-4 multiple choice questions per article that test understanding of key facts, implications, and context. You may include questions based on useful generic context or widely-known facts, but you must ALWAYS be 100% certain of the correct answer - never guess or hallucinate. Include a mix of factual recall and analytical thinking questions. Always provide exactly 4 short, concise answer options that will fit in small UI elements. Make incorrect answers plausible but clearly wrong to someone who read carefully.',
-        PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
-    );
+    static readonly SYSTEM_PROMPT = new SystemPrompt();
 
     public readonly name = 'ArticleQuizGenerationAgent';
 
@@ -56,43 +52,82 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
                 : '';
 
         return new UserPrompt(
-            `Create quiz questions for this article.
+            // Role & Mission
+            'You are an expert quiz generator creating engaging, educational questions based on news articles. Your goal: help readers test their comprehension and engagement with content.',
+            '',
+            'Create 2-4 multiple choice questions that test understanding of key facts, implications, and context. Must be 100% certain of correct answers—never guess or hallucinate.',
+            '',
+            `CRITICAL: All questions and answers MUST be written in ${input.targetLanguage.toString().toUpperCase()}.`,
+            '',
 
-TARGET LANGUAGE: ${input.targetLanguage.toString()}
+            // Language & Style Requirements
+            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            '',
+            '**Enhanced Context Usage**: You may incorporate well-established historical facts, widely-known events, basic geographic/scientific knowledge, or common contextual information to create more educational questions—BUT ONLY when you are absolutely certain of the accuracy. Examples: historical dates of major events, basic scientific principles, well-documented political processes, established economic concepts. Never guess or approximate.',
+            '',
 
-ARTICLE HEADLINE: ${input.articleHeadline}
+            // Question Strategy
+            '=== QUESTION STRATEGY ===',
+            '',
+            '**Content Focus**: Test understanding from main article and any frames/perspectives',
+            '- Include mix of factual recall and analytical thinking',
+            '- Compare or contrast different frames when multiple perspectives provided',
+            '- Focus on key information and implications',
+            '',
+            '**Question Types**:',
+            '- Key facts and details mentioned in article',
+            '- Main themes or implications discussed',
+            '- Cause and effect relationships',
+            '- Comparisons or contrasts mentioned',
+            '- Differences between alternative frames/perspectives',
+            '- Historical context relevant to the topic (only well-established facts)',
+            '- Basic scientific, geographic, or economic principles that enhance understanding',
+            '- Widely-documented events or processes that provide context',
+            '',
 
-ARTICLE CONTENT:
-${input.articleBody}${framesContent}
+            // Answer Design
+            '=== ANSWER DESIGN ===',
+            '',
+            '**Answer Options**: Exactly 4 short, concise options per question',
+            '- Maximum 2-5 words each (for small UI elements)',
+            '- Make incorrect answers plausible but clearly wrong to careful readers',
+            '- Ensure correct answer is unambiguous',
+            '',
+            '**Certainty Requirement**: Only include questions with absolute answer certainty',
+            '- No guessing, speculation, or hallucination',
+            '- External knowledge allowed ONLY for well-established, widely-documented facts',
+            '- Historical events, basic science, geography: use only if universally accepted',
+            '- If ANY doubt exists about accuracy, exclude the question',
+            '',
 
-Generate 2-4 comprehensive quiz questions that test understanding of this article's key information and implications.
+            // Output Requirements
+            '=== OUTPUT REQUIREMENTS ===',
+            '',
+            '• **questions** → Array of 2-4 quiz questions',
+            '    • Each question contains:',
+            '      • question: The question text',
+            '      • answers: Array of exactly 4 answer options',
+            '      • correctAnswerIndex: 0-based index of correct answer',
+            '',
 
-GUIDELINES:
-- Questions should test understanding of key facts, implications, and context from the main article and any alternative frames/perspectives provided
-- Include a mix of factual recall and analytical thinking questions
-- You may create questions that compare or contrast different frames/perspectives if provided
-- Make incorrect answers plausible but clearly wrong to someone who read carefully
-- You may include questions based on useful generic context or widely-known facts ONLY if you are 100% certain of the correct answer
-- NEVER guess, speculate, or hallucinate - only ask questions where you know the answer with absolute certainty
-- Write questions in the target language specified
-- Ensure questions are appropriate for a general audience
-- Keep all answer options SHORT and CONCISE (max 6-8 words each) as they will be displayed in small UI elements
+            // Critical Standards
+            '=== CRITICAL STANDARDS ===',
+            '',
+            '• **Answer Certainty**: 100% certain of correct answer or exclude question',
+            '• **Appropriate Content**: Suitable for general audience',
+            '• **UI Constraints**: Keep answer options short and concise',
+            '• **Language Consistency**: All content in specified target language',
+            '',
 
-QUESTION TYPES TO INCLUDE:
-- Key facts and details mentioned in the article
-- Main themes or implications discussed
-- Cause and effect relationships
-- Comparisons or contrasts mentioned
-- Differences between alternative frames/perspectives when provided
-- Widely-known background context relevant to the topic (only if you're 100% certain)
-- Basic factual knowledge that enhances understanding (only if you're absolutely sure)
-
-Return a JSON object with a "questions" array. Each question should have:
-- "question": The question text
-- "answers": Array of EXACTLY 4 short, concise answer options
-- "correctAnswerIndex": Index (0-based) of the correct answer
-
-CRITICAL: Only include questions where you are absolutely certain of the correct answer. If you have ANY doubt about a fact or answer, do not include that question.`,
+            // Article Content
+            '=== ARTICLE CONTENT ===',
+            '',
+            `**Headline**: ${input.articleHeadline}`,
+            '',
+            `**Main Article**:`,
+            input.articleBody,
+            '',
+            ...(framesContent ? ['**Alternative Frames/Perspectives**:', framesContent, ''] : []),
         );
     };
 
