@@ -14,7 +14,7 @@ import {
 } from '../../../application/ports/outbound/agents/report-deduplication.agent.js';
 import { type NewsReport } from '../../../application/ports/outbound/providers/news.port.js';
 
-export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgentPort {
+export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
     static readonly SCHEMA = z.object({
         duplicateOfReportId: z.string().nullable(),
         reason: z.string(),
@@ -24,7 +24,7 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
 
     public readonly name = 'ReportDeduplicationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportDeduplicationAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ReportDeduplicationAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -33,8 +33,8 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ReportDeduplicationAgentAdapter.SCHEMA,
-            systemPrompt: ReportDeduplicationAgentAdapter.SYSTEM_PROMPT,
+            schema: ReportDeduplicationAgent.SCHEMA,
+            systemPrompt: ReportDeduplicationAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -130,9 +130,7 @@ export class ReportDeduplicationAgentAdapter implements ReportDeduplicationAgent
                 headline: params.newReport.articles[0]?.headline,
             });
 
-            const result = await this.agent.run(
-                ReportDeduplicationAgentAdapter.USER_PROMPT(params),
-            );
+            const result = await this.agent.run(ReportDeduplicationAgent.USER_PROMPT(params));
 
             if (!result) {
                 this.logger.warn('Deduplication check failed: AI model returned no result', {

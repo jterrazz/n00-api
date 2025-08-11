@@ -14,7 +14,7 @@ import {
     type ArticleQuizGenerationResult,
 } from '../../../application/ports/outbound/agents/article-quiz-generation.agent.js';
 
-export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationAgentPort {
+export class ArticleQuizGenerationAgent implements ArticleQuizGenerationAgentPort {
     static readonly SCHEMA = z.object({
         questions: z.array(
             z.object({
@@ -28,7 +28,7 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
 
     public readonly name = 'ArticleQuizGenerationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleQuizGenerationAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ArticleQuizGenerationAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -37,8 +37,8 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ArticleQuizGenerationAgentAdapter.SCHEMA,
-            systemPrompt: ArticleQuizGenerationAgentAdapter.SYSTEM_PROMPT,
+            schema: ArticleQuizGenerationAgent.SCHEMA,
+            systemPrompt: ArticleQuizGenerationAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -134,9 +134,7 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
         input: ArticleQuizGenerationInput,
     ): Promise<ArticleQuizGenerationResult | null> {
         try {
-            const result = await this.agent.run(
-                ArticleQuizGenerationAgentAdapter.USER_PROMPT(input),
-            );
+            const result = await this.agent.run(ArticleQuizGenerationAgent.USER_PROMPT(input));
 
             if (!result) {
                 this.logger.warn('Quiz generation failed', {

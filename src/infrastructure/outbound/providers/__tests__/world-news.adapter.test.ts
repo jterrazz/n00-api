@@ -19,9 +19,9 @@ import { ZodError } from 'zod/v4';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 
 import { createTZDateForCountry } from '../../../../shared/date/timezone.js';
-import { WorldNewsAdapter, type WorldNewsAdapterConfiguration } from '../world-news.adapter.js';
+import { WorldNews, type WorldNewsConfiguration } from '../world-news.adapter.js';
 
-const mockConfiguration: WorldNewsAdapterConfiguration = {
+const mockConfiguration: WorldNewsConfiguration = {
     apiKey: 'test-world-news-key',
 };
 const mockLogger = mockOf<LoggerPort>();
@@ -84,7 +84,7 @@ const server = setupServer(
     }),
 );
 
-let adapter: WorldNewsAdapter;
+let adapter: WorldNews;
 
 beforeAll(() => {
     server.listen();
@@ -93,7 +93,11 @@ beforeAll(() => {
 beforeEach(() => {
     const newRelicAdapter = mockOf<MonitoringPort>();
     newRelicAdapter.monitorSegment.mockImplementation(async (_name, cb) => cb());
-    adapter = new WorldNewsAdapter(mockConfiguration, mockLogger, newRelicAdapter);
+    adapter = new WorldNews(
+        mockConfiguration as WorldNewsConfiguration,
+        mockLogger,
+        newRelicAdapter,
+    );
     requestedDates = {};
 });
 afterEach(() => {
@@ -104,7 +108,7 @@ afterAll(() => {
     vitest.useRealTimers();
 });
 
-describe('WorldNewsAdapter', () => {
+describe('WorldNews', () => {
     it('should fetch news successfully', async () => {
         // Given - a valid API key and a response with multiple articles
 
@@ -245,10 +249,10 @@ describe('WorldNewsAdapter', () => {
     });
 });
 
-describe('WorldNewsAdapter.transformResponse', () => {
+describe('WorldNews.transformResponse', () => {
     it('should return a report with all articles from each section', () => {
         // Given
-        const adapter = new WorldNewsAdapter(
+        const adapter = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),
@@ -312,7 +316,7 @@ describe('WorldNewsAdapter.transformResponse', () => {
 
     it('should handle multiple sections correctly', () => {
         // Given
-        const adapter = new WorldNewsAdapter(
+        const adapter = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),

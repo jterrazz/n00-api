@@ -3,7 +3,7 @@ import cron, { type ScheduledTask } from 'node-cron';
 
 import { type TaskPort, type WorkerPort } from '../../../application/ports/inbound/worker.port.js';
 
-export class NodeCronAdapter implements WorkerPort {
+export class NodeCron implements WorkerPort {
     private readonly scheduledTasks: ScheduledTask[] = [];
 
     constructor(

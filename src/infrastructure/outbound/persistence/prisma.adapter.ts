@@ -3,14 +3,14 @@ import { type Prisma, PrismaClient } from '@prisma/client';
 
 import { type DatabasePort } from '../../../application/ports/outbound/persistence/database.port.js';
 
-export class PrismaAdapter implements DatabasePort {
+export class PrismaDatabase implements DatabasePort {
     private client: PrismaClient;
 
     constructor(
         private readonly logger: LoggerPort,
         databaseUrl: string,
     ) {
-        this.logger.info('Configuring Prisma adapter', { databaseUrl });
+        this.logger.info('Configuring Prisma client', { databaseUrl });
         this.client = new PrismaClient({
             datasources: {
                 db: {

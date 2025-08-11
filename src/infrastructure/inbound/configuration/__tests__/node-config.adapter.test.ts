@@ -1,9 +1,9 @@
 import { describe, expect, test } from '@jterrazz/test';
 import { ZodError } from 'zod/v4';
 
-import { NodeConfigAdapter } from '../node-config.adapter.js';
+import { NodeConfig } from '../node-config.adapter.js';
 
-describe('Node Config Adapter', () => {
+describe('Node Config', () => {
     const validConfig = {
         inbound: {
             env: 'development',
@@ -48,8 +48,8 @@ describe('Node Config Adapter', () => {
 
     test('should load valid configuration', () => {
         // Given - a valid configuration object
-        // When - creating a NodeConfigAdapter instance
-        const configAdapter = new NodeConfigAdapter(validConfig);
+        // When - creating a NodeConfig instance
+        const configAdapter = new NodeConfig(validConfig);
         // Then - it should return the correct inbound and outbound configuration
         expect(configAdapter.getInboundConfiguration()).toEqual(validConfig.inbound);
         expect(configAdapter.getOutboundConfiguration()).toEqual(validConfig.outbound);
@@ -66,8 +66,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When - creating a NodeConfigAdapter instance
-        const configAdapter = new NodeConfigAdapter(configWithoutTasks);
+        // When - creating a NodeConfig instance
+        const configAdapter = new NodeConfig(configWithoutTasks);
         // Then - it should return configuration with empty reportPipeline array
         expect(configAdapter.getInboundConfiguration().tasks.reportPipeline).toEqual([]);
     });
@@ -81,8 +81,8 @@ describe('Node Config Adapter', () => {
                 env: 'invalid-env',
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with missing API keys', () => {
@@ -94,8 +94,8 @@ describe('Node Config Adapter', () => {
                 worldNews: { apiKey: '' },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with invalid port', () => {
@@ -110,8 +110,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with invalid log level', () => {
@@ -126,8 +126,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with missing host', () => {
@@ -141,8 +141,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with missing tasks configuration', () => {
@@ -154,8 +154,8 @@ describe('Node Config Adapter', () => {
                 tasks: undefined,
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with invalid report pipeline task configuration', () => {
@@ -174,8 +174,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with invalid country in report pipeline task', () => {
@@ -194,8 +194,8 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 
     test('should fail with invalid language in report pipeline task', () => {
@@ -214,7 +214,7 @@ describe('Node Config Adapter', () => {
                 },
             },
         };
-        // When/Then - creating a NodeConfigAdapter should throw a ZodError
-        expect(() => new NodeConfigAdapter(invalidConfig)).toThrow(ZodError);
+        // When/Then - creating a NodeConfig should throw a ZodError
+        expect(() => new NodeConfig(invalidConfig)).toThrow(ZodError);
     });
 });

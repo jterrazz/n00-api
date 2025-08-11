@@ -57,7 +57,7 @@ type Configuration = z.infer<typeof configurationSchema>;
 /**
  * Node.js configuration adapter that loads configuration from node-config
  */
-export class NodeConfigAdapter implements ConfigurationPort {
+export class NodeConfig implements ConfigurationPort {
     private readonly configuration: Configuration;
 
     constructor(configurationInput: unknown, overrides?: { databaseUrl?: string }) {

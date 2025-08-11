@@ -18,7 +18,7 @@ import {
 import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { Classification as ClassificationVO } from '../../../domain/value-objects/report/classification.vo.js';
 
-export class ReportClassificationAgentAdapter implements ReportClassificationAgentPort {
+export class ReportClassificationAgent implements ReportClassificationAgentPort {
     static readonly SCHEMA = z.object({
         classification: classificationSchema,
         reason: z.string(),
@@ -32,7 +32,7 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
 
     public readonly name = 'ReportClassificationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportClassificationAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ReportClassificationAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -41,8 +41,8 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ReportClassificationAgentAdapter.SCHEMA,
-            systemPrompt: ReportClassificationAgentAdapter.SYSTEM_PROMPT,
+            schema: ReportClassificationAgent.SCHEMA,
+            systemPrompt: ReportClassificationAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -137,9 +137,7 @@ export class ReportClassificationAgentAdapter implements ReportClassificationAge
                 reportId: input.report.id,
             });
 
-            const result = await this.agent.run(
-                ReportClassificationAgentAdapter.USER_PROMPT(input),
-            );
+            const result = await this.agent.run(ReportClassificationAgent.USER_PROMPT(input));
 
             if (!result) {
                 this.logger.warn('Classification agent returned no result', {

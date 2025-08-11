@@ -18,7 +18,7 @@ import { factsSchema } from '../../../domain/entities/report.entity.js';
 import { Categories, categoriesSchema } from '../../../domain/value-objects/categories.vo.js';
 import { angleCorpusSchema } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 
-export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
+export class ReportIngestionAgent implements ReportIngestionAgentPort {
     static readonly SCHEMA = z.object({
         angles: z.array(
             z.object({
@@ -33,7 +33,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
 
     public readonly name = 'ReportIngestionAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportIngestionAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ReportIngestionAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -42,8 +42,8 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ReportIngestionAgentAdapter.SCHEMA,
-            systemPrompt: ReportIngestionAgentAdapter.SYSTEM_PROMPT,
+            schema: ReportIngestionAgent.SCHEMA,
+            systemPrompt: ReportIngestionAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -131,7 +131,7 @@ export class ReportIngestionAgentAdapter implements ReportIngestionAgentPort {
             this.logger.info(`Ingesting report with ${params.newsReport.articles.length} articles`);
 
             const result = await this.agent.run(
-                ReportIngestionAgentAdapter.USER_PROMPT(params.newsReport),
+                ReportIngestionAgent.USER_PROMPT(params.newsReport),
             );
 
             if (!result) {

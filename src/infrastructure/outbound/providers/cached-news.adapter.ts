@@ -43,7 +43,7 @@ const cacheDataSchema = z.object({
 /**
  * Decorator that adds caching behavior to any news data source
  */
-export class CachedNewsAdapter implements NewsProviderPort {
+export class CachedNews implements NewsProviderPort {
     constructor(
         private readonly newsSource: NewsProviderPort,
         private readonly logger: LoggerPort,

@@ -9,14 +9,14 @@ import type {
 
 import type { Article } from '../../../../domain/entities/article.entity.js';
 
-import type { PrismaAdapter } from '../prisma.adapter.js';
+import type { PrismaDatabase } from '../prisma.adapter.js';
 
 import { ArticleMapper } from './prisma-article.mapper.js';
 
 export class PrismaArticleRepository implements ArticleRepositoryPort {
     private readonly mapper: ArticleMapper;
 
-    constructor(private readonly prisma: PrismaAdapter) {
+    constructor(private readonly prisma: PrismaDatabase) {
         this.mapper = new ArticleMapper();
     }
 

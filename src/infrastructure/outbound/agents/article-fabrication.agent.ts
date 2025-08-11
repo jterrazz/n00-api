@@ -19,7 +19,7 @@ import { headlineSchema } from '../../../domain/value-objects/article/headline.v
 import { Categories } from '../../../domain/value-objects/categories.vo.js';
 import { categorySchema } from '../../../domain/value-objects/category.vo.js';
 
-export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPort {
+export class ArticleFabricationAgent implements ArticleFabricationAgentPort {
     static readonly SCHEMA = z.object({
         body: bodySchema,
         category: categorySchema,
@@ -33,7 +33,7 @@ export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPo
 
     public readonly name = 'ArticleFabricationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleFabricationAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ArticleFabricationAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -42,8 +42,8 @@ export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPo
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ArticleFabricationAgentAdapter.SCHEMA,
-            systemPrompt: ArticleFabricationAgentAdapter.SYSTEM_PROMPT,
+            schema: ArticleFabricationAgent.SCHEMA,
+            systemPrompt: ArticleFabricationAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -147,7 +147,7 @@ export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPo
                 language: input.targetLanguage.toString(),
             });
 
-            const result = await this.agent.run(ArticleFabricationAgentAdapter.USER_PROMPT(input));
+            const result = await this.agent.run(ArticleFabricationAgent.USER_PROMPT(input));
 
             if (!result) {
                 this.logger.warn('Fabrication agent returned no result');

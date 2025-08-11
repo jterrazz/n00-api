@@ -17,7 +17,7 @@ import {
 import { bodySchema } from '../../../domain/value-objects/article/body.vo.js';
 import { headlineSchema } from '../../../domain/value-objects/article/headline.vo.js';
 
-export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPort {
+export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
     static readonly SCHEMA = z.object({
         body: bodySchema,
         frames: z.array(
@@ -33,7 +33,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
 
     public readonly name = 'ArticleCompositionAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleCompositionAgentAdapter.SCHEMA>>;
+    private readonly agent: ChatAgent<z.infer<typeof ArticleCompositionAgent.SCHEMA>>;
 
     constructor(
         private readonly model: ModelPort,
@@ -42,8 +42,8 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
         this.agent = new ChatAgent(this.name, {
             logger: this.logger,
             model: this.model,
-            schema: ArticleCompositionAgentAdapter.SCHEMA,
-            systemPrompt: ArticleCompositionAgentAdapter.SYSTEM_PROMPT,
+            schema: ArticleCompositionAgent.SCHEMA,
+            systemPrompt: ArticleCompositionAgent.SYSTEM_PROMPT,
         });
     }
 
@@ -150,7 +150,7 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
                 },
             );
 
-            const result = await this.agent.run(ArticleCompositionAgentAdapter.USER_PROMPT(input));
+            const result = await this.agent.run(ArticleCompositionAgent.USER_PROMPT(input));
 
             if (!result) {
                 this.logger.warn('Article composition agent returned no result');

@@ -38,22 +38,25 @@ import { GetArticlesUseCase } from '../application/use-cases/articles/get-articl
 import { ClassifyReportsUseCase } from '../application/use-cases/reports/classify-reports.use-case.js';
 import { IngestReportsUseCase } from '../application/use-cases/reports/ingest-reports.use-case.js';
 
-import { NodeConfigAdapter } from '../infrastructure/inbound/configuration/node-config.adapter.js';
+import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.adapter.js';
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
-import { HonoServerAdapter } from '../infrastructure/inbound/server/hono.adapter.js';
-import { NodeCronAdapter } from '../infrastructure/inbound/worker/node-cron.adapter.js';
+import { HonoServer } from '../infrastructure/inbound/server/hono.adapter.js';
+import { NodeCron } from '../infrastructure/inbound/worker/node-cron.adapter.js';
 import { ReportPipelineTask } from '../infrastructure/inbound/worker/reports/report-pipeline.task.js';
-import { ArticleCompositionAgentAdapter } from '../infrastructure/outbound/agents/article-composition.agent.js';
-import { ArticleFabricationAgentAdapter } from '../infrastructure/outbound/agents/article-fabrication.agent.js';
-import { ArticleQuizGenerationAgentAdapter } from '../infrastructure/outbound/agents/article-quiz-generation.agent.js';
-import { ReportClassificationAgentAdapter } from '../infrastructure/outbound/agents/report-classification.agent.js';
-import { ReportDeduplicationAgentAdapter } from '../infrastructure/outbound/agents/report-deduplication.agent.js';
-import { ReportIngestionAgentAdapter } from '../infrastructure/outbound/agents/report-ingestion.agent.js';
+import { ArticleCompositionAgent } from '../infrastructure/outbound/agents/article-composition.agent.js';
+import { ArticleFabricationAgent } from '../infrastructure/outbound/agents/article-fabrication.agent.js';
+import { ArticleQuizGenerationAgent } from '../infrastructure/outbound/agents/article-quiz-generation.agent.js';
+import { ReportClassificationAgent } from '../infrastructure/outbound/agents/report-classification.agent.js';
+import { ReportDeduplicationAgent } from '../infrastructure/outbound/agents/report-deduplication.agent.js';
+import { ReportIngestionAgent } from '../infrastructure/outbound/agents/report-ingestion.agent.js';
 import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/article/prisma-article.adapter.js';
-import { PrismaAdapter } from '../infrastructure/outbound/persistence/prisma.adapter.js';
+import { PrismaDatabase } from '../infrastructure/outbound/persistence/prisma.adapter.js';
 import { PrismaReportRepository } from '../infrastructure/outbound/persistence/report/prisma-report.adapter.js';
-import { CachedNewsAdapter } from '../infrastructure/outbound/providers/cached-news.adapter.js';
-import { WorldNewsAdapter } from '../infrastructure/outbound/providers/world-news.adapter.js';
+import { CachedNews } from '../infrastructure/outbound/providers/cached-news.adapter.js';
+import {
+    WorldNews,
+    type WorldNewsConfiguration,
+} from '../infrastructure/outbound/providers/world-news.adapter.js';
 
 /**
  * Outbound adapters
@@ -62,7 +65,7 @@ const databaseFactory = Injectable(
     'Database',
     ['Logger', 'Configuration'] as const,
     (logger: LoggerPort, config: ConfigurationPort) =>
-        new PrismaAdapter(logger, config.getOutboundConfiguration().prisma.databaseUrl),
+        new PrismaDatabase(logger, config.getOutboundConfiguration().prisma.databaseUrl),
 );
 
 const loggerFactory = Injectable(
@@ -80,17 +83,17 @@ const newsFactory = Injectable(
     ['Configuration', 'Logger', 'NewRelic'] as const,
     (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
         logger.info('Initializing WorldNews adapter', { adapter: 'WorldNews' });
-        const newsAdapter = new WorldNewsAdapter(
+        const newsAdapter = new WorldNews(
             {
                 apiKey: config.getOutboundConfiguration().worldNews.apiKey,
-            },
+            } as WorldNewsConfiguration,
             logger,
             monitoring,
         );
         const useCache = config.getOutboundConfiguration().worldNews.useCache;
 
         if (useCache) {
-            const cachedNewsAdapter = new CachedNewsAdapter(
+            const cachedNewsAdapter = new CachedNews(
                 newsAdapter,
                 logger,
                 config.getInboundConfiguration().env,
@@ -187,7 +190,7 @@ const reportIngestionAgentFactory = Injectable(
     'ReportIngestionAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportIngestionAgentAdapter(
+        new ReportIngestionAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -202,7 +205,7 @@ const reportDeduplicationAgentFactory = Injectable(
     'ReportDeduplicationAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportDeduplicationAgentAdapter(
+        new ReportDeduplicationAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -217,7 +220,7 @@ const reportClassificationAgentFactory = Injectable(
     'ReportClassificationAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportClassificationAgentAdapter(
+        new ReportClassificationAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -231,7 +234,7 @@ const articleCompositionAgentFactory = Injectable(
     'ArticleCompositionAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleCompositionAgentAdapter(
+        new ArticleCompositionAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -245,7 +248,7 @@ const articleFabricationAgentFactory = Injectable(
     'ArticleFabricationAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleFabricationAgentAdapter(
+        new ArticleFabricationAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -259,7 +262,7 @@ const articleQuizGenerationAgentFactory = Injectable(
     'ArticleQuizGenerationAgent',
     ['Models', 'Configuration', 'Logger'] as const,
     (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleQuizGenerationAgentAdapter(
+        new ArticleQuizGenerationAgent(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
@@ -275,7 +278,7 @@ const articleQuizGenerationAgentFactory = Injectable(
 const articleRepositoryFactory = Injectable(
     'ArticleRepository',
     ['Database', 'Logger'] as const,
-    (db: PrismaAdapter, logger: LoggerPort) => {
+    (db: PrismaDatabase, logger: LoggerPort) => {
         logger.info('Initializing Article repository', { repository: 'PrismaArticle' });
         const articleRepository = new PrismaArticleRepository(db);
         return articleRepository;
@@ -285,7 +288,7 @@ const articleRepositoryFactory = Injectable(
 const reportRepositoryFactory = Injectable(
     'ReportRepository',
     ['Database', 'Logger'] as const,
-    (db: PrismaAdapter, logger: LoggerPort) => {
+    (db: PrismaDatabase, logger: LoggerPort) => {
         logger.info('Initializing Report repository', { repository: 'PrismaReport' });
         const reportRepository = new PrismaReportRepository(db, logger);
         return reportRepository;
@@ -449,14 +452,14 @@ const newRelicFactory = Injectable(
  * Inbound adapters
  */
 const configurationFactory = (overrides?: ContainerOverrides) =>
-    Injectable('Configuration', () => new NodeConfigAdapter(nodeConfiguration, overrides));
+    Injectable('Configuration', () => new NodeConfig(nodeConfiguration, overrides));
 
 const serverFactory = Injectable(
     'Server',
     ['Logger', 'Controllers'] as const,
     (logger: LoggerPort, controllers: { getArticles: GetArticlesController }): ServerPort => {
         logger.info('Initializing Server', { implementation: 'Hono' });
-        const server = new HonoServerAdapter(logger, controllers.getArticles);
+        const server = new HonoServer(logger, controllers.getArticles);
         return server;
     },
 );
@@ -466,7 +469,7 @@ const workerFactory = Injectable(
     ['Logger', 'Tasks'] as const,
     (logger: LoggerPort, tasks: TaskPort[]): WorkerPort => {
         logger.info('Initializing Worker', { implementation: 'NodeCron' });
-        const worker = new NodeCronAdapter(logger, tasks);
+        const worker = new NodeCron(logger, tasks);
         return worker;
     },
 );

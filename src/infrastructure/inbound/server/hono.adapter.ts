@@ -13,7 +13,7 @@ import { createHealthRouter } from './health/health.routes.js';
 
 import { createErrorHandlerMiddleware } from './error-handler.middleware.js';
 
-export class HonoServerAdapter implements ServerPort {
+export class HonoServer implements ServerPort {
     private app: Hono;
     private server: null | ReturnType<typeof serve> = null;
 

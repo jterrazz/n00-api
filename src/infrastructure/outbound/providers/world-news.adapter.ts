@@ -26,7 +26,7 @@ const DEFAULT_LANGUAGE = 'EN';
 const DATE_FORMAT = 'yyyy-MM-dd';
 
 // Types
-export interface WorldNewsAdapterConfiguration {
+export interface WorldNewsConfiguration {
     apiKey: string;
 }
 
@@ -51,11 +51,11 @@ const worldNewsResponseSchema = z.object({
     ),
 });
 
-export class WorldNewsAdapter implements NewsProviderPort {
+export class WorldNews implements NewsProviderPort {
     private lastRequestTime = 0;
 
     constructor(
-        private readonly configuration: WorldNewsAdapterConfiguration,
+        private readonly configuration: WorldNewsConfiguration,
         private readonly logger: LoggerPort,
         private readonly monitoring: MonitoringPort,
     ) {}

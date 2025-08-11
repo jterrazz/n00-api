@@ -7,7 +7,7 @@ import { type Report } from '../../../../domain/entities/report.entity.js';
 import { type Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';
 
-import { type PrismaAdapter } from '../prisma.adapter.js';
+import { type PrismaDatabase } from '../prisma.adapter.js';
 
 import { ReportMapper } from './prisma-report.mapper.js';
 
@@ -15,7 +15,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
     private readonly mapper: ReportMapper;
 
     constructor(
-        private readonly prisma: PrismaAdapter,
+        private readonly prisma: PrismaDatabase,
         private readonly logger: LoggerPort,
     ) {
         this.mapper = new ReportMapper();

@@ -12,12 +12,12 @@ import {
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
-import { CachedNewsAdapter } from '../cached-news.adapter.js';
+import { CachedNews } from '../cached-news.adapter.js';
 
 // Mock node fs operations
 vi.mock('node:fs');
 
-describe('CachedNewsAdapter', () => {
+describe('CachedNews', () => {
     // Given
     const mockNewsSource = mockOf<NewsProviderPort>();
     const mockLogger = mockOf<LoggerPort>();
@@ -39,11 +39,11 @@ describe('CachedNewsAdapter', () => {
         publishedAt: new Date('2024-03-08T00:00:00.000Z'),
     };
 
-    let adapter: CachedNewsAdapter;
+    let adapter: CachedNews;
 
     beforeEach(() => {
         vi.clearAllMocks();
-        adapter = new CachedNewsAdapter(mockNewsSource, mockLogger, cacheDirectory);
+        adapter = new CachedNews(mockNewsSource, mockLogger, cacheDirectory);
     });
 
     describe('fetchNews', () => {
