@@ -1,3 +1,7 @@
+// =============================================================================
+// Prisma Schema
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +10,10 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+// =============================================================================
+// Enumerations — Core
+// =============================================================================
 
 enum Country {
   GLOBAL
@@ -161,6 +169,10 @@ enum Category {
   OTHER
 }
 
+// =============================================================================
+// Enumerations — Workflow
+// =============================================================================
+
 enum ClassificationState {
   PENDING
   COMPLETE
@@ -184,25 +196,30 @@ enum DuplicateReviewStatus {
   REJECTED
 }
 
+// =============================================================================
+// Models — Domain
+// =============================================================================
+
 model Report {
-  id               String           @id @default(uuid())
-  facts            String
+  // Identity
+  id String @id @default(uuid())
+
+  // Core content
+  facts  String
+  angles ReportAngle[]
+
+  // Context & sources
+  country          Country
+  dateline         DateTime
   reportCategories ReportCategory[]
-  traitsSmart      Boolean          @default(false)
-  traitsUplifting  Boolean          @default(false)
 
-  // Step 1: Classification
+  // Workflow — Classification
   classificationState ClassificationState @default(PENDING)
-  classification      Classification? // Only set when classificationState = COMPLETE
+  classification      Classification?
+  traitsSmart         Boolean             @default(false)
+  traitsUplifting     Boolean             @default(false)
 
-  // Geographic and temporal context
-  country  Country
-  dateline DateTime
-
-  // Sources
-  sources Json
-
-  // Step 2: Deduplication
+  // Workflow — Deduplication
   deduplicationState DeduplicationState     @default(PENDING)
   duplicateOfId      String?
   duplicateOf        Report?                @relation("ReportDuplicateOf", fields: [duplicateOfId], references: [id])
@@ -210,13 +227,14 @@ model Report {
   duplicateReview    DuplicateReviewStatus?
 
   // Relations
-  angles   ReportAngle[]
-  articles Article[]     @relation("ReportArticles")
+  articles Article[] @relation("ReportArticles")
 
   // Metadata
+  sources   Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Indexes
   @@index([classificationState])
   @@index([deduplicationState])
   @@index([duplicateOfId])
@@ -227,45 +245,107 @@ model Report {
 }
 
 model ReportAngle {
-  id     String @id @default(uuid())
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
   corpus String
 
   // Relations
-  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
   reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Indexes
   @@index([reportId])
 }
 
 model Article {
-  id                String            @id @default(uuid())
-  headline          String
-  body              String // Main neutral article presenting only facts from all sides
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  headline String
+  body     String
+  frames   ArticleFrame[]
+
+  // Context
+  country  Country
+  language Language
+
+  // Classification
   articleCategories ArticleCategory[]
   traitsSmart       Boolean           @default(false)
   traitsUplifting   Boolean           @default(false)
-  fabricated        Boolean           @default(false) // Whether the article is fabricated
-  fabricatedReason  String? // Explanation when article is fabricated
-  country           Country
-  language          Language
-  publishedAt       DateTime // When the original report was published
-  createdAt         DateTime          @default(now())
+
+  // Fabrication
+  fabricated       Boolean @default(false)
+  fabricatedReason String?
+
+  // Metadata
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+
+  // Interactions
+  quizQuestions ArticleQuiz[]
 
   // Relations
-  frames        ArticleFrame[]
-  quizQuestions ArticleQuiz[]
-  reports       Report[]       @relation("ReportArticles")
+  reports Report[] @relation("ReportArticles")
 
+  // Indexes
   @@index([language, country])
   @@index([createdAt])
   @@index([publishedAt])
 }
 
-// Join table for Article categories
+model ArticleFrame {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  headline String // Frame headline from this viewpoint
+  body     String // Viewpoint-specific content explaining this side of the report
+
+  // Relations
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  // Indexes
+  @@index([articleId])
+}
+
+model ArticleQuiz {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  question           String // The quiz question text
+  answers            Json // Array of possible answers ["Answer 1", "Answer 2", "Answer 3", "Answer 4"]
+  correctAnswerIndex Int // Index (0-based) of the correct answer in the answers array
+
+  // Relations
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  // Indexes & mapping
+  @@index([articleId])
+  @@map("ArticleQuizQuestion")
+}
+
+// =============================================================================
+// Models — Join Tables
+// =============================================================================
+
+// Article ↔ Category
 model ArticleCategory {
   articleId String
   category  Category
@@ -276,7 +356,7 @@ model ArticleCategory {
   @@index([category])
 }
 
-// Join table for Report categories
+// Report ↔ Category
 model ReportCategory {
   reportId String
   category Category
@@ -285,36 +365,4 @@ model ReportCategory {
 
   @@id([reportId, category])
   @@index([category])
-}
-
-model ArticleFrame {
-  id       String @id @default(uuid())
-  headline String // Frame headline from this viewpoint
-  body     String // Viewpoint-specific content explaining this side of the report
-
-  // Relations
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId String
-
-  // Metadata
-  createdAt DateTime @default(now())
-
-  @@index([articleId])
-}
-
-model ArticleQuiz {
-  id                 String @id @default(uuid())
-  question           String // The quiz question text
-  answers            Json // Array of possible answers ["Answer 1", "Answer 2", "Answer 3", "Answer 4"]
-  correctAnswerIndex Int // Index (0-based) of the correct answer in the answers array
-
-  // Relations
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  articleId String
-
-  // Metadata
-  createdAt DateTime @default(now())
-
-  @@index([articleId])
-  @@map("ArticleQuizQuestion")
 }
