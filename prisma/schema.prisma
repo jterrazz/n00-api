@@ -188,13 +188,6 @@ enum DeduplicationState {
   COMPLETE
 }
 
-// Review status for duplicate lineage
-enum DuplicateReviewStatus {
-  PENDING_REVIEW
-  CONFIRMED_DUPLICATE
-  REJECTED
-}
-
 // =============================================================================
 // Models — Domain
 // =============================================================================
@@ -219,11 +212,10 @@ model Report {
   traitsUplifting     Boolean             @default(false)
 
   // Workflow — Deduplication
-  deduplicationState DeduplicationState     @default(PENDING)
+  deduplicationState DeduplicationState @default(PENDING)
   duplicateOfId      String?
-  duplicateOf        Report?                @relation("ReportDuplicateOf", fields: [duplicateOfId], references: [id])
-  duplicates         Report[]               @relation("ReportDuplicateOf")
-  duplicateReview    DuplicateReviewStatus?
+  duplicateOf        Report?            @relation("ReportDuplicateOf", fields: [duplicateOfId], references: [id])
+  duplicates         Report[]           @relation("ReportDuplicateOf")
 
   // Relations
   articles Article[] @relation("ReportArticles")
@@ -237,7 +229,6 @@ model Report {
   @@index([classificationState])
   @@index([deduplicationState])
   @@index([duplicateOfId])
-  @@index([duplicateReview])
   @@index([country])
   @@index([dateline])
   @@index([createdAt])

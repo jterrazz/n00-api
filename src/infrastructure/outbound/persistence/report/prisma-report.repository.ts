@@ -70,7 +70,6 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             const duplicateData = {
                 ...this.mapper.toPrisma(report),
                 duplicateOfId: options.duplicateOfId,
-                duplicateReview: 'CONFIRMED_DUPLICATE',
             } as unknown as Prisma.ReportCreateInput;
 
             const createdReport = await tx.report.create({ data: duplicateData });
