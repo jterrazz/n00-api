@@ -43,14 +43,14 @@ import { {Value} } from "./{value}.vo.js";
 
 ## 3. Naming Conventions
 
-| Kind             | Example                                  |
-| ---------------- | ---------------------------------------- |
-| Interface / Type | `UserProfile`                            |
-| Class            | `WorldNews`, `GetArticlesUseCase` |
-| Enum             | `StatusEnum`                             |
-| Constant         | `API_BASE_URL`, `RATE_LIMIT_DELAY`       |
-| Zod schema var   | `categorySchema`                         |
-| Port interface   | `ArticleRepositoryPort`                  |
+| Kind             | Example                            |
+| ---------------- | ---------------------------------- |
+| Interface / Type | `UserProfile`                      |
+| Class            | `WorldNews`, `GetArticlesUseCase`  |
+| Enum             | `StatusEnum`                       |
+| Constant         | `API_BASE_URL`, `RATE_LIMIT_DELAY` |
+| Zod schema var   | `categorySchema`                   |
+| Port interface   | `ArticleRepositoryPort`            |
 
 ---
 
