@@ -19,7 +19,7 @@ import { ZodError } from 'zod/v4';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 
 import { createTZDateForCountry } from '../../../../shared/date/timezone.js';
-import { WorldNews, type WorldNewsConfiguration } from '../world-news.adapter.js';
+import { WorldNews, type WorldNewsConfiguration } from '../world-news.provider.js';
 
 const mockConfiguration: WorldNewsConfiguration = {
     apiKey: 'test-world-news-key',
@@ -84,20 +84,16 @@ const server = setupServer(
     }),
 );
 
-let adapter: WorldNews;
+let provider: WorldNews;
 
 beforeAll(() => {
     server.listen();
     vitest.useFakeTimers();
 });
 beforeEach(() => {
-    const newRelicAdapter = mockOf<MonitoringPort>();
-    newRelicAdapter.monitorSegment.mockImplementation(async (_name, cb) => cb());
-    adapter = new WorldNews(
-        mockConfiguration as WorldNewsConfiguration,
-        mockLogger,
-        newRelicAdapter,
-    );
+    const newRelic = mockOf<MonitoringPort>();
+    newRelic.monitorSegment.mockImplementation(async (_name, cb) => cb());
+    provider = new WorldNews(mockConfiguration as WorldNewsConfiguration, mockLogger, newRelic);
     requestedDates = {};
 });
 afterEach(() => {
@@ -112,8 +108,8 @@ describe('WorldNews', () => {
     it('should fetch news successfully', async () => {
         // Given - a valid API key and a response with multiple articles
 
-        // When - fetching news from the adapter
-        const result = await adapter.fetchNews();
+        // When - fetching news from the provider
+        const result = await provider.fetchNews();
 
         // Then - it should return a report with all articles
         expect(result).toHaveLength(1);
@@ -146,12 +142,12 @@ describe('WorldNews', () => {
         mockOfDate.set(utcTimestamp);
 
         // When - fetching news for different countries
-        const first = adapter.fetchNews();
+        const first = provider.fetchNews();
         vitest.runAllTimers();
         await first;
 
         vitest.advanceTimersByTime(1500);
-        const second = adapter.fetchNews({ country: new Country('FR') });
+        const second = provider.fetchNews({ country: new Country('FR') });
         vitest.runAllTimers();
         await second;
 
@@ -171,7 +167,7 @@ describe('WorldNews', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
@@ -196,7 +192,7 @@ describe('WorldNews', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
@@ -221,7 +217,7 @@ describe('WorldNews', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
@@ -235,11 +231,11 @@ describe('WorldNews', () => {
     it('should respect rate limiting between requests', async () => {
         // Given - two consecutive requests
         // When - making the requests
-        const first = adapter.fetchNews();
+        const first = provider.fetchNews();
         vitest.runAllTimers();
         const firstResult = await first;
         vitest.advanceTimersByTime(1500);
-        const second = adapter.fetchNews();
+        const second = provider.fetchNews();
         vitest.runAllTimers();
         const secondResult = await second;
 
@@ -252,7 +248,7 @@ describe('WorldNews', () => {
 describe('WorldNews.transformResponse', () => {
     it('should return a report with all articles from each section', () => {
         // Given
-        const adapter = new WorldNews(
+        const provider = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),
@@ -287,8 +283,8 @@ describe('WorldNews.transformResponse', () => {
         };
 
         // When
-        // @ts-expect-error: testing private method
-        const result = adapter.transformResponse(response);
+        // @ts-expect-error - testing private method
+        const result = provider.transformResponse(response);
 
         // Then
         expect(result).toHaveLength(1);
@@ -316,7 +312,7 @@ describe('WorldNews.transformResponse', () => {
 
     it('should handle multiple sections correctly', () => {
         // Given
-        const adapter = new WorldNews(
+        const provider = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),
@@ -355,8 +351,8 @@ describe('WorldNews.transformResponse', () => {
         };
 
         // When
-        // @ts-expect-error: testing private method
-        const result = adapter.transformResponse(response);
+        // @ts-expect-error - testing private method
+        const result = provider.transformResponse(response);
 
         // Then
         expect(result).toHaveLength(2);

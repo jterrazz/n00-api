@@ -50,7 +50,7 @@ export class CachedNews implements NewsProviderPort {
         private readonly cacheDirectory: string,
     ) {
         const cacheDir = getCacheDir(this.cacheDirectory);
-        this.logger.info('Initializing CachedNews adapter', {
+        this.logger.info('Initializing CachedNews provider', {
             directory: cacheDir,
             environment: this.cacheDirectory,
             ttlMs: CACHE_TTL,

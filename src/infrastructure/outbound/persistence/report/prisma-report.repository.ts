@@ -7,7 +7,7 @@ import { type Report } from '../../../../domain/entities/report.entity.js';
 import { type Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';
 
-import { type PrismaDatabase } from '../prisma.adapter.js';
+import { type PrismaDatabase } from '../prisma.database.js';
 
 import { ReportMapper } from './prisma-report.mapper.js';
 
@@ -36,9 +36,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         const updatedSources = Array.from(new Set([...existingSources, ...sourceIds]));
 
         await this.prisma.getPrismaClient().report.update({
-            data: {
-                sources: updatedSources,
-            },
+            data: { sources: updatedSources },
             where: { id: reportId },
         });
     }
@@ -46,26 +44,15 @@ export class PrismaReportRepository implements ReportRepositoryPort {
     async create(report: Report): Promise<Report> {
         const prismaClient = this.prisma.getPrismaClient();
 
-        // Use transaction to create report with angles
         const result = await prismaClient.$transaction(async (tx) => {
-            // Create the report
-            const createdReport = await tx.report.create({
-                data: this.mapper.toPrisma(report),
-            });
-
-            // Create angles
+            const createdReport = await tx.report.create({ data: this.mapper.toPrisma(report) });
             for (const angle of report.angles) {
                 await tx.reportAngle.create({
                     data: this.mapper.angleToPrisma(angle, createdReport.id),
                 });
             }
-
-            // Return the created report with angles and categories
             return await tx.report.findUnique({
-                include: {
-                    angles: true,
-                    reportCategories: true,
-                },
+                include: { angles: true, reportCategories: true },
                 where: { id: createdReport.id },
             });
         });
@@ -73,7 +60,6 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         if (!result) {
             throw new Error('Failed to create report');
         }
-
         return this.mapper.toDomain(result);
     }
 
@@ -81,31 +67,20 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         const prismaClient = this.prisma.getPrismaClient();
 
         const result = await prismaClient.$transaction(async (tx) => {
-            // Create the duplicate report linked to its canonical
             const duplicateData = {
                 ...this.mapper.toPrisma(report),
-                // The following fields are added by a schema migration and may not be present
-                // in generated Prisma types until generation runs; we cast to bypass excess checks
                 duplicateOfId: options.duplicateOfId,
                 duplicateReview: 'CONFIRMED_DUPLICATE',
             } as unknown as Prisma.ReportCreateInput;
 
-            const createdReport = await tx.report.create({
-                data: duplicateData,
-            });
-
-            // Create angles for the duplicate as well
+            const createdReport = await tx.report.create({ data: duplicateData });
             for (const angle of report.angles) {
                 await tx.reportAngle.create({
                     data: this.mapper.angleToPrisma(angle, createdReport.id),
                 });
             }
-
             return await tx.report.findUnique({
-                include: {
-                    angles: true,
-                    reportCategories: true,
-                },
+                include: { angles: true, reportCategories: true },
                 where: { id: createdReport.id },
             });
         });
@@ -113,19 +88,14 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         if (!result) {
             throw new Error('Failed to create duplicate report');
         }
-
         return this.mapper.toDomain(result);
     }
 
     async findById(id: string): Promise<null | Report> {
         const prismaReport = await this.prisma.getPrismaClient().report.findUnique({
-            include: {
-                angles: true,
-                reportCategories: true,
-            },
+            include: { angles: true, reportCategories: true },
             where: { id },
         });
-
         return prismaReport ? this.mapper.toDomain(prismaReport) : null;
     }
 
@@ -136,54 +106,28 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         limit?: number;
         offset?: number;
         startDate?: Date;
-        where?: {
-            classificationState?: 'PENDING';
-        };
+        where?: { classificationState?: 'PENDING' };
     }): Promise<Report[]> {
         const where: Record<string, unknown> = {};
-
-        // Category filter
         if (criteria.category) {
             const categoryFilter = this.mapper.createCategoryFilter(criteria.category);
-            if (categoryFilter) {
-                Object.assign(where, categoryFilter);
-            }
+            if (categoryFilter) Object.assign(where, categoryFilter);
         }
-
-        // Country filter
-        if (criteria.country) {
-            where.country = criteria.country;
-        }
-
-        // Date range filter
+        if (criteria.country) where.country = criteria.country;
         if (criteria.startDate && criteria.endDate) {
-            where.dateline = {
-                gte: criteria.startDate,
-                lte: criteria.endDate,
-            };
+            where.dateline = { gte: criteria.startDate, lte: criteria.endDate };
         }
-
-        // Classification state filter
         if (criteria.where?.classificationState) {
             where.classificationState = criteria.where.classificationState;
-            // Note: duplicate filtering (duplicateOfId = null) intentionally omitted to maintain
-            // compatibility with older generated Prisma clients during tests.
         }
-
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            include: {
-                angles: true,
-                reportCategories: true,
-            },
-            orderBy: {
-                dateline: 'desc',
-            },
+            include: { angles: true, reportCategories: true },
+            orderBy: { dateline: 'desc' },
             skip: criteria.offset,
             take: criteria.limit,
             where,
         });
-
-        return reports.map((report) => this.mapper.toDomain(report));
+        return reports.map((r) => this.mapper.toDomain(r));
     }
 
     async findRecentFacts(options: {
@@ -192,19 +136,12 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         since: Date;
     }): Promise<Array<{ facts: string; id: string }>> {
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-            select: {
-                facts: true,
-                id: true,
-            },
-            take: 100, // Limit to a reasonable number for performance
+            orderBy: { createdAt: 'desc' },
+            select: { facts: true, id: true },
+            take: 100,
             where: {
                 country: this.mapper.mapCountryToPrisma(options.country),
-                createdAt: {
-                    gte: options.since,
-                },
+                createdAt: { gte: options.since },
             },
         });
         return reports;
@@ -217,108 +154,55 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         country?: string;
         limit?: number;
     }): Promise<Report[]> {
-        const where: Record<string, unknown> = {
-            articles: {
-                none: {}, // Reports that have no articles linked
-            },
-        };
-
-        // Category filter
+        const where: Record<string, unknown> = { articles: { none: {} } };
         if (criteria?.category) {
             const categoryFilter = this.mapper.createCategoryFilter(criteria.category);
-            if (categoryFilter) {
-                Object.assign(where, categoryFilter);
-            }
+            if (categoryFilter) Object.assign(where, categoryFilter);
         }
-
-        // Country filter
-        if (criteria?.country) {
-            where.country = criteria.country;
-        }
-
-        // Exclude suspected/confirmed duplicates – generate articles only from canonicals
-        // Note: duplicate filtering (duplicateOfId = null) intentionally omitted to maintain
-        // compatibility with older generated Prisma clients during tests.
-
-        // Classification state filter
-        if (criteria?.classificationState) {
-            where.classificationState = criteria.classificationState;
-        }
-
-        // Classification filter
+        if (criteria?.country) where.country = criteria.country;
+        if (criteria?.classificationState) where.classificationState = criteria.classificationState;
         if (criteria?.classification && criteria.classification.length > 0) {
             where.classification = { in: criteria.classification };
         }
-
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            include: {
-                angles: true,
-                reportCategories: true,
-            },
-            orderBy: {
-                dateline: 'desc',
-            },
+            include: { angles: true, reportCategories: true },
+            orderBy: { dateline: 'desc' },
             take: criteria?.limit || 50,
             where,
         });
-
-        return reports.map((report) => this.mapper.toDomain(report));
+        return reports.map((r) => this.mapper.toDomain(r));
     }
 
     async getAllSourceReferences(country?: Country): Promise<string[]> {
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-            select: {
-                sources: true,
-            },
-            take: 5000, // Limit to the 5,000 most recent reports as per contract
-            where: country
-                ? {
-                      country: this.mapper.mapCountryToPrisma(country),
-                  }
-                : undefined,
+            orderBy: { createdAt: 'desc' },
+            select: { sources: true },
+            take: 5000,
+            where: country ? { country: this.mapper.mapCountryToPrisma(country) } : undefined,
         });
-
-        // Flatten the array of arrays and remove duplicates
         const allSourceReferences = reports
             .map((report) => report.sources as string[])
             .flat()
             .filter((ref, index, arr) => arr.indexOf(ref) === index);
-
         return allSourceReferences;
     }
 
     async update(id: string, data: Partial<Report>): Promise<Report> {
         const updateData: Record<string, unknown> = {};
-
-        if (data.classificationState) {
+        if (data.classificationState)
             updateData.classificationState = data.classificationState.toString();
-        }
-
-        if (data.classification) {
-            updateData.classification = data.classification.toString();
-        }
-
-        if (data.deduplicationState) {
+        if (data.classification) updateData.classification = data.classification.toString();
+        if (data.deduplicationState)
             updateData.deduplicationState = data.deduplicationState.toString();
-        }
-
         if (data.traits) {
             updateData.traitsSmart = data.traits.smart;
             updateData.traitsUplifting = data.traits.uplifting;
         }
-
         const updatedReport = await this.prisma.getPrismaClient().report.update({
             data: updateData,
-            include: {
-                angles: true,
-                reportCategories: true,
-            },
+            include: { angles: true, reportCategories: true },
             where: { id },
         });
-
         return this.mapper.toDomain(updatedReport);
     }
 }

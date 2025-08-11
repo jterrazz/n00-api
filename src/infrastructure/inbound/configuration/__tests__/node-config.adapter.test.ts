@@ -1,7 +1,7 @@
 import { describe, expect, test } from '@jterrazz/test';
 import { ZodError } from 'zod/v4';
 
-import { NodeConfig } from '../node-config.adapter.js';
+import { NodeConfig } from '../node-config.js';
 
 describe('Node Config', () => {
     const validConfig = {
@@ -49,10 +49,10 @@ describe('Node Config', () => {
     test('should load valid configuration', () => {
         // Given - a valid configuration object
         // When - creating a NodeConfig instance
-        const configAdapter = new NodeConfig(validConfig);
+        const config = new NodeConfig(validConfig);
         // Then - it should return the correct inbound and outbound configuration
-        expect(configAdapter.getInboundConfiguration()).toEqual(validConfig.inbound);
-        expect(configAdapter.getOutboundConfiguration()).toEqual(validConfig.outbound);
+        expect(config.getInboundConfiguration()).toEqual(validConfig.inbound);
+        expect(config.getOutboundConfiguration()).toEqual(validConfig.outbound);
     });
 
     test('should load configuration with default empty reportPipeline when not provided', () => {
@@ -67,9 +67,9 @@ describe('Node Config', () => {
             },
         };
         // When - creating a NodeConfig instance
-        const configAdapter = new NodeConfig(configWithoutTasks);
+        const config = new NodeConfig(configWithoutTasks);
         // Then - it should return configuration with empty reportPipeline array
-        expect(configAdapter.getInboundConfiguration().tasks.reportPipeline).toEqual([]);
+        expect(config.getInboundConfiguration().tasks.reportPipeline).toEqual([]);
     });
 
     test('should fail with invalid environment', () => {

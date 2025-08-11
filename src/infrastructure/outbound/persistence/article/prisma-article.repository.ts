@@ -9,7 +9,7 @@ import type {
 
 import type { Article } from '../../../../domain/entities/article.entity.js';
 
-import type { PrismaDatabase } from '../prisma.adapter.js';
+import type { PrismaDatabase } from '../prisma.database.js';
 
 import { ArticleMapper } from './prisma-article.mapper.js';
 
@@ -75,7 +75,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
 
         return articles.map((article) => ({
             headline: article.headline,
-            summary: article.body.substring(0, 200) + '...', // Generate summary from body // TODO FIx this
+            summary: article.body.substring(0, 200) + '...',
         }));
     }
 
@@ -97,7 +97,6 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                 },
             }),
             ...(options.classification && {
-                // Explicit inclusion filter (GENERAL / NICHE)
                 reports: {
                     some: {
                         classification: {
@@ -108,8 +107,6 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
             }),
         };
 
-        // If excludeArchived is true (default), exclude articles that are OFF_TOPIC.
-        // This must allow articles with no reports (fake/unclassified) **or** reports with classification not ARCHIVED.
         if (!options.classification && options.excludeArchived !== false) {
             Object.assign(where, {
                 OR: [
@@ -137,7 +134,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                         classification: true,
                         id: true,
                     },
-                    take: 1, // We only need the classification from one report
+                    take: 1,
                 },
             },
             orderBy: {
@@ -161,7 +158,6 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
             await client.$transaction(async (tx) => {
                 const prismaData = this.mapper.toPrisma(article);
 
-                // Update the main article
                 await tx.article.update({
                     data: {
                         body: prismaData.body,
@@ -175,16 +171,12 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     where: { id: article.id },
                 });
 
-                // Handle quiz questions - delete existing and create new ones
                 if (
                     prismaData.quizQuestions &&
                     typeof prismaData.quizQuestions === 'object' &&
                     'create' in prismaData.quizQuestions
                 ) {
-                    await tx.articleQuiz.deleteMany({
-                        where: { articleId: article.id },
-                    });
-
+                    await tx.articleQuiz.deleteMany({ where: { articleId: article.id } });
                     const quizData = prismaData.quizQuestions.create;
                     if (Array.isArray(quizData)) {
                         await tx.articleQuiz.createMany({
@@ -198,16 +190,12 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     }
                 }
 
-                // Handle frames - delete existing and create new ones if provided
                 if (
                     prismaData.frames &&
                     typeof prismaData.frames === 'object' &&
                     'create' in prismaData.frames
                 ) {
-                    await tx.articleFrame.deleteMany({
-                        where: { articleId: article.id },
-                    });
-
+                    await tx.articleFrame.deleteMany({ where: { articleId: article.id } });
                     const frameData = prismaData.frames.create;
                     if (Array.isArray(frameData)) {
                         await tx.articleFrame.createMany({

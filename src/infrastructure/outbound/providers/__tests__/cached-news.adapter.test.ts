@@ -12,7 +12,7 @@ import {
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
-import { CachedNews } from '../cached-news.adapter.js';
+import { CachedNews } from '../cached-news.provider.js';
 
 // Mock node fs operations
 vi.mock('node:fs');
@@ -39,11 +39,11 @@ describe('CachedNews', () => {
         publishedAt: new Date('2024-03-08T00:00:00.000Z'),
     };
 
-    let adapter: CachedNews;
+    let provider: CachedNews;
 
     beforeEach(() => {
         vi.clearAllMocks();
-        adapter = new CachedNews(mockNewsSource, mockLogger, cacheDirectory);
+        provider = new CachedNews(mockNewsSource, mockLogger, cacheDirectory);
     });
 
     describe('fetchNews', () => {
@@ -56,8 +56,8 @@ describe('CachedNews', () => {
             (existsSync as Mock).mockReturnValue(true);
             (readFileSync as Mock).mockReturnValue(JSON.stringify(validCache));
 
-            // When - fetching data from the adapter
-            const result = await adapter.fetchNews(options);
+            // When - fetching data from the provider
+            const result = await provider.fetchNews(options);
 
             // Then - it should return the cached data
             expect(result).toEqual([mockReport]);
@@ -79,8 +79,8 @@ describe('CachedNews', () => {
             (readFileSync as Mock).mockReturnValue(JSON.stringify(expiredCache));
             mockNewsSource.fetchNews.mockResolvedValue([mockReport]);
 
-            // When - fetching data from the adapter
-            const result = await adapter.fetchNews(options);
+            // When - fetching data from the provider
+            const result = await provider.fetchNews(options);
 
             // Then - it should fetch fresh data and update the cache
             expect(result).toEqual([mockReport]);
@@ -100,8 +100,8 @@ describe('CachedNews', () => {
             (existsSync as Mock).mockReturnValue(false);
             mockNewsSource.fetchNews.mockResolvedValue([mockReport]);
 
-            // When - fetching data from the adapter
-            const result = await adapter.fetchNews(options);
+            // When - fetching data from the provider
+            const result = await provider.fetchNews(options);
 
             // Then - it should fetch fresh data and return it
             expect(result).toEqual([mockReport]);
@@ -120,8 +120,8 @@ describe('CachedNews', () => {
                 });
                 mockNewsSource.fetchNews.mockResolvedValue([mockReport]);
 
-                // When - fetching data from the adapter
-                const result = await adapter.fetchNews(options);
+                // When - fetching data from the provider
+                const result = await provider.fetchNews(options);
 
                 // Then - it should fetch fresh data and log the cache read error
                 expect(result).toEqual([mockReport]);
@@ -141,8 +141,8 @@ describe('CachedNews', () => {
                 });
                 mockNewsSource.fetchNews.mockResolvedValue([mockReport]);
 
-                // When - fetching data from the adapter
-                const result = await adapter.fetchNews(options);
+                // When - fetching data from the provider
+                const result = await provider.fetchNews(options);
 
                 // Then - it should return the data and log the cache write error
                 expect(result).toEqual([mockReport]);

@@ -18,37 +18,22 @@ export class PrismaDatabase implements DatabasePort {
                 },
             },
             log: [
-                {
-                    emit: 'event',
-                    level: 'query',
-                },
-                {
-                    emit: 'event',
-                    level: 'error',
-                },
-                {
-                    emit: 'event',
-                    level: 'info',
-                },
-                {
-                    emit: 'event',
-                    level: 'warn',
-                },
+                { emit: 'event', level: 'query' },
+                { emit: 'event', level: 'error' },
+                { emit: 'event', level: 'info' },
+                { emit: 'event', level: 'warn' },
             ],
         });
 
         this.client.$on('error' as never, (event: Prisma.LogEvent) => {
             this.logger.error('Prisma emitted an error', { ...event });
         });
-
         this.client.$on('warn' as never, (event: Prisma.LogEvent) => {
             this.logger.warn('Prisma emitted a warning', { ...event });
         });
-
         this.client.$on('info' as never, (event: Prisma.LogEvent) => {
             this.logger.info('Prisma info', { ...event });
         });
-
         this.client.$on('query' as never, (event: Prisma.LogEvent) => {
             this.logger.debug('Prisma query executed', { ...event });
         });

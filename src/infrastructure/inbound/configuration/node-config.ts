@@ -55,7 +55,7 @@ const configurationSchema = z.object({
 type Configuration = z.infer<typeof configurationSchema>;
 
 /**
- * Node.js configuration adapter that loads configuration from node-config
+ * Node.js configuration loader backed by node-config
  */
 export class NodeConfig implements ConfigurationPort {
     private readonly configuration: Configuration;

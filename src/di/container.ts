@@ -38,10 +38,10 @@ import { GetArticlesUseCase } from '../application/use-cases/articles/get-articl
 import { ClassifyReportsUseCase } from '../application/use-cases/reports/classify-reports.use-case.js';
 import { IngestReportsUseCase } from '../application/use-cases/reports/ingest-reports.use-case.js';
 
-import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.adapter.js';
+import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.js';
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
-import { HonoServer } from '../infrastructure/inbound/server/hono.adapter.js';
-import { NodeCron } from '../infrastructure/inbound/worker/node-cron.adapter.js';
+import { HonoServer } from '../infrastructure/inbound/server/hono.server.js';
+import { NodeCron } from '../infrastructure/inbound/worker/node-cron.worker.js';
 import { ReportPipelineTask } from '../infrastructure/inbound/worker/reports/report-pipeline.task.js';
 import { ArticleCompositionAgent } from '../infrastructure/outbound/agents/article-composition.agent.js';
 import { ArticleFabricationAgent } from '../infrastructure/outbound/agents/article-fabrication.agent.js';
@@ -49,14 +49,14 @@ import { ArticleQuizGenerationAgent } from '../infrastructure/outbound/agents/ar
 import { ReportClassificationAgent } from '../infrastructure/outbound/agents/report-classification.agent.js';
 import { ReportDeduplicationAgent } from '../infrastructure/outbound/agents/report-deduplication.agent.js';
 import { ReportIngestionAgent } from '../infrastructure/outbound/agents/report-ingestion.agent.js';
-import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/article/prisma-article.adapter.js';
-import { PrismaDatabase } from '../infrastructure/outbound/persistence/prisma.adapter.js';
-import { PrismaReportRepository } from '../infrastructure/outbound/persistence/report/prisma-report.adapter.js';
-import { CachedNews } from '../infrastructure/outbound/providers/cached-news.adapter.js';
+import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/article/prisma-article.repository.js';
+import { PrismaDatabase } from '../infrastructure/outbound/persistence/prisma.database.js';
+import { PrismaReportRepository } from '../infrastructure/outbound/persistence/report/prisma-report.repository.js';
+import { CachedNews } from '../infrastructure/outbound/providers/cached-news.provider.js';
 import {
     WorldNews,
     type WorldNewsConfiguration,
-} from '../infrastructure/outbound/providers/world-news.adapter.js';
+} from '../infrastructure/outbound/providers/world-news.provider.js';
 
 /**
  * Outbound adapters
@@ -82,7 +82,7 @@ const newsFactory = Injectable(
     'News',
     ['Configuration', 'Logger', 'NewRelic'] as const,
     (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
-        logger.info('Initializing WorldNews adapter', { adapter: 'WorldNews' });
+        logger.info('Initializing WorldNews provider', { provider: 'WorldNews' });
         const newsAdapter = new WorldNews(
             {
                 apiKey: config.getOutboundConfiguration().worldNews.apiKey,
@@ -93,12 +93,12 @@ const newsFactory = Injectable(
         const useCache = config.getOutboundConfiguration().worldNews.useCache;
 
         if (useCache) {
-            const cachedNewsAdapter = new CachedNews(
+            const cachedNewsProvider = new CachedNews(
                 newsAdapter,
                 logger,
                 config.getInboundConfiguration().env,
             );
-            return cachedNewsAdapter;
+            return cachedNewsProvider;
         }
 
         return newsAdapter;
@@ -439,7 +439,7 @@ const newRelicFactory = Injectable(
             return new NoopMonitoringAdapter(logger);
         }
 
-        logger.info('Initializing NewRelic monitoring', { adapter: 'NewRelic' });
+        logger.info('Initializing NewRelic monitoring', { provider: 'NewRelic' });
         return new NewRelicMonitoringAdapter({
             environment: config.getInboundConfiguration().env,
             licenseKey: outboundConfig.newRelic.licenseKey,
