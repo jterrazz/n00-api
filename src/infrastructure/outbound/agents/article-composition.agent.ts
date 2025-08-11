@@ -20,24 +20,16 @@ import { headlineSchema } from '../../../domain/value-objects/article/headline.v
 export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPort {
     static readonly SCHEMA = z.object({
         body: bodySchema,
-        frames: z
-            .array(
-                z.object({
-                    body: bodySchema,
-                    headline: headlineSchema,
-                }),
-            )
-            .describe(
-                'You MUST return one frame for EACH angle in the input. The length of this array MUST match the number of angles provided.',
-            ),
+        frames: z.array(
+            z.object({
+                body: bodySchema,
+                headline: headlineSchema,
+            }),
+        ),
         headline: headlineSchema,
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt(
-        'You are a senior editorial writer and narrative composer for a global news application. Your mission is to convert structured report data into a compelling news package: a concise, neutral main article presenting only verified facts, plus viewpoint frames that build on—never repeat—the core facts.',
-        'Write in the clear, authoritative style of a quality newspaper—professional yet accessible to a broad audience. Maintain strict neutrality, avoid jargon, and aim for a total reading time of roughly one minute.',
-        PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
-    );
+    static readonly SYSTEM_PROMPT = new SystemPrompt();
 
     public readonly name = 'ArticleCompositionAgent';
 
@@ -59,57 +51,87 @@ export class ArticleCompositionAgentAdapter implements ArticleCompositionAgentPo
         const expectedFrameCount = input.report.angles.length;
 
         return new UserPrompt(
-            // Language Constraint
-            `CRITICAL: All output MUST be written in ${input.targetLanguage
-                .toString()
-                .toUpperCase()}.`,
+            // Role & Mission
+            'You are a senior editorial writer and narrative composer for a global news application. Your mission: convert structured report data into compelling news packages for mobile readers.',
+            '',
+            'Write in clear, authoritative newspaper style—professional yet accessible. Create a neutral main article with verified facts, plus viewpoint frames that build on (never repeat) the core facts.',
+            '',
+            `CRITICAL: All output MUST be written in ${input.targetLanguage.toString().toUpperCase()}.`,
             '',
 
-            // Core Mission & Audience
-            'Compose content for our mobile news app so readers can quickly grasp BOTH the verified facts and each viewpoint surrounding the subject. Keep the writing engaging, crystal-clear, and concise for a broad audience.',
+            // Language & Style Requirements
+            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
             '',
 
-            // Output Structure (The "What")
-            'OUTPUT STRUCTURE:',
-            '• headline → Main article headline.',
-            '• body → Main Article (≈50-100 words) presenting ONLY the undisputed facts. Use markdown formatting: line breaks for paragraphs, **bold** for key facts, *italic* for emphasis.',
-            `• frames → EXACTLY ${expectedFrameCount} items (one per angle) where each item contains:`,
-            '    • headline → Frame headline capturing its viewpoint.',
-            '    • body → Frame article (≈20-60 words) that EXPANDS on the facts from its specific perspective without repeating them verbatim. Use markdown formatting: line breaks for readability, **bold** for critical points, *italic* for perspective emphasis.',
+            // Content Structure
+            '=== CONTENT STRUCTURE ===',
+            '',
+            '**Main Article**: Neutral foundation of verified facts',
+            '- Present undisputed information only',
+            '- 20-150 words, information-dense',
+            '- Strict neutrality, no interpretation',
+            '',
+            '**Frames**: Viewpoint-specific interpretations',
+            `- Create exactly ${expectedFrameCount} frames (one per angle provided)`,
+            '- 20-100 words each, perspective-focused',
+            '- Expand on facts without repetition',
+            '- Each frame represents a distinct viewpoint',
             '',
 
-            // Editorial Guidance (The "How")
-            'EDITORIAL GUIDANCE:',
-            '• Curate—do NOT transcribe. Select only the most pertinent details.',
-            '• Use simple, jargon-free language that anyone can understand.',
-            '• Craft vivid, memorable headlines and key phrases to keep readers engaged.',
-            '• Maintain strict neutrality in the Main Article; use the frames to express the angles.',
-            '• Target a total reading time of about one minute.',
+            // Writing Guidelines
+            '=== WRITING GUIDELINES ===',
+            '',
+            '**Editorial Standards**:',
+            "- Curate, don't transcribe—select most pertinent details",
+            '- Simple, jargon-free language accessible to broad audience',
+            '- Vivid, memorable headlines that engage readers',
+            '',
+            '**Content Separation**:',
+            '- Main Article = facts only',
+            '- Frames = interpretation and perspective',
+            '- Zero repetition between main article and frames',
+            '- Each frame focuses on its specific angle',
             '',
 
-            // Formatting Guidelines
-            'MARKDOWN FORMATTING:',
-            '• Use line breaks (double newline) to separate paragraphs for better readability.',
-            '• Use **bold** to highlight crucial facts, numbers, or key developments.',
-            '• Use *italic* for subtle emphasis, context, or perspective nuances.',
-            '• Apply formatting sparingly—enhance readability without overwhelming the text.',
+            // Formatting Standards
+            '=== FORMATTING STANDARDS ===',
+            '',
+            '**Markdown Usage**:',
+            '- Double newlines to separate paragraphs',
+            '- **Bold** for crucial facts, numbers, key developments',
+            '- *Italic* for subtle emphasis, context, perspective nuances',
+            '- Apply formatting sparingly for enhanced readability',
             '',
 
-            // Critical Rules
-            'CRITICAL RULES:',
-            `• You MUST create exactly ${expectedFrameCount} frames—one for each provided angle.`,
-            '• Base ALL content solely on the supplied report data; do NOT add external information.',
-            '• NO REPETITION: Main Article contains the facts; Frames provide interpretation. Information must not be duplicated.',
+            // Output Requirements
+            '=== OUTPUT REQUIREMENTS ===',
+            '',
+            '• **headline** → Compelling main article headline',
+            '• **body** → Main article with verified facts only',
+            `• **frames** → Array of exactly ${expectedFrameCount} viewpoint frames`,
+            '    • Each frame: headline + body',
+            '    • Each frame represents one provided angle',
             '',
 
-            // Report Data Input
-            'REPORT DATA:',
+            // Critical Standards
+            '=== CRITICAL STANDARDS ===',
+            '',
+            '• **Source Fidelity**: Use only supplied report data—no external information',
+            '• **Frame Completeness**: Must create one frame per angle provided',
+            '• **Content Separation**: Facts in main article, interpretation in frames',
+            '• **Language Consistency**: All content in specified target language',
+            '',
+
+            // Data Input
+            '=== REPORT DATA ===',
+            '',
             JSON.stringify(
                 {
                     angles: input.report.angles.map((angle) => ({
                         digest: angle.angleCorpus.value,
                     })),
                     dateline: input.report.dateline.toISOString(),
+                    facts: input.report.facts,
                 },
                 null,
                 2,

@@ -235,7 +235,7 @@ const articleCompositionAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
+                'gptOSS',
             ),
             logger,
         ),
@@ -249,7 +249,7 @@ const articleFabricationAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'grok4',
+                'gptOSS',
             ),
             logger,
         ),
@@ -263,7 +263,7 @@ const articleQuizGenerationAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
+                'gptOSS',
             ),
             logger,
         ),

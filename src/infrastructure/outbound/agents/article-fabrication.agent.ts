@@ -23,27 +23,13 @@ export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPo
     static readonly SCHEMA = z.object({
         body: bodySchema,
         category: categorySchema,
-        clarification: z
-            .string()
-            .describe(
-                'Clear explanation **for the reader, revealed after their guess**, of why this article is fabricated and what makes it misleading',
-            ),
+        clarification: z.string(),
         headline: headlineSchema,
-        insertAfterIndex: z
-            .number()
-            .int()
-            .describe(
-                '0-based index inside the provided recentArticles array **after** which the generated fake article should be placed. Use -1 if recentArticles is empty.',
-            )
-            .default(-1),
-        tone: z.enum(['satirical']).describe('The tone/style used in the generated article'),
+        insertAfterIndex: z.number().int().default(-1),
+        tone: z.enum(['satirical']),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt(
-        'You are a senior editorial simulator specialising in crafting **convincing but completely fabricated** news articles for an educational fake-news-detection game.',
-        'Your purpose is twofold: 1) entertain and educate by showing how misinformation can look credible, 2) never risk real-world harm. The content must be plausible, professional, and journalistic in tone, yet entirely fictional and safe.',
-        PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
-    );
+    static readonly SYSTEM_PROMPT = new SystemPrompt();
 
     public readonly name = 'ArticleFabricationAgent';
 
@@ -64,79 +50,93 @@ export class ArticleFabricationAgentAdapter implements ArticleFabricationAgentPo
     static readonly USER_PROMPT = (input: ArticleFabricationInput) => {
         const currentDate = input.context?.currentDate || new Date();
         const recentArticles = input.context?.recentArticles || [];
-        const toneInstruction =
-            'TONE: **SATIRICAL ONLY** – Generate content in a dead-pan, absurdist style reminiscent of The Onion or Babylon Bee.';
-
-        const categoryInstruction =
-            'CATEGORY: Choose the single most appropriate category from [TECHNOLOGY, BUSINESS, POLITICS, SCIENCE, HEALTH, ENTERTAINMENT, SPORTS].';
-
-        const styleGuidelines = [
-            '### SATIRICAL STYLE (DEFAULT)',
-            '•   Dead-pan humour, absurd premise delivered in a straight-news voice.',
-            '',
-            '### SKI_JUMP RULE',
-            'Hide the twist until the final 2-4 syllables of the headline.',
-            '',
-            '### BIG/SMALL SWITCH',
-            'Either treat monumental events with pedestrian seriousness OR trivial stories with outsized gravitas.',
-            '',
-            '### SPECIFICITY & PLAUSIBILITY',
-            '•   Include at least TWO concrete, believable details ("14-page ordinance", "Gallup poll of 1,028 voters").',
-            '•   Attribute at least one quote to a named (fictional) expert or agency.',
-            '',
-            '### LINGUISTIC BALANCE',
-            'Blend analytic phrasing with one emotionally loaded clause for believability.',
-            '',
-            '### CONTINUITY RULES',
-            '•   Match headline length (8-16 words) and body word-count to recentArticles average (±10%).',
-            '•   If no recentArticles, aim for headline 8-16 words and body 40-100 words.',
-        ].join('\n');
 
         return new UserPrompt(
-            // Language Constraint
+            // Role & Mission
+            'You are a senior editorial simulator specializing in crafting convincing but completely fabricated news articles for an educational fake-news-detection game.',
+            '',
+            'Your purpose: entertain and educate by showing how misinformation can look credible, while never risking real-world harm. Content must be plausible, professional, and journalistic in tone, yet entirely fictional and safe.',
+            '',
             `CRITICAL: All output MUST be written in ${input.targetLanguage.toString().toUpperCase()}.`,
             '',
 
-            // Core Mission
-            'Create a **completely fictional** yet **plausible** news article for our fake-news-detection game. Users will try to spot why it is misleading.',
+            // Language & Style Requirements
+            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
             '',
 
-            // Output Structure
-            'OUTPUT STRUCTURE (JSON): { headline, body, clarification, category, tone, insertAfterIndex }',
-            '• headline → Click-worthy headline (8-16 words) matching chosen tone.',
-            '• body → Article body with word-count matching continuity rules.',
-            '• clarification → One sentence the reader will see **after guessing**, explaining *why* and *how* the article is misleading.',
-            '• category → As instructed in CATEGORY.',
-            '• tone → "serious" or "satirical".',
-            '• insertAfterIndex → Index after which this article fits chronologically in recentArticles, or -1 if none.',
+            // Content Strategy
+            '=== CONTENT STRATEGY ===',
+            '',
+            '**Educational Purpose**: Create fictional content that teaches fake news detection',
+            '- Users will attempt to identify why the article is misleading',
+            '- Must be convincing enough to challenge critical thinking',
+            '- Reveal fabrication techniques without causing real-world harm',
+            '',
+            '**Satirical Style** (Default approach):',
+            '- Dead-pan humor with absurd premise delivered in straight-news voice',
+            '- Satirical content',
+            '- Must punch upward—target institutions or powerful figures, never marginalized groups',
             '',
 
-            // Tone & Category Instructions
-            toneInstruction,
-            categoryInstruction,
+            // Writing Techniques
+            '=== WRITING TECHNIQUES ===',
+            '',
+            '**Ski Jump Rule**: Hide the twist until final 2-4 syllables of headline',
+            '',
+            '**Big/Small Switch**: Either treat monumental events with pedestrian seriousness OR trivial stories with outsized gravitas',
+            '',
+            '**Specificity & Plausibility**:',
+            '- Include at least TWO concrete, believable details',
+            '- Examples: "14-page ordinance", "Gallup poll of 1,028 voters"',
+            '- Attribute at least one quote to named (fictional) expert or agency',
+            '',
+            '**Linguistic Balance**: Blend analytic phrasing with one emotionally loaded clause for believability',
             '',
 
-            // Style Guidelines
-            'STYLE GUIDELINES:',
-            styleGuidelines,
+            // Content Standards
+            '=== CONTENT STANDARDS ===',
+            '',
+            '**Continuity Rules**:',
+            '- Match headline length and body word count to recent articles',
+            '',
+            '**Category Selection**: Choose most appropriate category',
             '',
 
-            // Critical Rules
-            'CRITICAL RULES:',
-            '• The story must be 100% fabricated — no real events or people presented as fact.',
-            '• Do NOT reveal within the article that it is fake.',
-            '• Ensure the piece would be convincing to an average reader.',
-            '• Satire must punch **upward** – target institutions or powerful figures, never marginalised groups.',
+            // Output Requirements
+            '=== OUTPUT REQUIREMENTS ===',
+            '',
+            '• **headline** → Click-worthy headline matching satirical tone',
+            '• **body** → Article body following continuity rules',
+            '• **clarification** → Post-guess explanation of why/how article is misleading',
+            '• **category** → Most appropriate category',
+            '• **tone** → "satirical" (current default)',
+            '• **insertAfterIndex** → Chronological placement index or -1 if no recent articles',
             '',
 
-            // Context & Timing
-            `TARGET: Country: ${input.targetCountry.toString()}, Language: ${input.targetLanguage.toString()}`,
-            `DATE: ${currentDate.toISOString()}`,
-            recentArticles.length > 0 ? 'RECENT_ARTICLES:' : '',
-            ...(recentArticles.length > 0 ? [JSON.stringify(recentArticles, null, 2)] : []),
+            // Critical Standards
+            '=== CRITICAL STANDARDS ===',
             '',
-            'TIMELINE INSTRUCTION:',
-            '•   Analyse timestamps of RECENT_ARTICLES and provide `insertAfterIndex` so chronology feels natural.',
+            '• **Complete Fabrication**: Story must be 100% fictional—no real events or people',
+            '• **Convincing Presentation**: Should fool average reader initially',
+            '• **Hidden Fabrication**: Do NOT reveal within article that it is fake',
+            '• **Safe Content**: Never risk real-world harm or target vulnerable groups',
+            '• **Educational Value**: Demonstrate misinformation techniques clearly',
+            '',
+
+            // Context Data
+            '=== CONTEXT DATA ===',
+            '',
+            `**Target**: ${input.targetCountry.toString()} | ${input.targetLanguage.toString()}`,
+            `**Date**: ${currentDate.toISOString()}`,
+            '',
+            ...(recentArticles.length > 0
+                ? [
+                      '**Recent Articles for Continuity**:',
+                      JSON.stringify(recentArticles, null, 2),
+                      '',
+                      '**Timeline Instruction**: Analyze timestamps and provide insertAfterIndex for natural chronological flow',
+                  ]
+                : ['**No Recent Articles**: Use default sizing guidelines']),
         );
     };
 
