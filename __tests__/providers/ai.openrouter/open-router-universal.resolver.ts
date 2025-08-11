@@ -128,22 +128,20 @@ function handleQuizGeneration(model: string) {
             questions: [
                 {
                     answers: [
-                        'It provides instant solutions to all problems',
                         'It helps readers test their understanding of the article',
+                        'It provides instant solutions to all problems',
                         'It generates random trivia questions',
                         'It replaces the need to read the article',
                     ],
-                    correctAnswerIndex: 1,
                     question: 'What is the primary purpose of quiz questions for news articles?',
                 },
                 {
                     answers: [
+                        'A mix of factual recall and analytical thinking',
                         'Only basic yes/no questions',
                         'Questions requiring external knowledge',
-                        'A mix of factual recall and analytical thinking',
                         'Only opinion-based questions',
                     ],
-                    correctAnswerIndex: 2,
                     question: 'What types of questions should be included in an article quiz?',
                 },
             ],
@@ -174,15 +172,15 @@ export const openRouterUniversalResolver = http.post(
         /* ----------------------------- Prompt routing ----------------------------- */
 
         if (
-            userPrompt.startsWith('Analyze the following news articles') ||
-            userPrompt.startsWith('Your mission is to transform the following news articles')
+            userPrompt.includes('You are a senior news analyst') ||
+            userPrompt.includes('transform multiple news articles covering the SAME event')
         ) {
             return handleIngestion(model);
         }
 
         if (
-            userPrompt.includes('Senior Editor') ||
-            userPrompt.startsWith('Your task is to weigh the report')
+            userPrompt.includes('You are a seasoned Senior Editor') ||
+            userPrompt.includes('evaluate each report and classify it')
         ) {
             return handleClassification(model);
         }
@@ -197,23 +195,22 @@ export const openRouterUniversalResolver = http.post(
         }
 
         if (
-            userPrompt.includes('fake news detection game') ||
-            userPrompt.includes('fake-news-detection game') ||
-            userPrompt.includes('entirely fake news article')
+            userPrompt.includes('You are a senior editorial simulator') ||
+            userPrompt.includes('crafting convincing but completely fabricated news articles')
         ) {
             return handleFabrication(model);
         }
 
         if (
-            userPrompt.startsWith('CRITICAL: Output MUST be in') ||
-            userPrompt.startsWith('CRITICAL: All output MUST be')
+            userPrompt.includes('You are a senior editorial writer') ||
+            userPrompt.includes('convert structured report data into compelling news packages')
         ) {
             return handleComposition(model);
         }
 
         if (
-            userPrompt.startsWith('Create quiz questions for this article') ||
-            userPrompt.includes('Generate 2-4 comprehensive quiz questions')
+            userPrompt.includes('You are an expert quiz generator') ||
+            userPrompt.includes('creating engaging, educational questions based on news articles')
         ) {
             return handleQuizGeneration(model);
         }

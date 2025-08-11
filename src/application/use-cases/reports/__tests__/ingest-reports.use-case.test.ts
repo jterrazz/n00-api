@@ -124,7 +124,7 @@ describe('IngestReportsUseCase', () => {
         expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
     });
 
-    test('it should persist a suspected duplicate and link sources to canonical when a semantic duplicate is found', async () => {
+    test('it should persist a suspected duplicate when a semantic duplicate is found', async () => {
         // Given: The deduplication agent identifies the second report as a duplicate of an existing one.
         const existingReportId = 'existing-report-id';
         // Override default and ensure a single call returns a duplicate match
@@ -138,7 +138,7 @@ describe('IngestReportsUseCase', () => {
         // When
         await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-        // Then: It should create one canonical and one duplicate, and merge sources into canonical.
+        // Then: It should create one canonical and one duplicate (no source merging).
         // Dedup agent is called only for the second report (after one exists)
         expect(mockReportDeduplicationAgent.run).toHaveBeenCalledTimes(1);
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
@@ -146,11 +146,8 @@ describe('IngestReportsUseCase', () => {
         expect(mockReportRepository.create).toHaveBeenCalled();
         // One duplicate created
         expect(mockReportRepository.createDuplicate).toHaveBeenCalled();
-        // Sources merged into canonical
-        expect(mockReportRepository.addSourceReferences).toHaveBeenCalledWith(
-            existingReportId,
-            expect.any(Array),
-        );
+        // No source merging for duplicates
+        expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
     });
 
     test('it should ignore news reports that have already been processed by source ID', async () => {

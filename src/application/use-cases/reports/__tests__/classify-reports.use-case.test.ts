@@ -95,11 +95,13 @@ describe('ClassifyReportsUseCase', () => {
             });
             expect(mockReportRepository.update).toHaveBeenCalledWith(reportToReview.id, {
                 classification: expect.any(Object),
+                traits: expect.any(Object),
             });
             expect(mockLogger.info).toHaveBeenCalledWith('Report classified', {
                 classification: expect.any(Object),
                 reason: classificationResult.reason,
                 reportId: reportToReview.id,
+                traits: expect.any(Object),
             });
             expect(mockLogger.info).toHaveBeenCalledWith('Report classification completed', {
                 failed: 0,
@@ -142,6 +144,7 @@ describe('ClassifyReportsUseCase', () => {
             expect(mockReportClassificationAgent.run).toHaveBeenCalledTimes(2);
             expect(mockReportRepository.update).toHaveBeenCalledWith(report1.id, {
                 classification: expect.any(Object),
+                traits: expect.any(Object),
             });
             expect(mockReportRepository.update).not.toHaveBeenCalledWith(
                 report2.id,
