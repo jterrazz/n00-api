@@ -19,7 +19,6 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
         questions: z.array(
             z.object({
                 answers: z.array(z.string()).length(4),
-                correctAnswerIndex: z.number().int().min(0).max(3),
                 question: z.string(),
             }),
         ),
@@ -90,7 +89,8 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
             '',
             '**Answer Options**: Exactly 4 short, concise options per question',
             '- Maximum 2-5 words each (for small UI elements)',
-            '- Make incorrect answers plausible but clearly wrong to careful readers',
+            '- ALWAYS place the correct answer as the FIRST option (index 0)',
+            '- Make remaining 3 incorrect answers plausible but clearly wrong to careful readers',
             '- Ensure correct answer is unambiguous',
             '',
             '**Certainty Requirement**: Only include questions with absolute answer certainty',
@@ -106,8 +106,7 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
             '• **questions** → Array of 2-4 quiz questions',
             '    • Each question contains:',
             '      • question: The question text',
-            '      • answers: Array of exactly 4 answer options',
-            '      • correctAnswerIndex: 0-based index of correct answer',
+            '      • answers: Array of exactly 4 answer options (correct answer ALWAYS first)',
             '',
 
             // Critical Standards
@@ -146,29 +145,29 @@ export class ArticleQuizGenerationAgentAdapter implements ArticleQuizGenerationA
                 return null;
             }
 
-            // Validate that correctAnswerIndex is within bounds for each question
-            const validatedQuestions = result.questions.filter((q) => {
-                if (q.correctAnswerIndex >= q.answers.length) {
-                    this.logger.warn('Invalid quiz question: correctAnswerIndex out of bounds', {
-                        answersLength: q.answers.length,
-                        correctAnswerIndex: q.correctAnswerIndex,
-                        question: q.question.substring(0, 50),
-                    });
-                    return false;
-                }
-                return true;
+            // Add correct answer index (always 0 initially) and randomize order
+            const processedQuestions = result.questions.map((q) => {
+                // Shuffle answers while tracking correct answer position
+                const correctAnswer = q.answers[0];
+                const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
+                const correctAnswerIndex = shuffledAnswers.indexOf(correctAnswer);
+
+                return {
+                    answers: shuffledAnswers,
+                    correctAnswerIndex,
+                    question: q.question,
+                };
             });
 
-            if (validatedQuestions.length === 0) {
-                this.logger.warn('No valid quiz questions generated', {
+            if (processedQuestions.length === 0) {
+                this.logger.warn('No quiz questions generated', {
                     agent: 'ArticleQuizGenerationAgent',
-                    originalCount: result.questions.length,
                 });
                 return null;
             }
 
             return {
-                questions: validatedQuestions,
+                questions: processedQuestions,
             };
         } catch (error) {
             this.logger.error('Quiz generation error', {
