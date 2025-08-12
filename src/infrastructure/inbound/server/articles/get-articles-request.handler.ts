@@ -15,6 +15,7 @@ export interface GetArticlesHttpQuery {
     category?: string;
     country?: string;
     cursor?: string;
+    ids?: string | string[];
     language?: string;
     limit?: string;
 }
@@ -100,6 +101,18 @@ const getArticlesParamsSchema = z.object({
     category: categoryParamSchema,
     country: countryParamSchema,
     cursor: cursorParamSchema,
+    ids: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((v) => (v === undefined ? undefined : Array.isArray(v) ? v : v.split(',')))
+        .transform((arr) => arr?.map((id) => id.trim()).filter((id) => id.length > 0))
+        .refine((arr) => (arr ? arr.length <= 50 : true), {
+            message: 'Too many ids (max 50 allowed)',
+        })
+        .refine(
+            (arr) => (arr ? arr.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)) : true),
+            { message: 'All ids must be UUIDs' },
+        ),
     language: languageParamSchema,
     limit: limitParamSchema,
 });
@@ -128,6 +141,11 @@ export class GetArticlesRequestHandler {
             });
         }
 
-        return validatedParams.data;
+        const data = validatedParams.data as unknown as Record<string, unknown>;
+        // Normalise: treat empty ids array as absent
+        if (Array.isArray((data as { ids?: unknown }).ids) && (data.ids as unknown[]).length === 0) {
+            delete (data as { ids?: unknown }).ids;
+        }
+        return data as GetArticlesHttpParams;
     }
 }

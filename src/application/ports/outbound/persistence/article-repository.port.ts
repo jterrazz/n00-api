@@ -31,6 +31,12 @@ export interface ArticleRepositoryPort {
     findMany(options: FindManyOptions): Promise<Article[]>;
 
     /**
+     * Find articles by a list of ids. Implementations must preserve the input order
+     * in the returned array for a consistent client experience.
+     */
+    findManyByIds(ids: string[]): Promise<Article[]>;
+
+    /**
      * Update multiple existing articles
      */
     updateMany(articles: Article[]): Promise<void>;

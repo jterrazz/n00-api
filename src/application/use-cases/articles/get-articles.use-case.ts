@@ -12,6 +12,7 @@ export interface GetArticlesParams {
     category?: Category;
     country: Country;
     cursor?: Date;
+    ids?: string[];
     language?: Language;
     limit: number;
 }
@@ -37,7 +38,13 @@ export class GetArticlesUseCase {
     constructor(private readonly articleRepository: ArticleRepositoryPort) {}
 
     async execute(params: GetArticlesParams): Promise<GetArticlesResult> {
-        const { category, country, cursor, language, limit } = params;
+        const { category, country, cursor, ids, language, limit } = params;
+
+        if (ids && ids.length > 0) {
+            const articles = await this.articleRepository.findManyByIds(ids);
+            // When querying by ids, ignore pagination and filtering
+            return { articles, lastItemDate: null, total: articles.length };
+        }
 
         const [rawArticles, total] = await Promise.all([
             this.articleRepository.findMany({
@@ -46,13 +53,9 @@ export class GetArticlesUseCase {
                 cursor,
                 excludeArchived: true,
                 language,
-                limit: limit + 1, // over-fetch to determine hasMore after filtering
+                limit: limit + 1,
             }),
-            this.articleRepository.countMany({
-                category,
-                country,
-                language,
-            }),
+            this.articleRepository.countMany({ category, country, language }),
         ]);
 
         const hasMore = rawArticles.length > limit;

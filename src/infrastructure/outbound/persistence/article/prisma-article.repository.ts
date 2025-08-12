@@ -147,6 +147,28 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
         return items.map((item) => this.mapper.toDomain(item));
     }
 
+    async findManyByIds(ids: string[]): Promise<Article[]> {
+        if (ids.length === 0) return [];
+
+        const items = await this.prisma.getPrismaClient().article.findMany({
+            include: {
+                categories: true,
+                frames: true,
+                quizQuestions: true,
+                reports: {
+                    select: { classification: true, id: true },
+                    take: 1,
+                },
+            },
+            where: { id: { in: ids } },
+        });
+
+        const mapped = items.map((item) => this.mapper.toDomain(item));
+        const orderMap = new Map(ids.map((id, index) => [id, index] as const));
+        mapped.sort((a, b) => (orderMap.get(a.id)! - orderMap.get(b.id)!));
+        return mapped;
+    }
+
     async updateMany(articles: Article[]): Promise<void> {
         if (articles.length === 0) {
             return;
