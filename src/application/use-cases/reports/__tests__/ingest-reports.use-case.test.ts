@@ -12,7 +12,6 @@ import { DeduplicationState } from '../../../../domain/value-objects/report/dedu
 import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
-import { type ReportDeduplicationAgentPort } from '../../../ports/outbound/agents/report-deduplication.agent.js';
 import {
     type ReportIngestionAgentPort,
     type ReportIngestionResult,
@@ -70,7 +69,7 @@ describe('IngestReportsUseCase', () => {
 
     // Mocks
     let mockReportIngestionAgent: DeepMockProxy<ReportIngestionAgentPort>;
-    let mockReportDeduplicationAgent: DeepMockProxy<ReportDeduplicationAgentPort>;
+
     let mockLogger: DeepMockProxy<LoggerPort>;
     let mockNewsProvider: DeepMockProxy<NewsProviderPort>;
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
@@ -78,14 +77,13 @@ describe('IngestReportsUseCase', () => {
 
     beforeEach(() => {
         mockReportIngestionAgent = mock<ReportIngestionAgentPort>();
-        mockReportDeduplicationAgent = mock<ReportDeduplicationAgentPort>();
+
         mockLogger = mock<LoggerPort>();
         mockNewsProvider = mock<NewsProviderPort>();
         mockReportRepository = mock<ReportRepositoryPort>();
 
         useCase = new IngestReportsUseCase(
             mockReportIngestionAgent,
-            mockReportDeduplicationAgent,
             mockLogger,
             mockNewsProvider,
             mockReportRepository,
@@ -102,16 +100,14 @@ describe('IngestReportsUseCase', () => {
             facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
         };
 
-        mockReportDeduplicationAgent.run.mockResolvedValue({
-            duplicateOfReportId: null,
-        });
+
         mockReportIngestionAgent.run.mockResolvedValue(mockResult);
         mockReportRepository.create.mockImplementation(async (report) => report);
-        mockReportRepository.createDuplicate.mockImplementation(async (report) => report);
+
 
         // Default happy path mocks
         mockNewsProvider.fetchNews.mockResolvedValue(MOCK_NEWS_STORIES);
-        mockReportRepository.findRecentFacts.mockResolvedValue([]);
+
         mockReportRepository.getAllSourceReferences.mockResolvedValue([]);
     });
 
@@ -127,30 +123,15 @@ describe('IngestReportsUseCase', () => {
         expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
     });
 
-    test('it should persist a suspected duplicate when a semantic duplicate is found', async () => {
-        // Given: The deduplication agent identifies the second report as a duplicate of an existing one.
-        const existingReportId = 'existing-report-id';
-        // Override default and ensure a single call returns a duplicate match
-        mockReportDeduplicationAgent.run.mockReset();
-        mockReportDeduplicationAgent.run.mockResolvedValueOnce({
-            duplicateOfReportId: existingReportId,
-        });
-        // Ensure repository considers the canonical ID as existing
-        mockReportRepository.findById.mockResolvedValue(createEmptyReport(existingReportId));
-
+    test('it sets deduplicationState to PENDING for created reports', async () => {
         // When
-        await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
+        const reports = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-        // Then: It should create one canonical and one duplicate (no source merging).
-        // Dedup agent is called only for the second report (after one exists)
-        expect(mockReportDeduplicationAgent.run).toHaveBeenCalledTimes(1);
-        expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
-        // At least one canonical is created, and one duplicate is created
-        expect(mockReportRepository.create).toHaveBeenCalled();
-        // One duplicate created
-        expect(mockReportRepository.createDuplicate).toHaveBeenCalled();
-        // No source merging for duplicates
-        expect(mockReportRepository.addSourceReferences).not.toHaveBeenCalled();
+        // Then
+        expect(reports.length).toBeGreaterThan(0);
+        for (const report of reports) {
+            expect(report.deduplicationState.isPending()).toBe(true);
+        }
     });
 
     test('it should ignore news reports that have already been processed by source ID', async () => {
@@ -161,8 +142,7 @@ describe('IngestReportsUseCase', () => {
         await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
         // Then: It should only process the one truly new report.
-        // Dedup agent is now skipped entirely because first report list empty and second filtered by source
-        expect(mockReportDeduplicationAgent.run).not.toHaveBeenCalled();
+
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(1);
         expect(mockReportRepository.create).toHaveBeenCalledTimes(1);
     });
@@ -179,7 +159,7 @@ describe('IngestReportsUseCase', () => {
 
         // Then: It should only process the one valid report.
         // Dedup agent is skipped because only one valid report, list empty
-        expect(mockReportDeduplicationAgent.run).not.toHaveBeenCalled();
+
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(1);
         expect(mockReportRepository.create).toHaveBeenCalledTimes(1);
     });
@@ -207,13 +187,13 @@ describe('IngestReportsUseCase', () => {
 
     test('it should skip deduplication when there are no existing reports', async () => {
         // Given – repository returns no recent reports so dedup list will be empty
-        mockReportRepository.findRecentFacts.mockResolvedValue([]);
+
 
         // When
         await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
         // Then – deduplication agent is invoked once for second report
-        expect(mockReportDeduplicationAgent.run).toHaveBeenCalledTimes(1);
+
         expect(mockReportIngestionAgent.run).toHaveBeenCalledTimes(2);
     });
 
@@ -305,32 +285,25 @@ describe('IngestReportsUseCase', () => {
         expect(processedArticleCount).toBe(6);
     });
 
-    test('it sets deduplicationState to COMPLETE for created reports', async () => {
+    test('it sets deduplicationState to PENDING for created reports', async () => {
         // When
         const reports = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
         // Then
         expect(reports.length).toBeGreaterThan(0);
         for (const report of reports) {
-            expect(report.deduplicationState.isComplete()).toBe(true);
+            expect(report.deduplicationState.isPending()).toBe(true);
         }
     });
 
-    test('it sets deduplicationState to COMPLETE for duplicates as well', async () => {
-        // Given – make the second report a duplicate of the first processed one
-        const existingReportId = 'existing-report-id';
-        mockReportDeduplicationAgent.run.mockReset();
-        mockReportDeduplicationAgent.run
-            .mockResolvedValueOnce({ duplicateOfReportId: null }) // First report canonical
-            .mockResolvedValueOnce({ duplicateOfReportId: existingReportId }); // Second is duplicate
-
+    test('it sets deduplicationState to PENDING for all ingested reports', async () => {
         // When
         const reports = await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);
 
-        // Then – both returned reports should have deduplication completed
-        expect(reports.length).toBeGreaterThanOrEqual(2);
+        // Then – all returned reports should have deduplication pending
+        expect(reports.length).toBeGreaterThan(0);
         for (const report of reports) {
-            expect(report.deduplicationState.isComplete()).toBe(true);
+            expect(report.deduplicationState.isPending()).toBe(true);
         }
     });
 });

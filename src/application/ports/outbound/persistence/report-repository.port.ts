@@ -66,6 +66,29 @@ export interface ReportRepositoryPort {
     }): Promise<Report[]>;
 
     /**
+     * Find reports with pending deduplication state
+     */
+    findReportsWithPendingDeduplication(criteria?: {
+        country?: string;
+        limit?: number;
+    }): Promise<Report[]>;
+
+    /**
+     * Find recent reports for deduplication comparison
+     */
+    findRecentReports(criteria: {
+        country?: string;
+        since: Date;
+        excludeIds?: string[];
+        limit?: number;
+    }): Promise<Report[]>;
+
+    /**
+     * Mark a report as a duplicate of another report
+     */
+    markAsDuplicate(reportId: string, options: { duplicateOfId: string }): Promise<Report>;
+
+    /**
      * Get all existing source references (article IDs) to support deduplication
      * Limited to 5000 most recent entries, optionally filtered by country
      */

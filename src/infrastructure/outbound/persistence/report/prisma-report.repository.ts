@@ -4,7 +4,7 @@ import { type Prisma } from '@prisma/client';
 import { type ReportRepositoryPort } from '../../../../application/ports/outbound/persistence/report-repository.port.js';
 
 import { type Report } from '../../../../domain/entities/report.entity.js';
-import { type Country } from '../../../../domain/value-objects/country.vo.js';
+import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';
 
 import { type PrismaDatabase } from '../prisma.database.js';
@@ -184,6 +184,54 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             .flat()
             .filter((ref, index, arr) => arr.indexOf(ref) === index);
         return allSourceReferences;
+    }
+
+    async findReportsWithPendingDeduplication(criteria?: {
+        country?: string;
+        limit?: number;
+    }): Promise<Report[]> {
+        const reports = await this.prisma.getPrismaClient().report.findMany({
+            include: { angles: true, categories: true },
+            orderBy: { createdAt: 'asc' },
+            take: criteria?.limit ?? 50,
+            where: {
+                country: criteria?.country ? this.mapper.mapCountryToPrisma(new Country(criteria.country)) : undefined,
+                deduplicationState: 'PENDING',
+            },
+        });
+        return reports.map((report) => this.mapper.toDomain(report));
+    }
+
+    async findRecentReports(criteria: {
+        country?: string;
+        since: Date;
+        excludeIds?: string[];
+        limit?: number;
+    }): Promise<Report[]> {
+        const reports = await this.prisma.getPrismaClient().report.findMany({
+            include: { angles: true, categories: true },
+            orderBy: { createdAt: 'desc' },
+            take: criteria.limit ?? 1000,
+            where: {
+                country: criteria.country ? this.mapper.mapCountryToPrisma(new Country(criteria.country)) : undefined,
+                createdAt: { gte: criteria.since },
+                deduplicationState: 'COMPLETE',
+                id: criteria.excludeIds ? { notIn: criteria.excludeIds } : undefined,
+            },
+        });
+        return reports.map((report) => this.mapper.toDomain(report));
+    }
+
+    async markAsDuplicate(reportId: string, options: { duplicateOfId: string }): Promise<Report> {
+        const updatedReport = await this.prisma.getPrismaClient().report.update({
+            data: {
+                deduplicationState: 'COMPLETE',
+                duplicateOfId: options.duplicateOfId,
+            },
+            include: { angles: true, categories: true },
+            where: { id: reportId },
+        });
+        return this.mapper.toDomain(updatedReport);
     }
 
     async update(id: string, data: Partial<Report>): Promise<Report> {

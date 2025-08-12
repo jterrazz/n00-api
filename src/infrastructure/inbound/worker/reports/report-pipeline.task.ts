@@ -4,9 +4,10 @@ import { type ReportPipelineTaskConfig } from '../../../../application/ports/inb
 
 import { type TaskPort } from '../../../../application/ports/inbound/worker.port.js';
 import { type GenerateArticleChallengesUseCase } from '../../../../application/use-cases/articles/generate-article-challenges.use-case.js';
-import { type GenerateArticlesFromReportsUseCase } from '../../../../application/use-cases/articles/generate-articles-from-reports.use-case.js';
 import { type ClassifyReportsUseCase } from '../../../../application/use-cases/reports/classify-reports.use-case.js';
+import { type DeduplicateReportsUseCase } from '../../../../application/use-cases/reports/deduplicate-reports.use-case.js';
 import { type IngestReportsUseCase } from '../../../../application/use-cases/reports/ingest-reports.use-case.js';
+import { type PublishReportsUseCase } from '../../../../application/use-cases/reports/publish-reports.use-case.js';
 
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
@@ -18,7 +19,8 @@ export class ReportPipelineTask implements TaskPort {
 
     constructor(
         private readonly ingestReports: IngestReportsUseCase,
-        private readonly generateArticlesFromReports: GenerateArticlesFromReportsUseCase,
+        private readonly deduplicateReports: DeduplicateReportsUseCase,
+        private readonly publishReports: PublishReportsUseCase,
         private readonly generateArticleChallenges: GenerateArticleChallengesUseCase,
         private readonly classifyReports: ClassifyReportsUseCase,
         private readonly taskConfigs: ReportPipelineTaskConfig[],
@@ -52,25 +54,37 @@ export class ReportPipelineTask implements TaskPort {
 
             this.logger.info('Report ingestion completed');
 
-            // Step 2: Classify newly ingested reports
+            // Step 2: Deduplicate newly ingested reports
+            await Promise.all(
+                languages.map(async ({ country }) => {
+                    this.logger.info('Deduplicating reports', {
+                        country: country.toString(),
+                    });
+                    return this.deduplicateReports.execute(country);
+                }),
+            );
+
+            this.logger.info('Report deduplication completed');
+
+            // Step 3: Classify deduplicated reports
             await this.classifyReports.execute();
 
             this.logger.info('Report classification completed');
 
-            // Step 3: Generate articles from reports that have been classified
+            // Step 4: Publish reports as articles
             await Promise.all(
                 languages.map(async ({ country, language }) => {
-                    this.logger.info('Generating articles for reports', {
+                    this.logger.info('Publishing reports as articles', {
                         country: country.toString(),
                         language: language.toString(),
                     });
-                    return this.generateArticlesFromReports.execute(language, country);
+                    return this.publishReports.execute(language, country);
                 }),
             );
 
-            this.logger.info('Article generation completed');
+            this.logger.info('Report publishing completed');
 
-            // Step 4: Generate quiz questions/challenges for articles
+            // Step 5: Generate quiz questions/challenges for articles
             await Promise.all(
                 languages.map(async ({ country, language }) => {
                     this.logger.info('Generating challenges for articles', {

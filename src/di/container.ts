@@ -33,10 +33,11 @@ import type { ArticleRepositoryPort } from '../application/ports/outbound/persis
 import { type ReportRepositoryPort } from '../application/ports/outbound/persistence/report-repository.port.js';
 import type { NewsProviderPort } from '../application/ports/outbound/providers/news.port.js';
 import { GenerateArticleChallengesUseCase } from '../application/use-cases/articles/generate-article-challenges.use-case.js';
-import { GenerateArticlesFromReportsUseCase } from '../application/use-cases/articles/generate-articles-from-reports.use-case.js';
 import { GetArticlesUseCase } from '../application/use-cases/articles/get-articles.use-case.js';
 import { ClassifyReportsUseCase } from '../application/use-cases/reports/classify-reports.use-case.js';
+import { DeduplicateReportsUseCase } from '../application/use-cases/reports/deduplicate-reports.use-case.js';
 import { IngestReportsUseCase } from '../application/use-cases/reports/ingest-reports.use-case.js';
+import { PublishReportsUseCase } from '../application/use-cases/reports/publish-reports.use-case.js';
 
 import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.js';
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
@@ -306,31 +307,27 @@ const getArticlesUseCaseFactory = Injectable(
 
 const ingestReportsUseCaseFactory = Injectable(
     'IngestReports',
-    [
-        'ReportIngestionAgent',
-        'ReportDeduplicationAgent',
-        'Logger',
-        'News',
-        'ReportRepository',
-    ] as const,
+    ['ReportIngestionAgent', 'Logger', 'News', 'ReportRepository'] as const,
     (
         reportIngestionAgent: ReportIngestionAgentPort,
-        reportDeduplicationAgent: ReportDeduplicationAgentPort,
         logger: LoggerPort,
         newsService: NewsProviderPort,
         reportRepository: ReportRepositoryPort,
-    ) =>
-        new IngestReportsUseCase(
-            reportIngestionAgent,
-            reportDeduplicationAgent,
-            logger,
-            newsService,
-            reportRepository,
-        ),
+    ) => new IngestReportsUseCase(reportIngestionAgent, logger, newsService, reportRepository),
 );
 
-const generateArticlesFromReportsUseCaseFactory = Injectable(
-    'GenerateArticlesFromReports',
+const deduplicateReportsUseCaseFactory = Injectable(
+    'DeduplicateReports',
+    ['ReportDeduplicationAgent', 'Logger', 'ReportRepository'] as const,
+    (
+        reportDeduplicationAgent: ReportDeduplicationAgentPort,
+        logger: LoggerPort,
+        reportRepository: ReportRepositoryPort,
+    ) => new DeduplicateReportsUseCase(reportDeduplicationAgent, logger, reportRepository),
+);
+
+const publishReportsUseCaseFactory = Injectable(
+    'PublishReports',
     [
         'ArticleCompositionAgent',
         'ArticleFabricationAgent',
@@ -345,7 +342,7 @@ const generateArticlesFromReportsUseCaseFactory = Injectable(
         reportRepository: ReportRepositoryPort,
         articleRepository: ArticleRepositoryPort,
     ) =>
-        new GenerateArticlesFromReportsUseCase(
+        new PublishReportsUseCase(
             articleCompositionAgent,
             articleFabricationAgent,
             logger,
@@ -393,7 +390,8 @@ const tasksFactory = Injectable(
     'Tasks',
     [
         'IngestReports',
-        'GenerateArticlesFromReports',
+        'DeduplicateReports',
+        'PublishReports',
         'GenerateArticleChallenges',
         'ClassifyReports',
         'Configuration',
@@ -401,7 +399,8 @@ const tasksFactory = Injectable(
     ] as const,
     (
         ingestReports: IngestReportsUseCase,
-        generateArticlesFromReports: GenerateArticlesFromReportsUseCase,
+        deduplicateReports: DeduplicateReportsUseCase,
+        publishReports: PublishReportsUseCase,
         generateArticleChallenges: GenerateArticleChallengesUseCase,
         classifyReports: ClassifyReportsUseCase,
         configuration: ConfigurationPort,
@@ -414,7 +413,8 @@ const tasksFactory = Injectable(
         tasks.push(
             new ReportPipelineTask(
                 ingestReports,
-                generateArticlesFromReports,
+                deduplicateReports,
+                publishReports,
                 generateArticleChallenges,
                 classifyReports,
                 reportPipelineConfigs,
@@ -503,7 +503,8 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         // Use cases
         .provides(getArticlesUseCaseFactory)
         .provides(ingestReportsUseCaseFactory)
-        .provides(generateArticlesFromReportsUseCaseFactory)
+        .provides(deduplicateReportsUseCaseFactory)
+        .provides(publishReportsUseCaseFactory)
         .provides(generateArticleChallengesUseCaseFactory)
         .provides(classifyReportsUseCaseFactory)
         // Controllers and tasks

@@ -22,10 +22,10 @@ import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/art
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 
 /**
- * Use case for generating articles from reports that don't have articles yet
- * @description Transforms reports into user-facing articles using AI composition
+ * Use case for publishing reports as user-facing articles
+ * @description Transforms reports into articles using AI composition and manages fake content ratio
  */
-export class GenerateArticlesFromReportsUseCase {
+export class PublishReportsUseCase {
     constructor(
         private readonly articleCompositionAgent: ArticleCompositionAgentPort,
         private readonly articleFabricationAgent: ArticleFabricationAgentPort,
@@ -35,20 +35,20 @@ export class GenerateArticlesFromReportsUseCase {
     ) {}
 
     /**
-     * Generate articles from reports that don't have articles yet,
+     * Publish reports as articles by generating content from unpublished reports,
      * plus a limited number of fake articles for the game
      * @param language - Target language for article composition
      * @param country - Target country for article composition
-     * @returns Array of generated articles (mix of real and fake)
+     * @returns Array of published articles (mix of real and fake)
      */
     public async execute(language: Language, country: Country): Promise<Article[]> {
         try {
-            this.logger.info('Starting article generation process', {
+            this.logger.info('Starting report publishing process', {
                 country: country.toString(),
                 language: language.toString(),
             });
 
-            // Find reports that are ready for article generation
+            // Find reports that are ready for publishing
             const reportsToProcess = await this.reportRepository.findReportsWithoutArticles({
                 classification: ['GENERAL', 'NICHE'],
                 country: country.toString(),
@@ -56,19 +56,19 @@ export class GenerateArticlesFromReportsUseCase {
             });
 
             if (reportsToProcess.length === 0) {
-                this.logger.info('No reports found for article generation', {
+                this.logger.info('No reports found for publishing', {
                     country: country.toString(),
                     language: language.toString(),
                 });
             }
 
-            this.logger.info('Reports found for article generation', {
+            this.logger.info('Reports found for publishing', {
                 count: reportsToProcess.length,
             });
 
-            const generatedArticles: Article[] = [];
+            const publishedArticles: Article[] = [];
 
-            // 1) Generate REAL articles (if there are reports)
+            // 1) Publish REAL articles (if there are reports)
             if (reportsToProcess.length > 0) {
                 for (const report of reportsToProcess) {
                     try {
@@ -112,9 +112,9 @@ export class GenerateArticlesFromReportsUseCase {
                             traits: report.traits || new ArticleTraits(), // Use report traits if available, otherwise default
                         });
 
-                        generatedArticles.push(article);
+                        publishedArticles.push(article);
                     } catch (articleError) {
-                        this.logger.warn('Error generating article', {
+                        this.logger.warn('Error publishing article from report', {
                             country: country.toString(),
                             error: articleError,
                             language: language.toString(),
@@ -125,9 +125,9 @@ export class GenerateArticlesFromReportsUseCase {
             }
 
             // Persist real articles before generating fakes so that fake-generation ratio has context
-            if (generatedArticles.length > 0) {
+            if (publishedArticles.length > 0) {
                 try {
-                    await this.articleRepository.createMany(generatedArticles);
+                    await this.articleRepository.createMany(publishedArticles);
                 } catch (persistError) {
                     this.logger.warn('Error persisting real articles', {
                         country: country.toString(),
@@ -154,20 +154,20 @@ export class GenerateArticlesFromReportsUseCase {
             }
 
             // Combine for return and logging
-            const allGenerated = [...generatedArticles, ...fakeArticles];
+            const allPublished = [...publishedArticles, ...fakeArticles];
 
-            this.logger.info('Article generation process completed', {
+            this.logger.info('Report publishing process completed', {
                 country: country.toString(),
                 fakeCount: fakeArticles.length,
-                generatedCount: allGenerated.length,
                 language: language.toString(),
                 processedCount: reportsToProcess.length,
-                realCount: generatedArticles.length,
+                publishedCount: allPublished.length,
+                realCount: publishedArticles.length,
             });
 
-            return allGenerated;
+            return allPublished;
         } catch (error) {
-            this.logger.error('Article generation encountered an error', {
+            this.logger.error('Report publishing encountered an error', {
                 country: country.toString(),
                 error,
                 language: language.toString(),

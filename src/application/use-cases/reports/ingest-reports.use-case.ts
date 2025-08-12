@@ -9,7 +9,6 @@ import { DeduplicationState } from '../../../domain/value-objects/report/dedupli
 import { AngleCorpus } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
 import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 
-import { type ReportDeduplicationAgentPort } from '../../ports/outbound/agents/report-deduplication.agent.js';
 import { type ReportIngestionAgentPort } from '../../ports/outbound/agents/report-ingestion.agent.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.js';
@@ -20,7 +19,6 @@ import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.
 export class IngestReportsUseCase {
     constructor(
         private readonly reportIngestionAgent: ReportIngestionAgentPort,
-        private readonly reportDeduplicationAgent: ReportDeduplicationAgentPort,
         private readonly logger: LoggerPort,
         private readonly newsProvider: NewsProviderPort,
         private readonly reportRepository: ReportRepositoryPort,
@@ -36,15 +34,11 @@ export class IngestReportsUseCase {
                 language: language.toString(),
             });
 
-            // Step 1: Get recent reports and existing source IDs for deduplication
-            const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 3); // 3 days ago
-            const [recentReports, existingSourceReferences] = await Promise.all([
-                this.reportRepository.findRecentFacts({ country, language, since }),
-                this.reportRepository.getAllSourceReferences(country),
-            ]);
+            // Step 1: Get existing source IDs for deduplication
+            const existingSourceReferences =
+                await this.reportRepository.getAllSourceReferences(country);
 
             this.logger.info('Repository statistics', {
-                recentReports: recentReports.length,
                 sourceReferences: existingSourceReferences.length,
             });
 
@@ -65,7 +59,7 @@ export class IngestReportsUseCase {
             }
             this.logger.info('Fetched news reports', { count: newsStories.length });
 
-            // Step 3: Filter out reports with insufficient articles (before considering duplicates)
+            // Step 3: Filter out reports with insufficient articles
             const maxArticleCount = Math.max(
                 ...newsStories.map((report) => report.articles.length),
             );
@@ -100,35 +94,19 @@ export class IngestReportsUseCase {
                 return [];
             }
 
-            this.logger.info('Valid reports after deduplication', { count: newNewsReports.length });
+            this.logger.info('Valid reports after source deduplication', {
+                count: newNewsReports.length,
+            });
 
             // Rename for clarity in the following processing steps
             const validNewsReports = newNewsReports;
 
             // Step 5: Process each valid news report
             const digestedReports: Report[] = [];
-            // Track all reports for deduplication (existing + newly processed in this batch)
-            const allReportsForDeduplication = [...recentReports];
 
             for (const newsReport of validNewsReports) {
                 try {
-                    // Step 5.1: Check for semantic duplicates only if we have something to compare against
-                    let duplicateOfId: null | string = null;
-                    if (allReportsForDeduplication.length > 0) {
-                        const deduplicationResult = await this.reportDeduplicationAgent.run({
-                            existingReports: allReportsForDeduplication,
-                            newReport: newsReport,
-                        });
-
-                        if (deduplicationResult?.duplicateOfReportId) {
-                            duplicateOfId = deduplicationResult.duplicateOfReportId;
-                            this.logger.info('Report marked as suspected duplicate', {
-                                duplicateOf: duplicateOfId,
-                            });
-                        }
-                    }
-
-                    // Step 5.2: Ingest the unique report
+                    // Step 5.1: Ingest the report
                     const ingestionResult = await this.reportIngestionAgent.run({ newsReport });
                     if (!ingestionResult) {
                         this.logger.warn('Ingestion agent returned no result', {
@@ -154,8 +132,8 @@ export class IngestReportsUseCase {
                         country,
                         createdAt: now,
                         dateline: newsReport.publishedAt,
-                        // Deduplication has been evaluated for this report at this point
-                        deduplicationState: new DeduplicationState('COMPLETE'),
+                        // Deduplication will be performed in a separate step
+                        deduplicationState: new DeduplicationState('PENDING'),
                         facts: ingestionResult.facts,
                         id: reportId,
                         sourceReferences: newsReport.articles.map((a) => a.id),
@@ -163,27 +141,12 @@ export class IngestReportsUseCase {
                         updatedAt: now,
                     });
 
-                    let savedReport: Report;
-                    if (duplicateOfId) {
-                        // Persist as duplicate and link to canonical
-                        savedReport = await this.reportRepository.createDuplicate(report, {
-                            duplicateOfId,
-                        });
-                        digestedReports.push(savedReport);
-                        this.logger.info('Duplicate report ingested and confirmed', {
-                            duplicateOf: duplicateOfId,
-                            reportId: savedReport.id,
-                        });
-                        // Do not add duplicates to deduplication pool
-                    } else {
-                        savedReport = await this.reportRepository.create(report);
-                        digestedReports.push(savedReport);
-                        // Add the newly created canonical report to deduplication tracking for subsequent reports
-                        allReportsForDeduplication.push(savedReport);
-                        this.logger.info('Report ingested successfully', {
-                            reportId: savedReport.id,
-                        });
-                    }
+                    // Step 5.2: Persist the report
+                    const savedReport = await this.reportRepository.create(report);
+                    digestedReports.push(savedReport);
+                    this.logger.info('Report ingested successfully', {
+                        reportId: savedReport.id,
+                    });
                 } catch (reportError) {
                     this.logger.warn('Error while processing individual report', {
                         error: reportError,
