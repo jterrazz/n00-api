@@ -107,6 +107,9 @@ export class ReportMapper {
 
     toPrisma(report: Report): Prisma.ReportCreateInput {
         return {
+            categories: {
+                create: report.categories.toArray().map((c) => ({ category: c })),
+            },
             classification: report.classification?.toString() as
                 | 'GENERAL'
                 | 'NICHE'
@@ -118,9 +121,6 @@ export class ReportMapper {
             deduplicationState: report.deduplicationState.toString() as 'COMPLETE' | 'PENDING',
             facts: report.facts,
             id: report.id,
-            categories: {
-                create: report.categories.toArray().map((c) => ({ category: c })),
-            },
             sources: report.sourceReferences,
             // Removed JSON traits - using typed columns
             traitsSmart: report.traits?.smart ?? false,

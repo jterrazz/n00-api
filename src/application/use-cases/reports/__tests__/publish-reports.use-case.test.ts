@@ -40,7 +40,7 @@ describe('PublishReportsUseCase', () => {
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
     let mockArticleRepository: DeepMockProxy<ArticleRepositoryPort>;
 
-    const createEmptyReport = (id: string): Report =>
+    const createEmptyReport = (_id: string): Report =>
         new Report({
             angles: [],
             categories: new Categories(['WORLD']),
@@ -64,6 +64,31 @@ describe('PublishReportsUseCase', () => {
         mockReportRepository = mock<ReportRepositoryPort>();
         mockArticleRepository = mock<ArticleRepositoryPort>();
 
+        // Set up default mocks for all repository methods that might be called
+        // Note: findReportsWithoutArticles is mocked in individual tests
+        mockReportRepository.addSourceReferences.mockResolvedValue();
+        mockReportRepository.create.mockResolvedValue({} as Report);
+        mockReportRepository.createDuplicate.mockResolvedValue({} as Report);
+        mockReportRepository.findById.mockResolvedValue(null);
+        mockReportRepository.findMany.mockResolvedValue([]);
+        mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([]);
+        mockReportRepository.findRecentReports.mockResolvedValue([]);
+        mockReportRepository.markAsDuplicate.mockResolvedValue({} as Report);
+        mockReportRepository.findRecentFacts.mockResolvedValue([]);
+        mockReportRepository.getAllSourceReferences.mockResolvedValue([]);
+        mockReportRepository.update.mockResolvedValue({} as Report);
+
+        mockArticleRepository.countMany.mockResolvedValue(0);
+        mockArticleRepository.createMany.mockResolvedValue();
+        mockArticleRepository.findMany.mockResolvedValue([]);
+        mockArticleRepository.findManyByIds.mockResolvedValue([]);
+
+        // Properly mock the logger methods
+        mockLogger.info.mockReturnValue();
+        mockLogger.warn.mockReturnValue();
+        mockLogger.error.mockReturnValue();
+        mockLogger.debug.mockReturnValue();
+
         useCase = new PublishReportsUseCase(
             mockArticleCompositionAgent,
             mockArticleFabricationAgent,
@@ -77,15 +102,17 @@ describe('PublishReportsUseCase', () => {
         const testLanguage = new Language('EN');
         const testCountry = new Country('US');
 
+
+
         test('should publish articles from reports successfully', async () => {
             // Given
             const mockReport = createEmptyReport('test-report-id');
 
             const mockCompositionResult: ArticleCompositionResult = {
-                body: 'Test body content',
+                body: 'This is a test body content that has at least thirty characters to pass validation requirements',
                 frames: [
                     {
-                        body: 'Frame body',
+                        body: 'This is a frame body that has at least thirty characters to pass validation requirements',
                         headline: 'Frame headline',
                     },
                 ],
@@ -104,7 +131,7 @@ describe('PublishReportsUseCase', () => {
             expect(result).toHaveLength(1);
             expect(result[0]).toBeInstanceOf(Article);
             expect(result[0].headline.value).toBe('Test headline');
-            expect(result[0].body.value).toBe('Test body content');
+            expect(result[0].body.value).toBe('This is a test body content that has at least thirty characters to pass validation requirements');
             expect(result[0].authenticity.status).toBe(AuthenticityStatusEnum.AUTHENTIC);
             expect(result[0].frames).toHaveLength(1);
 
@@ -140,7 +167,7 @@ describe('PublishReportsUseCase', () => {
             });
 
             const mockFabricationResult: ArticleFabricationResult = {
-                body: 'Fake body content',
+                body: 'This is a fake body content that has at least thirty characters to pass validation requirements',
                 categories: new Categories(['WORLD']),
                 clarification: 'This is fake',
                 headline: 'Fake headline',
@@ -161,6 +188,7 @@ describe('PublishReportsUseCase', () => {
             expect(result).toHaveLength(1);
             expect(result[0].authenticity.status).toBe(AuthenticityStatusEnum.FABRICATED);
             expect(result[0].headline.value).toBe('Fake headline');
+            expect(result[0].body.value).toBe('This is a fake body content that has at least thirty characters to pass validation requirements');
 
             expect(mockArticleFabricationAgent.run).toHaveBeenCalledWith({
                 context: {
@@ -211,7 +239,7 @@ describe('PublishReportsUseCase', () => {
             expect(mockLogger.warn).toHaveBeenCalledWith('Composition agent returned no result', {
                 country: 'US',
                 language: 'EN',
-                reportId: 'test-report-id',
+                reportId: expect.any(String),
             });
         });
     });

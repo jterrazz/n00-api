@@ -51,9 +51,9 @@ export class DeduplicateReportsUseCase {
             const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7); // 7 days ago
             const existingReports = await this.reportRepository.findRecentReports({
                 country: country?.toString(),
-                since,
                 excludeIds: pendingReports.map(r => r.id),
-                limit: 1000, // Get a good sample for comparison
+                limit: 1000,
+                since, // Get a good sample for comparison
             });
 
             this.logger.info('Existing reports loaded for comparison', {
@@ -66,7 +66,7 @@ export class DeduplicateReportsUseCase {
 
             for (const pendingReport of pendingReports) {
                 try {
-                    let duplicateOfId: string | null = null;
+                    let duplicateOfId: null | string = null;
 
                     // Only check for duplicates if we have reports to compare against
                     if (existingReports.length > 0) {
@@ -84,8 +84,8 @@ export class DeduplicateReportsUseCase {
                         if (deduplicationResult?.duplicateOfReportId) {
                             duplicateOfId = deduplicationResult.duplicateOfReportId;
                             this.logger.info('Report identified as duplicate', {
-                                reportId: pendingReport.id,
                                 duplicateOf: duplicateOfId,
+                                reportId: pendingReport.id,
                             });
                         }
                     }
@@ -100,8 +100,8 @@ export class DeduplicateReportsUseCase {
                         });
                         duplicatesFound++;
                         this.logger.info('Report marked as duplicate', {
-                            reportId: pendingReport.id,
                             duplicateOf: duplicateOfId,
+                            reportId: pendingReport.id,
                         });
                     } else {
                         // Mark as unique (not a duplicate)
@@ -137,8 +137,8 @@ export class DeduplicateReportsUseCase {
 
             this.logger.info('Report deduplication process completed', {
                 country: country?.toString() || 'all',
-                processedCount: processedReports.length,
                 duplicatesFound,
+                processedCount: processedReports.length,
                 uniqueReports: processedReports.length - duplicatesFound,
             });
 

@@ -1,4 +1,3 @@
-import { type ArticleFrame } from '../../../../domain/value-objects/article-frame/article-frame.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';
 
 /**

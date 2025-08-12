@@ -100,10 +100,8 @@ describe('IngestReportsUseCase', () => {
             facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
         };
 
-
         mockReportIngestionAgent.run.mockResolvedValue(mockResult);
         mockReportRepository.create.mockImplementation(async (report) => report);
-
 
         // Default happy path mocks
         mockNewsProvider.fetchNews.mockResolvedValue(MOCK_NEWS_STORIES);
@@ -187,7 +185,6 @@ describe('IngestReportsUseCase', () => {
 
     test('it should skip deduplication when there are no existing reports', async () => {
         // Given – repository returns no recent reports so dedup list will be empty
-
 
         // When
         await useCase.execute(DEFAULT_LANGUAGE, DEFAULT_COUNTRY);

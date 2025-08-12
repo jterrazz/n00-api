@@ -109,10 +109,9 @@ const getArticlesParamsSchema = z.object({
         .refine((arr) => (arr ? arr.length <= 50 : true), {
             message: 'Too many ids (max 50 allowed)',
         })
-        .refine(
-            (arr) => (arr ? arr.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)) : true),
-            { message: 'All ids must be UUIDs' },
-        ),
+        .refine((arr) => (arr ? arr.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)) : true), {
+            message: 'All ids must be UUIDs',
+        }),
     language: languageParamSchema,
     limit: limitParamSchema,
 });
@@ -143,7 +142,10 @@ export class GetArticlesRequestHandler {
 
         const data = validatedParams.data as unknown as Record<string, unknown>;
         // Normalise: treat empty ids array as absent
-        if (Array.isArray((data as { ids?: unknown }).ids) && (data.ids as unknown[]).length === 0) {
+        if (
+            Array.isArray((data as { ids?: unknown }).ids) &&
+            (data.ids as unknown[]).length === 0
+        ) {
             delete (data as { ids?: unknown }).ids;
         }
         return data as GetArticlesHttpParams;

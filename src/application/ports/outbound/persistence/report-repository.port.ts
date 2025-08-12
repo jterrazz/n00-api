@@ -54,6 +54,16 @@ export interface ReportRepositoryPort {
     }): Promise<Array<{ facts: string; id: string }>>;
 
     /**
+     * Find recent reports for deduplication comparison
+     */
+    findRecentReports(criteria: {
+        country?: string;
+        excludeIds?: string[];
+        limit?: number;
+        since: Date;
+    }): Promise<Report[]>;
+
+    /**
      * Find reports that don't have any articles linked to them
      * Useful for identifying reports that need article implementation
      */
@@ -74,25 +84,15 @@ export interface ReportRepositoryPort {
     }): Promise<Report[]>;
 
     /**
-     * Find recent reports for deduplication comparison
+     * Get all existing source references (article IDs) to support deduplication
+     * Limited to 5000 most recent entries, optionally filtered by country
      */
-    findRecentReports(criteria: {
-        country?: string;
-        since: Date;
-        excludeIds?: string[];
-        limit?: number;
-    }): Promise<Report[]>;
+    getAllSourceReferences(country?: Country): Promise<string[]>;
 
     /**
      * Mark a report as a duplicate of another report
      */
     markAsDuplicate(reportId: string, options: { duplicateOfId: string }): Promise<Report>;
-
-    /**
-     * Get all existing source references (article IDs) to support deduplication
-     * Limited to 5000 most recent entries, optionally filtered by country
-     */
-    getAllSourceReferences(country?: Country): Promise<string[]>;
 
     /**
      * Update a report's interest tier

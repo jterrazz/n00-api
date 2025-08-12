@@ -130,10 +130,10 @@ export class ArticleMapper {
 
     toPrisma(domain: Article): Prisma.ArticleCreateInput {
         return {
+            body: domain.body.value,
             categories: {
                 create: domain.categories.toArray().map((c) => ({ category: c })),
             },
-            body: domain.body.value,
             country: this.mapCountryToPrisma(domain.country),
             fabricated: domain.isFabricated(),
             fabricatedReason: domain.authenticity.clarification,

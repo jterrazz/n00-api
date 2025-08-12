@@ -165,7 +165,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
 
         const mapped = items.map((item) => this.mapper.toDomain(item));
         const orderMap = new Map(ids.map((id, index) => [id, index] as const));
-        mapped.sort((a, b) => (orderMap.get(a.id)! - orderMap.get(b.id)!));
+        mapped.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
         return mapped;
     }
 

@@ -81,9 +81,9 @@ describe('DeduplicateReportsUseCase', () => {
             });
             expect(mockReportRepository.findRecentReports).toHaveBeenCalledWith({
                 country: 'US',
-                since: expect.any(Date),
                 excludeIds: [pendingReport.id],
                 limit: 1000,
+                since: expect.any(Date),
             });
             expect(mockReportDeduplicationAgent.run).toHaveBeenCalledWith({
                 existingReports: [existingReport],
@@ -122,8 +122,8 @@ describe('DeduplicateReportsUseCase', () => {
                 duplicateOfId: existingReport.id,
             });
             expect(mockLogger.info).toHaveBeenCalledWith('Report identified as duplicate', {
-                reportId: pendingReport.id,
                 duplicateOf: existingReport.id,
+                reportId: pendingReport.id,
             });
         });
 
@@ -249,8 +249,8 @@ describe('DeduplicateReportsUseCase', () => {
             expect(result).toHaveLength(2);
             expect(mockLogger.info).toHaveBeenCalledWith('Report deduplication process completed', {
                 country: 'US',
-                processedCount: 2,
                 duplicatesFound: 1,
+                processedCount: 2,
                 uniqueReports: 1,
             });
         });

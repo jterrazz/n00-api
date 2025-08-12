@@ -146,6 +146,26 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         return reports;
     }
 
+    async findRecentReports(criteria: {
+        country?: string;
+        excludeIds?: string[];
+        limit?: number;
+        since: Date;
+    }): Promise<Report[]> {
+        const reports = await this.prisma.getPrismaClient().report.findMany({
+            include: { angles: true, categories: true },
+            orderBy: { createdAt: 'desc' },
+            take: criteria.limit ?? 1000,
+            where: {
+                country: criteria.country ? this.mapper.mapCountryToPrisma(new Country(criteria.country)) : undefined,
+                createdAt: { gte: criteria.since },
+                deduplicationState: 'COMPLETE',
+                id: criteria.excludeIds ? { notIn: criteria.excludeIds } : undefined,
+            },
+        });
+        return reports.map((report) => this.mapper.toDomain(report));
+    }
+
     async findReportsWithoutArticles(criteria?: {
         category?: string;
         classification?: Array<'GENERAL' | 'NICHE' | 'OFF_TOPIC'>;
@@ -172,20 +192,6 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         return reports.map((r) => this.mapper.toDomain(r));
     }
 
-    async getAllSourceReferences(country?: Country): Promise<string[]> {
-        const reports = await this.prisma.getPrismaClient().report.findMany({
-            orderBy: { createdAt: 'desc' },
-            select: { sources: true },
-            take: 5000,
-            where: country ? { country: this.mapper.mapCountryToPrisma(country) } : undefined,
-        });
-        const allSourceReferences = reports
-            .map((report) => report.sources as string[])
-            .flat()
-            .filter((ref, index, arr) => arr.indexOf(ref) === index);
-        return allSourceReferences;
-    }
-
     async findReportsWithPendingDeduplication(criteria?: {
         country?: string;
         limit?: number;
@@ -202,24 +208,18 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         return reports.map((report) => this.mapper.toDomain(report));
     }
 
-    async findRecentReports(criteria: {
-        country?: string;
-        since: Date;
-        excludeIds?: string[];
-        limit?: number;
-    }): Promise<Report[]> {
+    async getAllSourceReferences(country?: Country): Promise<string[]> {
         const reports = await this.prisma.getPrismaClient().report.findMany({
-            include: { angles: true, categories: true },
             orderBy: { createdAt: 'desc' },
-            take: criteria.limit ?? 1000,
-            where: {
-                country: criteria.country ? this.mapper.mapCountryToPrisma(new Country(criteria.country)) : undefined,
-                createdAt: { gte: criteria.since },
-                deduplicationState: 'COMPLETE',
-                id: criteria.excludeIds ? { notIn: criteria.excludeIds } : undefined,
-            },
+            select: { sources: true },
+            take: 5000,
+            where: country ? { country: this.mapper.mapCountryToPrisma(country) } : undefined,
         });
-        return reports.map((report) => this.mapper.toDomain(report));
+        const allSourceReferences = reports
+            .map((report) => report.sources as string[])
+            .flat()
+            .filter((ref, index, arr) => arr.indexOf(ref) === index);
+        return allSourceReferences;
     }
 
     async markAsDuplicate(reportId: string, options: { duplicateOfId: string }): Promise<Report> {
