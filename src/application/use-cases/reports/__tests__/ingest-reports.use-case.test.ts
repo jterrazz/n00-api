@@ -29,7 +29,7 @@ import {
 import { IngestReportsUseCase } from '../ingest-reports.use-case.js';
 
 describe('IngestReportsUseCase', () => {
-    const createEmptyReport = (_id: string): Report =>
+    const _createEmptyReport = (_id: string): Report =>
         new Report({
             angles: [
                 new ReportAngle({

@@ -1,15 +1,4 @@
 import { type ModelPort, OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
-
-export interface ModelsPort {
-    deepseekV3: ModelPort;
-    gemini25Flash: ModelPort;
-    gemini25FlashLite: ModelPort;
-    glm45: ModelPort;
-    gpt5Mini: ModelPort;
-    gptOSS: ModelPort;
-    grok4: ModelPort;
-}
-
 import { type LoggerPort, PinoLoggerAdapter } from '@jterrazz/logger';
 import {
     type MonitoringPort,
@@ -25,8 +14,7 @@ import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.
 
 // Application
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
-import type { TaskPort } from '../application/ports/inbound/worker.port.js';
-import type { WorkerPort } from '../application/ports/inbound/worker.port.js';
+import type { TaskPort, WorkerPort } from '../application/ports/inbound/worker.port.js';
 import { type ArticleCompositionAgentPort } from '../application/ports/outbound/agents/article-composition.agent.js';
 import { type ArticleFabricationAgentPort } from '../application/ports/outbound/agents/article-fabrication.agent.js';
 import { type ArticleQuizGenerationAgentPort } from '../application/ports/outbound/agents/article-quiz-generation.agent.js';
@@ -62,6 +50,16 @@ import {
     WorldNews,
     type WorldNewsConfiguration,
 } from '../infrastructure/outbound/providers/world-news.provider.js';
+
+export interface ModelsPort {
+    deepseekV3: ModelPort;
+    gemini25Flash: ModelPort;
+    gemini25FlashLite: ModelPort;
+    glm45: ModelPort;
+    gpt5Mini: ModelPort;
+    gptOSS: ModelPort;
+    grok4: ModelPort;
+}
 
 /**
  * Outbound adapters

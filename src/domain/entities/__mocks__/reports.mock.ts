@@ -7,6 +7,8 @@ import { Categories } from '../../value-objects/categories.vo.js';
 import { mockReportAngles } from '../../value-objects/report-angle/__mocks__/report-angles.mock.js';
 import { type ReportAngle } from '../../value-objects/report-angle/report-angle.vo.js';
 import { getClassification } from '../../value-objects/report/__mocks__/tiers.mock.js';
+import { Background } from '../../value-objects/report/background.vo.js';
+import { Core } from '../../value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../value-objects/report/deduplication-state.vo.js';
 import { ClassificationState } from '../../value-objects/report/tier-state.vo.js';
 import { Report } from '../report.entity.js';
@@ -35,9 +37,12 @@ export function getMockReport(options?: {
             options?.countryIndex !== undefined ? getCountry(options.countryIndex) : getCountry(0),
         createdAt: new Date(),
         dateline: new Date(),
-        background:
+        background: new Background(
             'Mock background context providing comprehensive contextual information for understanding the story.',
-        core: 'Mock core story representing the main narrative being reported with sufficient detail for validation.',
+        ),
+        core: new Core(
+            'Mock core story representing the main narrative being reported with sufficient detail for validation.',
+        ),
         deduplicationState: new DeduplicationState('COMPLETE'),
         id: reportId,
         sourceReferences: ['worldnewsapi:mock-article-1', 'worldnewsapi:mock-article-2'],
@@ -68,8 +73,12 @@ function createMockReport(index: number): Report {
         country: getCountry(index + 1),
         createdAt: new Date(),
         dateline: new Date(),
-        background: `Background context for report ${index} providing comprehensive contextual information. Topic: ${category.toString()}.`,
-        core: `Core story for report ${index} representing the main narrative. Topic: ${category.toString()}. Contains sufficient detail for validation.`,
+        background: new Background(
+            `Background context for report ${index} providing comprehensive contextual information. Topic: ${category.toString()}.`,
+        ),
+        core: new Core(
+            `Core story for report ${index} representing the main narrative. Topic: ${category.toString()}. Contains sufficient detail for validation.`,
+        ),
         deduplicationState: new DeduplicationState('COMPLETE'),
         id: reportId,
         sourceReferences: [`source-ref-${index}`],

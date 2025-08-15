@@ -138,14 +138,17 @@ export class PrismaReportRepository implements ReportRepositoryPort {
     }): Promise<Array<{ facts: string; id: string }>> {
         const reports = await this.prisma.getPrismaClient().report.findMany({
             orderBy: { createdAt: 'desc' },
-            select: { facts: true, id: true },
+            select: { core: true, id: true },
             take: 100,
             where: {
                 country: this.mapper.mapCountryToPrisma(options.country),
                 createdAt: { gte: options.since },
             },
         });
-        return reports;
+        return reports.map((report) => ({
+            facts: report.core,
+            id: report.id,
+        }));
     }
 
     async findRecentReports(criteria: {
