@@ -1,6 +1,7 @@
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod/v4';
 
+// Domain
 import { Category, categorySchema } from '../../../../domain/value-objects/category.vo.js';
 import { Country, countrySchema } from '../../../../domain/value-objects/country.vo.js';
 import { Language, languageSchema } from '../../../../domain/value-objects/language.vo.js';

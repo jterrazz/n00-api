@@ -3,12 +3,12 @@ import { z } from 'zod/v4';
 import { ArticleTraits } from '../value-objects/article-traits.vo.js';
 import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
+import { ReportAngle } from '../value-objects/report-angle/report-angle.vo.js';
 import { Background } from '../value-objects/report/background.vo.js';
 import { Core } from '../value-objects/report/core.vo.js';
 import { DeduplicationState } from '../value-objects/report/deduplication-state.vo.js';
-import { Classification } from '../value-objects/report/tier.vo.js';
 import { ClassificationState } from '../value-objects/report/tier-state.vo.js';
-import { ReportAngle } from '../value-objects/report-angle/report-angle.vo.js';
+import { Classification } from '../value-objects/report/tier.vo.js';
 
 export const coreSchema = z.instanceof(Core).describe('The core story being reported');
 

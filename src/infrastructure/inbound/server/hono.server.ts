@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 import { type LoggerPort } from '@jterrazz/logger';
 import { Hono } from 'hono';
 
+// Application
 import {
     type ServerConfiguration,
     type ServerPort,
@@ -9,9 +10,8 @@ import {
 
 import { createArticlesRouter } from './articles/articles.routes.js';
 import { type GetArticlesController } from './articles/get-articles.controller.js';
-import { createHealthRouter } from './health/health.routes.js';
-
 import { createErrorHandlerMiddleware } from './error-handler.middleware.js';
+import { createHealthRouter } from './health/health.routes.js';
 
 export class HonoServer implements ServerPort {
     private app: Hono;

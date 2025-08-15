@@ -8,12 +8,14 @@ import {
 import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
+// Application
 import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionInput,
     type ArticleCompositionResult,
 } from '../../../application/ports/outbound/agents/article-composition.agent.js';
 
+// Domain
 import { bodySchema } from '../../../domain/value-objects/article/body.vo.js';
 import { headlineSchema } from '../../../domain/value-objects/article/headline.vo.js';
 

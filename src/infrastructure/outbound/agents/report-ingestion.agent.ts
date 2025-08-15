@@ -8,16 +8,18 @@ import {
 import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
+// Application
 import {
     type ReportIngestionAgentPort,
     type ReportIngestionResult,
 } from '../../../application/ports/outbound/agents/report-ingestion.agent.js';
 import { type NewsReport } from '../../../application/ports/outbound/providers/news.port.js';
 
+// Domain
 import { Categories, categoriesSchema } from '../../../domain/value-objects/categories.vo.js';
+import { angleNarrativeSchema } from '../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { backgroundSchema } from '../../../domain/value-objects/report/background.vo.js';
 import { coreSchema } from '../../../domain/value-objects/report/core.vo.js';
-import { angleNarrativeSchema } from '../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 
 export class ReportIngestionAgent implements ReportIngestionAgentPort {
     static readonly SCHEMA = z.object({

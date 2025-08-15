@@ -1,7 +1,9 @@
 import { type Category, type Country, type Language } from '@prisma/client';
 
+// Application
 import { type GetArticlesResult } from '../../../../application/use-cases/articles/get-articles.use-case.js';
 
+// Domain
 import { type Article } from '../../../../domain/entities/article.entity.js';
 
 type ArticleChallenges = {
@@ -122,11 +124,7 @@ export class GetArticlesResponsePresenter {
                 country: article.country.toString() as Country,
                 fabricated: article.isFabricated(),
                 language: article.language.toString() as Language,
-                tier: article.tier?.toString() as
-                    | 'GENERAL'
-                    | 'NICHE'
-                    | 'OFF_TOPIC'
-                    | undefined,
+                tier: article.tier?.toString() as 'GENERAL' | 'NICHE' | 'OFF_TOPIC' | undefined,
                 traits: {
                     smart: article.traits.smart,
                     uplifting: article.traits.uplifting,

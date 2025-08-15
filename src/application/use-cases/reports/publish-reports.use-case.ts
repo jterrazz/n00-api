@@ -1,18 +1,20 @@
 import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
+// Domain
 import { Article } from '../../../domain/entities/article.entity.js';
+import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
+import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import {
     Authenticity,
     AuthenticityStatusEnum,
 } from '../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../domain/value-objects/article/headline.vo.js';
-import { ArticleFrame } from '../../../domain/value-objects/article-frame/article-frame.vo.js';
-import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 
+// Ports
 import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionInput,

@@ -1,9 +1,11 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
+// Domain
 import { type Report } from '../../../domain/entities/report.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { DeduplicationState } from '../../../domain/value-objects/report/deduplication-state.vo.js';
 
+// Ports
 import { type ReportDeduplicationAgentPort } from '../../ports/outbound/agents/report-deduplication.agent.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 

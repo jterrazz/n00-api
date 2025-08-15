@@ -3,14 +3,14 @@ import { randomUUID } from 'crypto';
 import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
 import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
 import { getLanguage } from '../../value-objects/__mocks__/languages.mock.js';
+import { mockArticleFrames } from '../../value-objects/article-frame/__mocks__/article-frames.mock.js';
+import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { getBody } from '../../value-objects/article/__mocks__/bodies.mock.js';
 import { getHeadline } from '../../value-objects/article/__mocks__/headlines.mock.js';
 import {
     Authenticity,
     AuthenticityStatusEnum,
 } from '../../value-objects/article/authenticity.vo.js';
-import { mockArticleFrames } from '../../value-objects/article-frame/__mocks__/article-frames.mock.js';
-import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { Categories } from '../../value-objects/categories.vo.js';
 import { Article } from '../article.entity.js';
 

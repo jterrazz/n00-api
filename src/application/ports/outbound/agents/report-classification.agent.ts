@@ -1,3 +1,4 @@
+// Domain
 import { type Report } from '../../../../domain/entities/report.entity.js';
 import { type ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import {

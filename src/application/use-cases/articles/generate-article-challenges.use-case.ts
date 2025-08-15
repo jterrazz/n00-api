@@ -1,11 +1,13 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
+// Domain
 import { Article } from '../../../domain/entities/article.entity.js';
 import { ArticleQuizQuestion } from '../../../domain/value-objects/article-quiz-question.vo.js';
 import { ArticleQuizQuestions } from '../../../domain/value-objects/article-quiz-questions.vo.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 
+// Ports
 import { type ArticleQuizGenerationAgentPort } from '../../ports/outbound/agents/article-quiz-generation.agent.js';
 import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
 

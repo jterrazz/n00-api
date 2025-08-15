@@ -1,5 +1,6 @@
 import { type LoggerLevel } from '@jterrazz/logger';
 
+// Domain
 import { type CountryEnum } from '../../../domain/value-objects/country.vo.js';
 import { type LanguageEnum } from '../../../domain/value-objects/language.vo.js';
 

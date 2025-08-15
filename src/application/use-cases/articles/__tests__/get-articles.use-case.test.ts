@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it } from '@jterrazz/test';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
+// Domain
 import { mockArticles } from '../../../../domain/entities/__mocks__/articles.mock.js';
 import { type Article } from '../../../../domain/entities/article.entity.js';
 import { Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
+// Ports
 import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
 
 import { type GetArticlesParams, GetArticlesUseCase } from '../get-articles.use-case.js';

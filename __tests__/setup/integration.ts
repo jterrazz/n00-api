@@ -7,6 +7,7 @@ import { setupServer, type SetupServerApi } from 'msw/node';
 import os from 'os';
 import { resolve } from 'path';
 
+// Application
 import { type ServerPort } from '../../src/application/ports/inbound/server.port.js';
 import { type TaskPort, type WorkerPort } from '../../src/application/ports/inbound/worker.port.js';
 

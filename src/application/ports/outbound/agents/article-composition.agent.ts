@@ -1,3 +1,4 @@
+// Domain
 import { type Report } from '../../../../domain/entities/report.entity.js';
 import { type Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';

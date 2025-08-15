@@ -1,7 +1,9 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
+// Domain
 import { ClassificationState } from '../../../domain/value-objects/report/tier-state.vo.js';
 
+// Ports
 import { type ReportClassificationAgentPort } from '../../ports/outbound/agents/report-classification.agent.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 

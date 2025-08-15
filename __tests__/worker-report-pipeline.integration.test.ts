@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
 
 import { openRouterUniversalResolver } from './providers/ai.openrouter/open-router-universal.resolver.js';
-import { worldNewsResolver } from './providers/com.worldnewsapi.api/top-news.resolver.js';
 import { worldNewsEmptyResolver } from './providers/com.worldnewsapi.api/top-news-empty.resolver.js';
+import { worldNewsResolver } from './providers/com.worldnewsapi.api/top-news.resolver.js';
 import {
     createIntegrationContext,
     executeTask,

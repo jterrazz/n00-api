@@ -1,7 +1,9 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
+// Configuration
 import { type ReportPipelineTaskConfig } from '../../../../application/ports/inbound/configuration.port.js';
 
+// Application
 import { type TaskPort } from '../../../../application/ports/inbound/worker.port.js';
 import { type GenerateArticleChallengesUseCase } from '../../../../application/use-cases/articles/generate-article-challenges.use-case.js';
 import { type ClassifyReportsUseCase } from '../../../../application/use-cases/reports/classify-reports.use-case.js';
@@ -9,6 +11,7 @@ import { type DeduplicateReportsUseCase } from '../../../../application/use-case
 import { type IngestReportsUseCase } from '../../../../application/use-cases/reports/ingest-reports.use-case.js';
 import { type PublishReportsUseCase } from '../../../../application/use-cases/reports/publish-reports.use-case.js';
 
+// Domain
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 

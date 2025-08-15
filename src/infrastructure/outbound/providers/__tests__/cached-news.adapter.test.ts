@@ -4,11 +4,13 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { vi } from 'vitest';
 import { type Mock } from 'vitest';
 
+// Application
 import {
     type NewsProviderPort,
     type NewsReport,
 } from '../../../../application/ports/outbound/providers/news.port.js';
 
+// Domain
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 

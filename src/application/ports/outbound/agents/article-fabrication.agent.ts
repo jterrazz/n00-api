@@ -1,3 +1,4 @@
+// Domain
 import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Country } from '../../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../../domain/value-objects/language.vo.js';

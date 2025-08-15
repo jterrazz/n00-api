@@ -8,6 +8,7 @@ import {
 import { type LoggerPort } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
+// Application
 import {
     classificationSchema,
     type ReportClassificationAgentPort,
@@ -15,6 +16,7 @@ import {
     type ReportClassificationResult,
 } from '../../../application/ports/outbound/agents/report-classification.agent.js';
 
+// Domain
 import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
 import { Classification as ClassificationVO } from '../../../domain/value-objects/report/tier.vo.js';
 

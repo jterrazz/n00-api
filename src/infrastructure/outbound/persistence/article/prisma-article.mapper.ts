@@ -1,23 +1,24 @@
 import {
+    type Prisma,
     type Article as PrismaArticle,
     type ArticleFrame as PrismaArticleFrame,
     type ArticleQuiz as PrismaArticleQuiz,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
-    type Prisma,
 } from '@prisma/client';
 
+// Domain
 import { Article } from '../../../../domain/entities/article.entity.js';
+import { ArticleFrame } from '../../../../domain/value-objects/article-frame/article-frame.vo.js';
+import { ArticleQuizQuestion } from '../../../../domain/value-objects/article-quiz-question.vo.js';
+import { ArticleQuizQuestions } from '../../../../domain/value-objects/article-quiz-questions.vo.js';
+import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import {
     Authenticity,
     AuthenticityStatusEnum,
 } from '../../../../domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../../../domain/value-objects/article/body.vo.js';
 import { Headline } from '../../../../domain/value-objects/article/headline.vo.js';
-import { ArticleFrame } from '../../../../domain/value-objects/article-frame/article-frame.vo.js';
-import { ArticleQuizQuestion } from '../../../../domain/value-objects/article-quiz-question.vo.js';
-import { ArticleQuizQuestions } from '../../../../domain/value-objects/article-quiz-questions.vo.js';
-import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
@@ -99,18 +100,15 @@ export class ArticleMapper {
             ),
             body: new Body(prisma.body),
             categories: (() => {
-                const joinCats = (
-                    prisma as unknown as { categories?: Array<{ category: string }> }
-                ).categories;
+                const joinCats = (prisma as unknown as { categories?: Array<{ category: string }> })
+                    .categories;
                 const values = Array.isArray(joinCats)
                     ? (joinCats.map((c) => c.category) as string[])
                     : [];
                 return new Categories(values.length > 0 ? values : ['OTHER']);
             })(),
             tier: prisma.reports?.[0]?.tier
-                ? new Classification(
-                      prisma.reports[0].tier as 'GENERAL' | 'NICHE' | 'OFF_TOPIC',
-                  )
+                ? new Classification(prisma.reports[0].tier as 'GENERAL' | 'NICHE' | 'OFF_TOPIC')
                 : undefined,
             country: new Country(prisma.country),
             frames,

@@ -1,5 +1,6 @@
 import { type Prisma } from '@prisma/client';
 
+// Application
 import type {
     ArticleRepositoryPort,
     CountManyOptions,
@@ -7,6 +8,7 @@ import type {
     FindManyOptions,
 } from '../../../../application/ports/outbound/persistence/article-repository.port.js';
 
+// Domain
 import type { Article } from '../../../../domain/entities/article.entity.js';
 
 import type { PrismaDatabase } from '../prisma.database.js';

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname } from 'node:path';
 import { z } from 'zod/v4';
 
+// Application
 import {
     type NewsOptions,
     type NewsProviderPort,

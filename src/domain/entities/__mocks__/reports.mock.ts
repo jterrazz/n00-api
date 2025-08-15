@@ -4,11 +4,11 @@ import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
 import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
 import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { Categories } from '../../value-objects/categories.vo.js';
-import { getClassification } from '../../value-objects/report/__mocks__/tiers.mock.js';
-import { ClassificationState } from '../../value-objects/report/tier-state.vo.js';
-import { DeduplicationState } from '../../value-objects/report/deduplication-state.vo.js';
 import { mockReportAngles } from '../../value-objects/report-angle/__mocks__/report-angles.mock.js';
 import { type ReportAngle } from '../../value-objects/report-angle/report-angle.vo.js';
+import { getClassification } from '../../value-objects/report/__mocks__/tiers.mock.js';
+import { DeduplicationState } from '../../value-objects/report/deduplication-state.vo.js';
+import { ClassificationState } from '../../value-objects/report/tier-state.vo.js';
 import { Report } from '../report.entity.js';
 
 /**
@@ -35,7 +35,8 @@ export function getMockReport(options?: {
             options?.countryIndex !== undefined ? getCountry(options.countryIndex) : getCountry(0),
         createdAt: new Date(),
         dateline: new Date(),
-        background: 'Mock background context providing comprehensive contextual information for understanding the story.',
+        background:
+            'Mock background context providing comprehensive contextual information for understanding the story.',
         core: 'Mock core story representing the main narrative being reported with sufficient detail for validation.',
         deduplicationState: new DeduplicationState('COMPLETE'),
         id: reportId,

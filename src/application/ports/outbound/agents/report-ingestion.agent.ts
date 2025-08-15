@@ -1,3 +1,4 @@
+// Domain
 import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 
 import { type NewsReport } from '../providers/news.port.js';

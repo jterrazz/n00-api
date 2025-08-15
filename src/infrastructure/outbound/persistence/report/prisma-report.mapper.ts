@@ -1,21 +1,22 @@
 import {
-    type Country as PrismaCountry,
     type Prisma,
+    type Country as PrismaCountry,
     type Report as PrismaReport,
     type ReportAngle as PrismaReportAngle,
 } from '@prisma/client';
 
+// Domain
 import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Background } from '../../../../domain/value-objects/report/background.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
-import { Core } from '../../../../domain/value-objects/report/core.vo.js';
-import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
 import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
+import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
 
 export class ReportMapper {
     angleToPrisma(
@@ -114,11 +115,7 @@ export class ReportMapper {
             categories: {
                 create: report.categories.toArray().map((c) => ({ category: c })),
             },
-            tier: report.tier?.toString() as
-                | 'GENERAL'
-                | 'NICHE'
-                | 'OFF_TOPIC'
-                | null,
+            tier: report.tier?.toString() as 'GENERAL' | 'NICHE' | 'OFF_TOPIC' | null,
             classificationState: report.classificationState.toString() as 'COMPLETE' | 'PENDING',
             core: report.core.toString(),
             country: this.mapCountryToPrisma(report.country),

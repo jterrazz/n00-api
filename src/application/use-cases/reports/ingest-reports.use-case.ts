@@ -1,16 +1,18 @@
 import { type LoggerPort } from '@jterrazz/logger';
 import { randomUUID } from 'crypto';
 
+// Domain
 import { Report } from '../../../domain/entities/report.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
+import { AngleNarrative } from '../../../domain/value-objects/report-angle/angle-narrative.vo.js';
+import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 import { Background } from '../../../domain/value-objects/report/background.vo.js';
 import { Core } from '../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../domain/value-objects/report/deduplication-state.vo.js';
 import { ClassificationState } from '../../../domain/value-objects/report/tier-state.vo.js';
-import { AngleNarrative } from '../../../domain/value-objects/report-angle/angle-narrative.vo.js';
-import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 
+// Ports
 import { type ReportIngestionAgentPort } from '../../ports/outbound/agents/report-ingestion.agent.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
 import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.js';

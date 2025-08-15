@@ -1,3 +1,4 @@
+// Domain
 import { type Article } from '../../../../domain/entities/article.entity.js';
 import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Category } from '../../../../domain/value-objects/category.vo.js';

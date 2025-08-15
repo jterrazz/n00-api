@@ -1,12 +1,14 @@
 import { LoggerLevelSchema } from '@jterrazz/logger';
 import { z } from 'zod/v4';
 
+// Configuration
 import {
     type ConfigurationPort,
     type InboundConfigurationPort,
     type OutboundConfigurationPort,
 } from '../../../application/ports/inbound/configuration.port.js';
 
+// Domain
 import { countrySchema } from '../../../domain/value-objects/country.vo.js';
 import { languageSchema } from '../../../domain/value-objects/language.vo.js';
 

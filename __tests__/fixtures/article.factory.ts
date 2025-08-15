@@ -1,19 +1,20 @@
 import {
-    type Country as PrismaCountry,
-    type Language as PrismaLanguage,
     type Prisma,
     type PrismaClient,
+    type Country as PrismaCountry,
+    type Language as PrismaLanguage,
 } from '@prisma/client';
 import { addDays, subDays } from 'date-fns';
 
+// Domain
 import { Article } from '../../src/domain/entities/article.entity.js';
+import { ArticleTraits } from '../../src/domain/value-objects/article-traits.vo.js';
 import {
     Authenticity,
     AuthenticityStatusEnum,
 } from '../../src/domain/value-objects/article/authenticity.vo.js';
 import { Body } from '../../src/domain/value-objects/article/body.vo.js';
 import { Headline } from '../../src/domain/value-objects/article/headline.vo.js';
-import { ArticleTraits } from '../../src/domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../src/domain/value-objects/categories.vo.js';
 import { Country } from '../../src/domain/value-objects/country.vo.js';
 import { Language } from '../../src/domain/value-objects/language.vo.js';

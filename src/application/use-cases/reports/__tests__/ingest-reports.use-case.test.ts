@@ -2,18 +2,20 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { beforeEach, describe, expect, test } from '@jterrazz/test';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
+// Domain
 import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
+import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
+import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 import { Background } from '../../../../domain/value-objects/report/background.vo.js';
 import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
 import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
-import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
-import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
+// Ports
 import {
     type ReportIngestionAgentPort,
     type ReportIngestionResult,

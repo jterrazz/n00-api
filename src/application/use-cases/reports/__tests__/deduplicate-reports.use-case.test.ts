@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test } from '@jterrazz/test';
 import { randomUUID } from 'crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
+// Domain
 import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
@@ -10,9 +11,10 @@ import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Background } from '../../../../domain/value-objects/report/background.vo.js';
 import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
 import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
 
+// Ports
 import {
     type ReportDeduplicationAgentPort,
     type ReportDeduplicationResult,

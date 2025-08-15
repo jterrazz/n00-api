@@ -2,6 +2,7 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { type MonitoringPort } from '@jterrazz/monitoring';
 import { z } from 'zod/v4';
 
+// Application
 import {
     type NewsArticle,
     type NewsOptions,
@@ -9,6 +10,7 @@ import {
     type NewsReport,
 } from '../../../application/ports/outbound/providers/news.port.js';
 
+// Domain
 import { Country } from '../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../domain/value-objects/language.vo.js';
 

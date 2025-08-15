@@ -19,8 +19,11 @@ import {
 import { Container, Injectable } from '@snap/ts-inject';
 import { default as nodeConfiguration } from 'config';
 
+// Configuration
 import type { ConfigurationPort } from '../application/ports/inbound/configuration.port.js';
+import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.js';
 
+// Application
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
 import type { TaskPort } from '../application/ports/inbound/worker.port.js';
 import type { WorkerPort } from '../application/ports/inbound/worker.port.js';
@@ -40,7 +43,7 @@ import { DeduplicateReportsUseCase } from '../application/use-cases/reports/dedu
 import { IngestReportsUseCase } from '../application/use-cases/reports/ingest-reports.use-case.js';
 import { PublishReportsUseCase } from '../application/use-cases/reports/publish-reports.use-case.js';
 
-import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.js';
+// Infrastructure
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
 import { HonoServer } from '../infrastructure/inbound/server/hono.server.js';
 import { NodeCron } from '../infrastructure/inbound/worker/node-cron.worker.js';

@@ -1,3 +1,4 @@
+// Application
 import { type GetArticlesUseCase } from '../../../../application/use-cases/articles/get-articles.use-case.js';
 
 import {
