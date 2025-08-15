@@ -14,8 +14,14 @@ inbound:
         language: EN
 
 outbound:
-  openRouter:
-    budget: high
+  agents:
+    reportIngestion: 'openai/gpt-oss-120b'
+    reportDeduplication: 'deepseek/deepseek-chat-v3-0324'
+    reportClassification: 'deepseek/deepseek-chat-v3-0324'
+    articleComposition: 'google/gemini-2.5-flash'
+    articleFabrication: 'google/gemini-2.5-flash'
+    articleQuizGeneration: 'google/gemini-2.5-flash'
+
   worldNews:
     useCache: false
   newRelic:

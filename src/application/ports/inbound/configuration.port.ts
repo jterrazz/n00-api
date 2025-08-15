@@ -41,13 +41,20 @@ export interface InboundConfigurationPort {
  * Outbound configuration (defined by external services)
  */
 export interface OutboundConfigurationPort {
+    agents: {
+        reportIngestion: string;
+        reportDeduplication: string;
+        reportClassification: string;
+        articleComposition: string;
+        articleFabrication: string;
+        articleQuizGeneration: string;
+    };
     newRelic: {
         enabled: boolean;
         licenseKey?: string;
     };
     openRouter: {
         apiKey: string;
-        budget: 'high' | 'low' | 'medium';
     };
     prisma: {
         databaseUrl: string;

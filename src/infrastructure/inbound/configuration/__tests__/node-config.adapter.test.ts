@@ -29,12 +29,19 @@ describe('Node Config', () => {
             },
         },
         outbound: {
+            agents: {
+                reportIngestion: 'google/gemini-2.5-flash-lite',
+                reportDeduplication: 'google/gemini-2.5-flash-lite',
+                reportClassification: 'google/gemini-2.5-flash-lite',
+                articleComposition: 'google/gemini-2.5-flash-lite',
+                articleFabrication: 'google/gemini-2.5-flash-lite',
+                articleQuizGeneration: 'google/gemini-2.5-flash-lite',
+            },
             newRelic: {
                 enabled: false,
             },
             openRouter: {
                 apiKey: 'test-openrouter-key',
-                budget: 'low',
             },
             prisma: {
                 databaseUrl: 'file:./database/test.sqlite',

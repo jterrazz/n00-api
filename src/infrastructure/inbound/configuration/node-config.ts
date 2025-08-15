@@ -36,13 +36,20 @@ const configurationSchema = z.object({
         }),
     }),
     outbound: z.object({
+        agents: z.object({
+            reportIngestion: z.string().min(1),
+            reportDeduplication: z.string().min(1),
+            reportClassification: z.string().min(1),
+            articleComposition: z.string().min(1),
+            articleFabrication: z.string().min(1),
+            articleQuizGeneration: z.string().min(1),
+        }),
         newRelic: z.object({
             enabled: z.boolean(),
             licenseKey: z.string().optional(),
         }),
         openRouter: z.object({
             apiKey: z.string().min(1),
-            budget: z.enum(['low', 'medium', 'high']),
         }),
         prisma: z.object({
             databaseUrl: z.string().min(1),

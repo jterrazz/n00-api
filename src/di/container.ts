@@ -1,4 +1,4 @@
-import { type ModelPort, OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
+import { OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
 import { type LoggerPort, PinoLoggerAdapter } from '@jterrazz/logger';
 import {
     type MonitoringPort,
@@ -15,12 +15,6 @@ import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.
 // Application
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
 import type { TaskPort, WorkerPort } from '../application/ports/inbound/worker.port.js';
-import { type ArticleCompositionAgentPort } from '../application/ports/outbound/agents/article-composition.agent.js';
-import { type ArticleFabricationAgentPort } from '../application/ports/outbound/agents/article-fabrication.agent.js';
-import { type ArticleQuizGenerationAgentPort } from '../application/ports/outbound/agents/article-quiz-generation.agent.js';
-import { type ReportClassificationAgentPort } from '../application/ports/outbound/agents/report-classification.agent.js';
-import { type ReportDeduplicationAgentPort } from '../application/ports/outbound/agents/report-deduplication.agent.js';
-import { type ReportIngestionAgentPort } from '../application/ports/outbound/agents/report-ingestion.agent.js';
 import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article-repository.port.js';
 import { type ReportRepositoryPort } from '../application/ports/outbound/persistence/report-repository.port.js';
 import type { NewsProviderPort } from '../application/ports/outbound/providers/news.port.js';
@@ -50,16 +44,6 @@ import {
     WorldNews,
     type WorldNewsConfiguration,
 } from '../infrastructure/outbound/providers/world-news.provider.js';
-
-export interface ModelsPort {
-    deepseekV3: ModelPort;
-    gemini25Flash: ModelPort;
-    gemini25FlashLite: ModelPort;
-    glm45: ModelPort;
-    gpt5Mini: ModelPort;
-    gptOSS: ModelPort;
-    grok4: ModelPort;
-}
 
 /**
  * Outbound adapters
@@ -121,166 +105,44 @@ const providerFactory = Injectable(
         }),
 );
 
-// Helper function to select model based on budget
-const selectModelByBudget = (
-    models: ModelsPort,
-    budget: 'high' | 'low' | 'medium',
-    preferredModel:
-        | 'deepseekV3'
-        | 'gemini25Flash'
-        | 'gemini25FlashLite'
-        | 'glm45'
-        | 'gpt5Mini'
-        | 'gptOSS'
-        | 'grok4',
-): ModelPort => {
-    // if (budget === 'low') {
-    //     return models.gemini25FlashLite;
-    // }
-    return models[preferredModel];
-};
+/**
+ * Agent factories
+ */
+const agentFactory = Injectable(
+    'Agents',
+    ['Provider', 'Configuration', 'Logger'] as const,
+    (provider: ProviderPort, config: ConfigurationPort, logger: LoggerPort) => {
+        const agentConfig = config.getOutboundConfiguration().agents;
 
-const modelsFactory = Injectable(
-    'Models',
-    ['Provider'] as const,
-    (provider: ProviderPort): ModelsPort => ({
-        deepseekV3: provider.getModel('deepseek/deepseek-chat-v3-0324', {
-            maxTokens: 150_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-        gemini25Flash: provider.getModel('google/gemini-2.5-flash', {
-            maxTokens: 256_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-        gemini25FlashLite: provider.getModel('google/gemini-2.5-flash-lite', {
-            maxTokens: 256_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-        glm45: provider.getModel('z-ai/glm-4.5', {
-            maxTokens: 80_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-        gpt5Mini: provider.getModel('openai/gpt-5-mini', {
-            maxTokens: 128_000,
-            reasoning: {
-                effort: 'low',
-                exclude: true,
-            },
-        }),
-        gptOSS: provider.getModel('openai/gpt-oss-120b', {
-            maxTokens: 128_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-        grok4: provider.getModel('x-ai/grok-4', {
-            maxTokens: 128_000,
-            reasoning: {
-                effort: 'high',
-                exclude: true,
-            },
-        }),
-    }),
-);
+        const getModel = (modelName: string) => provider.getModel(modelName);
 
-// Ingestion requires a mix of: long context, reasoning, and text generation.
-const reportIngestionAgentFactory = Injectable(
-    'ReportIngestionAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportIngestionAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gptOSS',
+        return {
+            reportIngestion: new ReportIngestionAgent(
+                getModel(agentConfig.reportIngestion),
+                logger,
             ),
-            logger,
-        ),
-);
-
-// Deduplication requires: reasoning and long context.
-const reportDeduplicationAgentFactory = Injectable(
-    'ReportDeduplicationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportDeduplicationAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'deepseekV3',
+            reportDeduplication: new ReportDeduplicationAgent(
+                getModel(agentConfig.reportDeduplication),
+                logger,
             ),
-            logger,
-        ),
-);
-
-// Classification requires: reasoning.
-const reportClassificationAgentFactory = Injectable(
-    'ReportClassificationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ReportClassificationAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'deepseekV3',
+            reportClassification: new ReportClassificationAgent(
+                getModel(agentConfig.reportClassification),
+                logger,
             ),
-            logger,
-        ),
-);
-
-const articleCompositionAgentFactory = Injectable(
-    'ArticleCompositionAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleCompositionAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
+            articleComposition: new ArticleCompositionAgent(
+                getModel(agentConfig.articleComposition),
+                logger,
             ),
-            logger,
-        ),
-);
-
-const articleFabricationAgentFactory = Injectable(
-    'ArticleFabricationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleFabricationAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
+            articleFabrication: new ArticleFabricationAgent(
+                getModel(agentConfig.articleFabrication),
+                logger,
             ),
-            logger,
-        ),
-);
-
-const articleQuizGenerationAgentFactory = Injectable(
-    'ArticleQuizGenerationAgent',
-    ['Models', 'Configuration', 'Logger'] as const,
-    (models: ModelsPort, config: ConfigurationPort, logger: LoggerPort) =>
-        new ArticleQuizGenerationAgent(
-            selectModelByBudget(
-                models,
-                config.getOutboundConfiguration().openRouter.budget,
-                'gemini25Flash',
+            articleQuizGeneration: new ArticleQuizGenerationAgent(
+                getModel(agentConfig.articleQuizGeneration),
+                logger,
             ),
-            logger,
-        ),
+        };
+    },
 );
 
 /**
@@ -317,44 +179,37 @@ const getArticlesUseCaseFactory = Injectable(
 
 const ingestReportsUseCaseFactory = Injectable(
     'IngestReports',
-    ['ReportIngestionAgent', 'Logger', 'News', 'ReportRepository'] as const,
+    ['Agents', 'Logger', 'News', 'ReportRepository'] as const,
     (
-        reportIngestionAgent: ReportIngestionAgentPort,
+        agents: ReturnType<typeof agentFactory>,
         logger: LoggerPort,
         newsService: NewsProviderPort,
         reportRepository: ReportRepositoryPort,
-    ) => new IngestReportsUseCase(reportIngestionAgent, logger, newsService, reportRepository),
+    ) => new IngestReportsUseCase(agents.reportIngestion, logger, newsService, reportRepository),
 );
 
 const deduplicateReportsUseCaseFactory = Injectable(
     'DeduplicateReports',
-    ['ReportDeduplicationAgent', 'Logger', 'ReportRepository'] as const,
+    ['Agents', 'Logger', 'ReportRepository'] as const,
     (
-        reportDeduplicationAgent: ReportDeduplicationAgentPort,
+        agents: ReturnType<typeof agentFactory>,
         logger: LoggerPort,
         reportRepository: ReportRepositoryPort,
-    ) => new DeduplicateReportsUseCase(reportDeduplicationAgent, logger, reportRepository),
+    ) => new DeduplicateReportsUseCase(agents.reportDeduplication, logger, reportRepository),
 );
 
 const publishReportsUseCaseFactory = Injectable(
     'PublishReports',
-    [
-        'ArticleCompositionAgent',
-        'ArticleFabricationAgent',
-        'Logger',
-        'ReportRepository',
-        'ArticleRepository',
-    ] as const,
+    ['Agents', 'Logger', 'ReportRepository', 'ArticleRepository'] as const,
     (
-        articleCompositionAgent: ArticleCompositionAgentPort,
-        articleFabricationAgent: ArticleFabricationAgentPort,
+        agents: ReturnType<typeof agentFactory>,
         logger: LoggerPort,
         reportRepository: ReportRepositoryPort,
         articleRepository: ArticleRepositoryPort,
     ) =>
         new PublishReportsUseCase(
-            articleCompositionAgent,
-            articleFabricationAgent,
+            agents.articleComposition,
+            agents.articleFabrication,
             logger,
             reportRepository,
             articleRepository,
@@ -363,23 +218,27 @@ const publishReportsUseCaseFactory = Injectable(
 
 const classifyReportsUseCaseFactory = Injectable(
     'ClassifyReports',
-    ['ReportClassificationAgent', 'Logger', 'ReportRepository'] as const,
+    ['Agents', 'Logger', 'ReportRepository'] as const,
     (
-        reportClassificationAgent: ReportClassificationAgentPort,
+        agents: ReturnType<typeof agentFactory>,
         logger: LoggerPort,
         reportRepository: ReportRepositoryPort,
-    ) => new ClassifyReportsUseCase(reportClassificationAgent, logger, reportRepository),
+    ) => new ClassifyReportsUseCase(agents.reportClassification, logger, reportRepository),
 );
 
 const generateArticleChallengesUseCaseFactory = Injectable(
     'GenerateArticleChallenges',
-    ['ArticleRepository', 'ArticleQuizGenerationAgent', 'Logger'] as const,
+    ['ArticleRepository', 'Agents', 'Logger'] as const,
     (
         articleRepository: ArticleRepositoryPort,
-        articleQuizGenerationAgent: ArticleQuizGenerationAgentPort,
+        agents: ReturnType<typeof agentFactory>,
         logger: LoggerPort,
     ) =>
-        new GenerateArticleChallengesUseCase(articleRepository, articleQuizGenerationAgent, logger),
+        new GenerateArticleChallengesUseCase(
+            articleRepository,
+            agents.articleQuizGeneration,
+            logger,
+        ),
 );
 
 /**
@@ -500,13 +359,7 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(databaseFactory)
         .provides(newsFactory)
         .provides(providerFactory)
-        .provides(modelsFactory)
-        .provides(reportIngestionAgentFactory)
-        .provides(articleCompositionAgentFactory)
-        .provides(articleFabricationAgentFactory)
-        .provides(articleQuizGenerationAgentFactory)
-        .provides(reportClassificationAgentFactory)
-        .provides(reportDeduplicationAgentFactory)
+        .provides(agentFactory)
         // Repositories
         .provides(articleRepositoryFactory)
         .provides(reportRepositoryFactory)
