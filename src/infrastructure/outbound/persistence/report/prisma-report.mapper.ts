@@ -9,10 +9,12 @@ import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
-import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
+import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
 export class ReportMapper {
@@ -21,7 +23,7 @@ export class ReportMapper {
         reportId: string,
     ): Omit<PrismaReportAngle, 'createdAt' | 'id' | 'updatedAt'> {
         return {
-            corpus: angle.angleCorpus.toString(),
+            narrative: angle.narrative.toString(),
             reportId,
         };
     }
@@ -70,30 +72,31 @@ export class ReportMapper {
         const angles = prisma.angles.map(
             (a) =>
                 new ReportAngle({
-                    angleCorpus: new AngleCorpus(a.corpus),
+                    narrative: new AngleNarrative(a.narrative),
                 }),
         );
 
         return new Report({
             angles,
+            background: new Background(prisma.background),
             categories: new Categories(
                 Array.isArray(prisma.categories)
                     ? (prisma.categories.map((c) => c.category) as string[])
                     : [],
             ),
-            classification: prisma.classification
-                ? new Classification(prisma.classification as 'GENERAL' | 'NICHE' | 'OFF_TOPIC')
+            tier: prisma.tier
+                ? new Classification(prisma.tier as 'GENERAL' | 'NICHE' | 'OFF_TOPIC')
                 : undefined,
             classificationState: new ClassificationState(
                 prisma.classificationState as 'COMPLETE' | 'PENDING',
             ),
+            core: new Core(prisma.core),
             country: new Country(prisma.country),
             createdAt: prisma.createdAt,
             dateline: prisma.dateline,
             deduplicationState: new DeduplicationState(
                 prisma.deduplicationState as 'COMPLETE' | 'PENDING',
             ),
-            facts: prisma.facts,
             id: prisma.id,
             sourceReferences: Array.isArray(prisma.sources) ? (prisma.sources as string[]) : [],
             traits: new ArticleTraits({
@@ -107,19 +110,20 @@ export class ReportMapper {
 
     toPrisma(report: Report): Prisma.ReportCreateInput {
         return {
+            background: report.background.toString(),
             categories: {
                 create: report.categories.toArray().map((c) => ({ category: c })),
             },
-            classification: report.classification?.toString() as
+            tier: report.tier?.toString() as
                 | 'GENERAL'
                 | 'NICHE'
                 | 'OFF_TOPIC'
                 | null,
             classificationState: report.classificationState.toString() as 'COMPLETE' | 'PENDING',
+            core: report.core.toString(),
             country: this.mapCountryToPrisma(report.country),
             dateline: report.dateline,
             deduplicationState: report.deduplicationState.toString() as 'COMPLETE' | 'PENDING',
-            facts: report.facts,
             id: report.id,
             sources: report.sourceReferences,
             // Removed JSON traits - using typed columns

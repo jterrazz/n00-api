@@ -96,25 +96,25 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                     lt: options.cursor,
                 },
             }),
-            ...(options.classification && {
+            ...(options.tier && {
                 reports: {
                     some: {
-                        classification: {
-                            in: options.classification,
+                        tier: {
+                            in: options.tier,
                         },
                     },
                 },
             }),
         };
 
-        if (!options.classification && options.excludeArchived !== false) {
+        if (!options.tier && options.excludeArchived !== false) {
             Object.assign(where, {
                 OR: [
                     { reports: { none: {} } },
                     {
                         reports: {
                             some: {
-                                classification: {
+                                tier: {
                                     not: 'OFF_TOPIC',
                                 },
                             },
@@ -131,8 +131,8 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                 quizQuestions: true,
                 reports: {
                     select: {
-                        classification: true,
                         id: true,
+                        tier: true,
                     },
                     take: 1,
                 },
@@ -156,7 +156,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
                 frames: true,
                 quizQuestions: true,
                 reports: {
-                    select: { classification: true, id: true },
+                    select: { id: true, tier: true },
                     take: 1,
                 },
             },

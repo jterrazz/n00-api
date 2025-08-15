@@ -5,6 +5,7 @@ export interface ModelsPort {
     gemini25Flash: ModelPort;
     gemini25FlashLite: ModelPort;
     glm45: ModelPort;
+    gpt5Mini: ModelPort;
     gptOSS: ModelPort;
     grok4: ModelPort;
 }
@@ -128,6 +129,7 @@ const selectModelByBudget = (
         | 'gemini25Flash'
         | 'gemini25FlashLite'
         | 'glm45'
+        | 'gpt5Mini'
         | 'gptOSS'
         | 'grok4',
 ): ModelPort => {
@@ -166,6 +168,13 @@ const modelsFactory = Injectable(
             maxTokens: 80_000,
             reasoning: {
                 effort: 'high',
+                exclude: true,
+            },
+        }),
+        gpt5Mini: provider.getModel('openai/gpt-5-mini', {
+            maxTokens: 128_000,
+            reasoning: {
+                effort: 'low',
                 exclude: true,
             },
         }),
@@ -239,7 +248,7 @@ const articleCompositionAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'gptOSS',
+                'gemini25Flash',
             ),
             logger,
         ),
@@ -253,7 +262,7 @@ const articleFabricationAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'gptOSS',
+                'gemini25Flash',
             ),
             logger,
         ),
@@ -267,7 +276,7 @@ const articleQuizGenerationAgentFactory = Injectable(
             selectModelByBudget(
                 models,
                 config.getOutboundConfiguration().openRouter.budget,
-                'gptOSS',
+                'gemini25Flash',
             ),
             logger,
         ),

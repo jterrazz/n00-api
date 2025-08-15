@@ -69,10 +69,10 @@ export interface ReportRepositoryPort {
      */
     findReportsWithoutArticles(criteria?: {
         category?: string;
-        classification?: Array<'GENERAL' | 'NICHE' | 'OFF_TOPIC'>;
         classificationState?: 'COMPLETE' | 'PENDING';
         country?: string;
         limit?: number;
+        tier?: Array<'GENERAL' | 'NICHE' | 'OFF_TOPIC'>;
     }): Promise<Report[]>;
 
     /**

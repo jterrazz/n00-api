@@ -3,7 +3,7 @@ import { type ArticleTraits } from '../../../../domain/value-objects/article-tra
 import {
     Classification,
     classificationSchema,
-} from '../../../../domain/value-objects/report/classification.vo.js';
+} from '../../../../domain/value-objects/report/tier.vo.js';
 
 export { Classification, classificationSchema };
 

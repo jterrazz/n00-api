@@ -60,8 +60,8 @@ export interface FindHeadlinesAndSummariesOptions {
 export interface FindManyOptions {
     categories?: Categories;
     category?: Category;
-    classification?: Array<'GENERAL' | 'NICHE'>;
     country?: Country;
+    tier?: Array<'GENERAL' | 'NICHE'>;
     cursor?: Date;
     /**
      * Exclude articles whose associated report classification is OFF_TOPIC.

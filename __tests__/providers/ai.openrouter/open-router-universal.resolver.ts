@@ -34,11 +34,14 @@ function handleIngestion(model: string) {
         buildCompletion('mock-ingestion-id', model, {
             angles: [
                 {
-                    corpus: 'This is a comprehensive corpus detailing the angle of the event from a mainstream perspective. It includes every significant argument, all supporting evidence, relevant statistics, quotes from key stakeholders, contextual background, chronological sequence of events, and potential implications. The corpus is written in bullet-point style, free of narrative fluff, focusing purely on delivering factual information that a writer can later transform into prose. Nothing is omitted; every pertinent data point gleaned from the articles is captured here for completeness.',
+                    narrative:
+                        'This is a comprehensive narrative detailing the angle of the story from a mainstream perspective. It includes every significant argument, all supporting evidence, relevant statistics, quotes from key stakeholders, detailed analysis, chronological sequence of developments, and potential implications. The narrative presents a complete account from this viewpoint, focusing purely on delivering factual information that captures this perspective thoroughly. Nothing is omitted; every pertinent data point gleaned from the articles is captured here for completeness.',
                 },
             ],
+            background:
+                'Supporting contextual information that helps understand the core story. This includes relevant history, key players, industry background, previous developments, and broader context that readers need to fully comprehend the situation.',
             categories: ['TECHNOLOGY'],
-            facts: 'Verified facts about the event presented in a clear, objective manner.',
+            core: 'The main story being reported - the primary development, subject, or narrative that this report is fundamentally about.',
             traits: {
                 smart: true,
                 uplifting: false,

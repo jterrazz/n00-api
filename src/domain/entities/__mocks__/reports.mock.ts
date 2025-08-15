@@ -4,8 +4,8 @@ import { getCategory } from '../../value-objects/__mocks__/categories.mock.js';
 import { getCountry } from '../../value-objects/__mocks__/countries.mock.js';
 import { ArticleTraits } from '../../value-objects/article-traits.vo.js';
 import { Categories } from '../../value-objects/categories.vo.js';
-import { getClassification } from '../../value-objects/report/__mocks__/classifications.mock.js';
-import { ClassificationState } from '../../value-objects/report/classification-state.vo.js';
+import { getClassification } from '../../value-objects/report/__mocks__/tiers.mock.js';
+import { ClassificationState } from '../../value-objects/report/tier-state.vo.js';
 import { DeduplicationState } from '../../value-objects/report/deduplication-state.vo.js';
 import { mockReportAngles } from '../../value-objects/report-angle/__mocks__/report-angles.mock.js';
 import { type ReportAngle } from '../../value-objects/report-angle/report-angle.vo.js';
@@ -17,9 +17,9 @@ import { Report } from '../report.entity.js';
 export function getMockReport(options?: {
     angles?: ReportAngle[];
     categoryIndex?: number;
-    classificationIndex?: number;
     countryIndex?: number;
     id?: string;
+    tierIndex?: number;
 }): Report {
     const reportId = options?.id || randomUUID();
     return new Report({
@@ -30,19 +30,20 @@ export function getMockReport(options?: {
                 : getCategory(0)
             ).value,
         ]),
-        classification:
-            options?.classificationIndex !== undefined
-                ? getClassification(options.classificationIndex)
-                : getClassification(0),
         classificationState: new ClassificationState('COMPLETE'),
         country:
             options?.countryIndex !== undefined ? getCountry(options.countryIndex) : getCountry(0),
         createdAt: new Date(),
         dateline: new Date(),
+        background: 'Mock background context providing comprehensive contextual information for understanding the story.',
+        core: 'Mock core story representing the main narrative being reported with sufficient detail for validation.',
         deduplicationState: new DeduplicationState('COMPLETE'),
-        facts: 'Mock Report Facts: A comprehensive list of key political developments across multiple regions, outlining actors, timelines, and data points that shape the public discourse on this evolving situation.',
         id: reportId,
         sourceReferences: ['worldnewsapi:mock-article-1', 'worldnewsapi:mock-article-2'],
+        tier:
+            options?.tierIndex !== undefined
+                ? getClassification(options.tierIndex)
+                : getClassification(0),
         traits: new ArticleTraits(),
         updatedAt: new Date(),
     });
@@ -57,20 +58,21 @@ export function getMockReports(count: number): Report[] {
 
 function createMockReport(index: number): Report {
     const category = getCategory(index);
-    const classification = getClassification(index + 1);
+    const tier = getClassification(index + 1);
     const reportId = randomUUID();
     return new Report({
         angles: mockReportAngles(2),
         categories: new Categories([category.value]),
-        classification,
         classificationState: new ClassificationState('COMPLETE'),
         country: getCountry(index + 1),
         createdAt: new Date(),
         dateline: new Date(),
+        background: `Background context for report ${index} providing comprehensive contextual information. Topic: ${category.toString()}.`,
+        core: `Core story for report ${index} representing the main narrative. Topic: ${category.toString()}. Contains sufficient detail for validation.`,
         deduplicationState: new DeduplicationState('COMPLETE'),
-        facts: `These are key facts for report ${index}. Topic: ${category.toString()}. It lists all major events, actors, and evidence in a concise factual format long enough to satisfy validation requirements.`,
         id: reportId,
         sourceReferences: [`source-ref-${index}`],
+        tier,
         traits: new ArticleTraits(),
         updatedAt: new Date(),
     });

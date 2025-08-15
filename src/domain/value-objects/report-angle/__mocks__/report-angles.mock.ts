@@ -1,13 +1,13 @@
 import { ReportAngle } from '../report-angle.vo.js';
 
-import { getAngleCorpus } from './angle-corpus.mock.js';
+import { getAngleNarrative } from './angle-narrative.mock.js';
 
 /**
  * Generates a single mock `ReportAngle` instance.
  */
 export function createMockReportAngle(index: number): ReportAngle {
     return new ReportAngle({
-        angleCorpus: getAngleCorpus(index),
+        narrative: getAngleNarrative(index),
     });
 }
 

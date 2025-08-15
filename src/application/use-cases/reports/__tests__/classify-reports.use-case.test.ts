@@ -7,10 +7,12 @@ import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
-import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
+import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
 import {
@@ -24,27 +26,32 @@ import { ClassifyReportsUseCase } from '../classify-reports.use-case.js';
 const createMockReport = (
     id: string,
     classificationState: 'COMPLETE' | 'PENDING' = 'PENDING',
-    classification?: 'GENERAL' | 'NICHE' | 'OFF_TOPIC',
+    tier?: 'GENERAL' | 'NICHE' | 'OFF_TOPIC',
 ): Report => {
     const reportId = id;
     return new Report({
         angles: [
             new ReportAngle({
-                angleCorpus: new AngleCorpus(
-                    'This is a very long and detailed holistic digest for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
+                narrative: new AngleNarrative(
+                    'This is a very long and detailed narrative for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
                 ),
             }),
         ],
+        background: new Background(
+            'These are valid background details that provide contextual information for testing purposes. They provide context and supporting information that should be sufficient for any validation checks.',
+        ),
         categories: new Categories(['TECHNOLOGY']),
-        classification: classification ? new Classification(classification) : undefined,
         classificationState: new ClassificationState(classificationState),
+        core: new Core(
+            'This is the core story that represents the main narrative being reported in this test case. It contains the primary information about what happened.',
+        ),
         country: new Country('us'),
         createdAt: new Date(),
         dateline: new Date(),
         deduplicationState: new DeduplicationState('PENDING'),
-        facts: 'These are valid report facts that are definitely long enough for testing purposes. They detail the event and provide context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
         id: reportId,
         sourceReferences: ['source-1'],
+        tier: tier ? new Classification(tier) : undefined,
         traits: new ArticleTraits(),
         updatedAt: new Date(),
     });
@@ -99,8 +106,8 @@ describe('ClassifyReportsUseCase', () => {
                 report: reportToReview,
             });
             expect(mockReportRepository.update).toHaveBeenCalledWith(reportToReview.id, {
-                classification: expect.any(Object),
                 classificationState: expect.any(Object),
+                tier: expect.any(Object),
                 traits: expect.any(Object),
             });
             expect(mockLogger.info).toHaveBeenCalledWith('Report classified', {
@@ -149,8 +156,8 @@ describe('ClassifyReportsUseCase', () => {
             // Then
             expect(mockReportClassificationAgent.run).toHaveBeenCalledTimes(2);
             expect(mockReportRepository.update).toHaveBeenCalledWith(report1.id, {
-                classification: expect.any(Object),
                 classificationState: expect.any(Object),
+                tier: expect.any(Object),
                 traits: expect.any(Object),
             });
             expect(mockReportRepository.update).not.toHaveBeenCalledWith(

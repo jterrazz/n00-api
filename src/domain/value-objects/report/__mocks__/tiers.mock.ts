@@ -1,4 +1,4 @@
-import { Classification } from '../classification.vo.js';
+import { Classification } from '../tier.vo.js';
 
 const CLASS_VALUES: Classification['value'][] = ['GENERAL', 'NICHE', 'OFF_TOPIC'];
 

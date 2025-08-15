@@ -102,7 +102,6 @@ export class GenerateArticleChallengesUseCase {
                         authenticity: article.authenticity,
                         body: article.body,
                         categories: article.categories,
-                        classification: article.classification,
                         country: article.country,
                         frames: article.frames,
                         headline: article.headline,
@@ -111,6 +110,7 @@ export class GenerateArticleChallengesUseCase {
                         publishedAt: article.publishedAt,
                         quizQuestions,
                         reportIds: article.reportIds,
+                        tier: article.tier,
                         traits: article.traits,
                     });
 

@@ -7,9 +7,11 @@ import { ArticleTraits } from '../../../../domain/value-objects/article-traits.v
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
-import { AngleCorpus } from '../../../../domain/value-objects/report-angle/angle-corpus.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
+import { AngleNarrative } from '../../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { ReportAngle } from '../../../../domain/value-objects/report-angle/report-angle.vo.js';
 
 import {
@@ -29,21 +31,26 @@ describe('IngestReportsUseCase', () => {
         new Report({
             angles: [
                 new ReportAngle({
-                    angleCorpus: new AngleCorpus(
-                        'This is a very long and detailed holistic digest for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
+                    narrative: new AngleNarrative(
+                        'This is a very long and detailed narrative for the mock angle, created specifically for testing. It needs to be over 200 characters long to pass the validation rules of the value object. This ensures that when our use case tests run, they do not fail due to simple validation errors in the mock data construction process, allowing us to focus on the actual logic of the use case itself.',
                     ),
                 }),
             ],
+            background: new Background(
+                'This is background context for testing purposes that provides necessary contextual information.',
+            ),
             categories: new Categories(['TECHNOLOGY']),
-            classification: undefined,
             classificationState: new ClassificationState('PENDING'),
+            core: new Core(
+                'This is the core story for testing purposes that represents the main narrative being reported.',
+            ),
             country: new Country('us'),
             createdAt: new Date(),
             dateline: new Date(),
             deduplicationState: new DeduplicationState('PENDING'),
-            facts: 'These are valid report facts that are definitely long enough for testing purposes. They detail the event and provide context that should be sufficient for any validation checks that might be in place, ensuring that this mock object is robust.',
             id: '11111111-1111-4111-8111-111111111111',
             sourceReferences: [],
+            tier: undefined,
             traits: new ArticleTraits(),
             updatedAt: new Date(),
         });
@@ -93,11 +100,14 @@ describe('IngestReportsUseCase', () => {
         const mockResult: ReportIngestionResult = {
             angles: [
                 {
-                    corpus: 'This is a comprehensive angle corpus that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
+                    narrative:
+                        'This is a comprehensive angle narrative that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
                 },
             ],
+            background:
+                'This is background context that provides supporting information to help understand the core story. It includes relevant history, key players, and contextual details.',
             categories: new Categories(['TECHNOLOGY']),
-            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
+            core: 'This is the core story that represents the main narrative being reported. It contains the primary information about what happened or what the story is fundamentally about.',
         };
 
         mockReportIngestionAgent.run.mockResolvedValue(mockResult);
@@ -167,11 +177,14 @@ describe('IngestReportsUseCase', () => {
         const mockResult: ReportIngestionResult = {
             angles: [
                 {
-                    corpus: 'This is a comprehensive angle corpus that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
+                    narrative:
+                        'This is a comprehensive angle narrative that contains detailed information about the mainstream angle on this topic. It includes various viewpoints, supporting evidence, and contextual information that would be sufficient for creating a proper report angle. This needs to be long enough to pass any validation requirements.',
                 },
             ],
+            background:
+                'This is background context that provides supporting information to help understand the core story. It includes relevant history, key players, and contextual details.',
             categories: new Categories(['TECHNOLOGY']),
-            facts: 'These are comprehensive facts about the report that contain detailed information about the event, including who, what, when, where, and how. The facts are written in a neutral tone and provide sufficient context for understanding the report completely without bias or interpretation.',
+            core: 'This is the core story that represents the main narrative being reported. It contains the primary information about what happened or what the story is fundamentally about.',
         };
 
         mockReportIngestionAgent.run.mockResolvedValueOnce(mockResult).mockResolvedValueOnce(null); // Second report fails to ingest

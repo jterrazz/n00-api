@@ -196,9 +196,10 @@ model Report {
   // Identity
   id String @id @default(uuid())
 
-  // Core content
-  facts  String
-  angles ReportAngle[]
+  // Content
+  core       String
+  background String
+  angles     ReportAngle[]
 
   // Context & sources
   country    Country
@@ -207,7 +208,7 @@ model Report {
 
   // Workflow — Classification
   classificationState ClassificationState @default(PENDING)
-  classification      Classification?
+  tier                Classification?
   traitsSmart         Boolean             @default(false)
   traitsUplifting     Boolean             @default(false)
 
@@ -239,7 +240,7 @@ model ReportAngle {
   id String @id @default(uuid())
 
   // Content
-  corpus String
+  narrative String
 
   // Relations
   reportId String

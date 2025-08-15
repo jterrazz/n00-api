@@ -1,21 +1,21 @@
 import { z } from 'zod/v4';
 
-import { AngleCorpus } from './angle-corpus.vo.js';
+import { AngleNarrative } from './angle-narrative.vo.js';
 
 export const reportAngleSchema = z.object({
-    angleCorpus: z.instanceof(AngleCorpus),
+    narrative: z.instanceof(AngleNarrative),
 });
 
 export type ReportAngleData = z.input<typeof reportAngleSchema>;
 
 /**
  * @description A value object representing a unique viewpoint on a report.
- * It contains the complete digest of that viewpoint plus its descriptive tags.
+ * It contains the complete narrative of that perspective.
  * It purposefully has **no identity of its own** – two angles
- * with the same digest & tags are considered equal.
+ * with the same narrative are considered equal.
  */
 export class ReportAngle {
-    public readonly angleCorpus: AngleCorpus;
+    public readonly narrative: AngleNarrative;
 
     constructor(data: ReportAngleData) {
         const result = reportAngleSchema.safeParse(data);
@@ -25,6 +25,6 @@ export class ReportAngle {
         }
 
         const validated = result.data;
-        this.angleCorpus = validated.angleCorpus;
+        this.narrative = validated.narrative;
     }
 }

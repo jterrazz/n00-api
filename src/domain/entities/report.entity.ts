@@ -3,12 +3,18 @@ import { z } from 'zod/v4';
 import { ArticleTraits } from '../value-objects/article-traits.vo.js';
 import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
-import { Classification } from '../value-objects/report/classification.vo.js';
-import { ClassificationState } from '../value-objects/report/classification-state.vo.js';
+import { Background } from '../value-objects/report/background.vo.js';
+import { Core } from '../value-objects/report/core.vo.js';
 import { DeduplicationState } from '../value-objects/report/deduplication-state.vo.js';
+import { Classification } from '../value-objects/report/tier.vo.js';
+import { ClassificationState } from '../value-objects/report/tier-state.vo.js';
 import { ReportAngle } from '../value-objects/report-angle/report-angle.vo.js';
 
-export const factsSchema = z.string();
+export const coreSchema = z.instanceof(Core).describe('The core story being reported');
+
+export const backgroundSchema = z
+    .instanceof(Background)
+    .describe('Contextual background information');
 
 export const categoriesSchema = z
     .instanceof(Categories)
@@ -58,16 +64,17 @@ export const updatedAtSchema = z.date().describe('The timestamp when the report 
 
 export const reportSchema = z.object({
     angles: anglesSchema,
+    background: backgroundSchema,
     categories: categoriesSchema,
-    classification: classificationSchema,
     classificationState: classificationStateSchema,
+    core: coreSchema,
     country: countrySchema,
     createdAt: createdAtSchema,
     dateline: datelineSchema,
     deduplicationState: deduplicationStateSchema,
-    facts: factsSchema,
     id: idSchema,
     sourceReferences: sourceReferencesSchema,
+    tier: classificationSchema,
     traits: traitsSchema,
     updatedAt: updatedAtSchema,
 });
@@ -79,16 +86,17 @@ export type ReportProps = z.input<typeof reportSchema>;
  */
 export class Report {
     public readonly angles: ReportAngle[];
+    public readonly background: Background;
     public readonly categories: Categories;
-    public readonly classification?: Classification;
     public readonly classificationState: ClassificationState;
+    public readonly core: Core;
     public readonly country: Country;
     public readonly createdAt: Date;
     public readonly dateline: Date;
     public readonly deduplicationState: DeduplicationState;
-    public readonly facts: string;
     public readonly id: string;
     public readonly sourceReferences: string[];
+    public readonly tier?: Classification;
     public readonly traits?: ArticleTraits;
     public readonly updatedAt: Date;
 
@@ -101,7 +109,8 @@ export class Report {
 
         const validatedData = result.data;
         this.id = validatedData.id;
-        this.facts = validatedData.facts;
+        this.core = validatedData.core;
+        this.background = validatedData.background;
         this.traits = validatedData.traits;
         this.categories = validatedData.categories;
         this.angles = validatedData.angles;
@@ -111,7 +120,7 @@ export class Report {
         this.updatedAt = validatedData.updatedAt;
         this.country = validatedData.country;
         this.classificationState = validatedData.classificationState;
-        this.classification = validatedData.classification;
+        this.tier = validatedData.tier;
         this.deduplicationState = validatedData.deduplicationState;
     }
 }

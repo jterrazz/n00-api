@@ -13,12 +13,13 @@ export interface ReportIngestionAgentPort {
 
 /**
  * @description
- * Result of report ingestion containing structured angles and facts
+ * Result of report ingestion containing structured core story, background context, and angle narratives
  */
 export interface ReportIngestionResult {
     angles: Array<{
-        corpus: string;
+        narrative: string;
     }>;
+    background: string;
     categories: Categories;
-    facts: string;
+    core: string;
 }

@@ -34,10 +34,10 @@ type ArticleInsights = Array<{
 
 type ArticleMetadata = {
     categories: Category[];
-    classification?: 'GENERAL' | 'NICHE' | 'OFF_TOPIC';
     country: Country;
     fabricated: boolean;
     language: Language;
+    tier?: 'GENERAL' | 'NICHE' | 'OFF_TOPIC';
     traits: {
         smart: boolean;
         uplifting: boolean;
@@ -119,14 +119,14 @@ export class GetArticlesResponsePresenter {
             insights: [],
             metadata: {
                 categories: article.categories.toArray() as Category[],
-                classification: article.classification?.toString() as
+                country: article.country.toString() as Country,
+                fabricated: article.isFabricated(),
+                language: article.language.toString() as Language,
+                tier: article.tier?.toString() as
                     | 'GENERAL'
                     | 'NICHE'
                     | 'OFF_TOPIC'
                     | undefined,
-                country: article.country.toString() as Country,
-                fabricated: article.isFabricated(),
-                language: article.language.toString() as Language,
                 traits: {
                     smart: article.traits.smart,
                     uplifting: article.traits.uplifting,

@@ -1,6 +1,6 @@
 import { type LoggerPort } from '@jterrazz/logger';
 
-import { ClassificationState } from '../../../domain/value-objects/report/classification-state.vo.js';
+import { ClassificationState } from '../../../domain/value-objects/report/tier-state.vo.js';
 
 import { type ReportClassificationAgentPort } from '../../ports/outbound/agents/report-classification.agent.js';
 import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
@@ -47,8 +47,8 @@ export class ClassifyReportsUseCase {
 
                     if (result) {
                         await this.reportRepository.update(report.id, {
-                            classification: result.classification,
                             classificationState: new ClassificationState('COMPLETE'),
+                            tier: result.classification,
                             traits: result.traits,
                         });
 

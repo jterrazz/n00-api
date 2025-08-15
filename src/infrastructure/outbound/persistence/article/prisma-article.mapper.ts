@@ -22,7 +22,7 @@ import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { type Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
 
 export class ArticleMapper {
     /**
@@ -64,7 +64,7 @@ export class ArticleMapper {
         prisma: PrismaArticle & {
             frames?: PrismaArticleFrame[];
             quizQuestions?: PrismaArticleQuiz[];
-            reports?: { classification: null | string; id: string }[];
+            reports?: { tier: null | string; id: string }[];
         },
     ): Article {
         const frames = prisma.frames?.map(
@@ -107,9 +107,9 @@ export class ArticleMapper {
                     : [];
                 return new Categories(values.length > 0 ? values : ['OTHER']);
             })(),
-            classification: prisma.reports?.[0]?.classification
+            tier: prisma.reports?.[0]?.tier
                 ? new Classification(
-                      prisma.reports[0].classification as 'GENERAL' | 'NICHE' | 'OFF_TOPIC',
+                      prisma.reports[0].tier as 'GENERAL' | 'NICHE' | 'OFF_TOPIC',
                   )
                 : undefined,
             country: new Country(prisma.country),

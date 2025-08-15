@@ -9,13 +9,12 @@ import { ArticleTraits } from '../value-objects/article-traits.vo.js';
 import { Categories } from '../value-objects/categories.vo.js';
 import { Country } from '../value-objects/country.vo.js';
 import { Language } from '../value-objects/language.vo.js';
-import { Classification } from '../value-objects/report/classification.vo.js';
+import { Classification } from '../value-objects/report/tier.vo.js';
 
 export const articleSchema = z.object({
     authenticity: z.instanceof(Authenticity),
     body: z.instanceof(Body),
     categories: z.instanceof(Categories),
-    classification: z.instanceof(Classification).optional(),
     country: z.instanceof(Country),
     frames: z.array(z.instanceof(ArticleFrame)).optional(),
     headline: z.instanceof(Headline),
@@ -24,6 +23,7 @@ export const articleSchema = z.object({
     publishedAt: z.date(),
     quizQuestions: z.instanceof(ArticleQuizQuestions).optional(),
     reportIds: z.array(z.string()).optional(),
+    tier: z.instanceof(Classification).optional(),
     traits: z.instanceof(ArticleTraits),
 });
 
@@ -33,7 +33,6 @@ export class Article {
     public readonly authenticity: Authenticity;
     public readonly body: Body;
     public readonly categories: Categories;
-    public readonly classification?: Classification;
     public readonly country: Country;
     public readonly frames?: ArticleFrame[];
     public readonly headline: Headline;
@@ -42,6 +41,7 @@ export class Article {
     public readonly publishedAt: Date;
     public readonly quizQuestions?: ArticleQuizQuestions;
     public readonly reportIds?: string[];
+    public readonly tier?: Classification;
     public readonly traits: ArticleTraits;
 
     public constructor(data: ArticleProps) {
@@ -57,7 +57,7 @@ export class Article {
         this.body = validatedData.body;
         this.country = validatedData.country;
         this.authenticity = validatedData.authenticity;
-        this.classification = validatedData.classification;
+        this.tier = validatedData.tier;
         this.headline = validatedData.headline;
         this.id = validatedData.id;
         this.language = validatedData.language;

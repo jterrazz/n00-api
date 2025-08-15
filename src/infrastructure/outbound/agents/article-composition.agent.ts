@@ -128,10 +128,11 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
             JSON.stringify(
                 {
                     angles: input.report.angles.map((angle) => ({
-                        digest: angle.angleCorpus.value,
+                        narrative: angle.narrative.value,
                     })),
+                    background: input.report.background.value,
+                    core: input.report.core.value,
                     dateline: input.report.dateline.toISOString(),
-                    facts: input.report.facts,
                 },
                 null,
                 2,

@@ -39,7 +39,7 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
     }
 
     static readonly USER_PROMPT = (input: {
-        existingReports: Array<{ facts: string; id: string }>;
+        existingReports: Array<{ background: string; core: string; id: string }>;
         newReport: NewsReport;
     }) => {
         const { existingReports, newReport } = input;
@@ -122,7 +122,7 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
     };
 
     async run(params: {
-        existingReports: Array<{ facts: string; id: string }>;
+        existingReports: Array<{ background: string; core: string; id: string }>;
         newReport: NewsReport;
     }): Promise<null | ReportDeduplicationResult> {
         try {

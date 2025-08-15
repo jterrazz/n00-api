@@ -4,9 +4,11 @@ import { randomUUID } from 'crypto';
 import { Report } from '../../../domain/entities/report.entity.js';
 import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
-import { ClassificationState } from '../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../domain/value-objects/report/deduplication-state.vo.js';
-import { AngleCorpus } from '../../../domain/value-objects/report-angle/angle-corpus.vo.js';
+import { ClassificationState } from '../../../domain/value-objects/report/tier-state.vo.js';
+import { AngleNarrative } from '../../../domain/value-objects/report-angle/angle-narrative.vo.js';
 import { ReportAngle } from '../../../domain/value-objects/report-angle/report-angle.vo.js';
 
 import { type ReportIngestionAgentPort } from '../../ports/outbound/agents/report-ingestion.agent.js';
@@ -120,23 +122,24 @@ export class IngestReportsUseCase {
                     const angles = ingestionResult.angles.map(
                         (angle) =>
                             new ReportAngle({
-                                angleCorpus: new AngleCorpus(angle.corpus),
+                                narrative: new AngleNarrative(angle.narrative),
                             }),
                     );
 
                     const report = new Report({
                         angles,
+                        background: new Background(ingestionResult.background),
                         categories: ingestionResult.categories,
-                        classification: undefined,
                         classificationState: new ClassificationState('PENDING'), // Will be set during classification
+                        core: new Core(ingestionResult.core),
                         country,
                         createdAt: now,
                         dateline: newsReport.publishedAt,
                         // Deduplication will be performed in a separate step
                         deduplicationState: new DeduplicationState('PENDING'),
-                        facts: ingestionResult.facts,
                         id: reportId,
                         sourceReferences: newsReport.articles.map((a) => a.id),
+                        tier: undefined, // Will be set during classification
                         // traits: undefined - will be set during classification
                         updatedAt: now,
                     });

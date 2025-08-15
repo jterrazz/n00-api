@@ -7,9 +7,11 @@ import { Report } from '../../../../domain/entities/report.entity.js';
 import { ArticleTraits } from '../../../../domain/value-objects/article-traits.vo.js';
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
 
 import {
     type ReportDeduplicationAgentPort,
@@ -25,19 +27,22 @@ describe('DeduplicateReportsUseCase', () => {
     let mockLogger: DeepMockProxy<LoggerPort>;
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
 
-    const createTestReport = (idPrefix: string, facts: string): Report =>
+    const createTestReport = (idPrefix: string, coreStory: string): Report =>
         new Report({
             angles: [],
+            background: new Background(
+                `Background context for ${idPrefix} that provides supporting information for understanding the story.`,
+            ),
             categories: new Categories(['WORLD']),
-            classification: new Classification('GENERAL'),
             classificationState: new ClassificationState('COMPLETE'),
+            core: new Core(coreStory),
             country: new Country('US'),
             createdAt: new Date('2023-01-01'),
             dateline: new Date('2023-01-01'),
             deduplicationState: new DeduplicationState('PENDING'),
-            facts,
             id: randomUUID(),
             sourceReferences: [],
+            tier: new Classification('GENERAL'),
             traits: new ArticleTraits(),
             updatedAt: new Date('2023-01-01'),
         });
@@ -59,10 +64,18 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should process pending reports and mark as unique when no duplicates found', async () => {
             // Given
-            const pendingReport = createTestReport('pending1', 'Unique facts about event A');
-            const existingReport = createTestReport('existing', 'Different facts about event B');
+            const pendingReport = createTestReport(
+                'pending1',
+                'Unique facts about event A that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
+            const existingReport = createTestReport(
+                'existing',
+                'Different facts about event B that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
 
-            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([pendingReport]);
+            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
+                pendingReport,
+            ]);
             mockReportRepository.findRecentReports.mockResolvedValue([existingReport]);
             mockReportDeduplicationAgent.run.mockResolvedValue({ duplicateOfReportId: null });
             mockReportRepository.update.mockResolvedValue({
@@ -86,7 +99,13 @@ describe('DeduplicateReportsUseCase', () => {
                 since: expect.any(Date),
             });
             expect(mockReportDeduplicationAgent.run).toHaveBeenCalledWith({
-                existingReports: [existingReport],
+                existingReports: [
+                    {
+                        background: existingReport.background.value,
+                        core: existingReport.core.value,
+                        id: existingReport.id,
+                    },
+                ],
                 newReport: {
                     articles: [],
                     publishedAt: pendingReport.dateline,
@@ -99,13 +118,21 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should mark report as duplicate when duplicate is detected', async () => {
             // Given
-            const pendingReport = createTestReport('pending1', 'Similar facts about event');
-            const existingReport = createTestReport('existing', 'Similar facts about event');
+            const pendingReport = createTestReport(
+                'pending1',
+                'Similar facts about event that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
+            const existingReport = createTestReport(
+                'existing',
+                'Similar facts about event that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
             const duplicateResult: ReportDeduplicationResult = {
                 duplicateOfReportId: existingReport.id,
             };
 
-            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([pendingReport]);
+            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
+                pendingReport,
+            ]);
             mockReportRepository.findRecentReports.mockResolvedValue([existingReport]);
             mockReportDeduplicationAgent.run.mockResolvedValue(duplicateResult);
             mockReportRepository.markAsDuplicate.mockResolvedValue({
@@ -144,9 +171,14 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should process reports without country filter when no country provided', async () => {
             // Given
-            const pendingReport = createTestReport('pending1', 'Test facts');
+            const pendingReport = createTestReport(
+                'pending1',
+                'Test facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
 
-            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([pendingReport]);
+            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
+                pendingReport,
+            ]);
             mockReportRepository.findRecentReports.mockResolvedValue([]);
             mockReportRepository.update.mockResolvedValue({
                 ...pendingReport,
@@ -169,9 +201,14 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should skip deduplication check when no existing reports available', async () => {
             // Given
-            const pendingReport = createTestReport('pending1', 'Test facts');
+            const pendingReport = createTestReport(
+                'pending1',
+                'Test facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
 
-            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([pendingReport]);
+            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
+                pendingReport,
+            ]);
             mockReportRepository.findRecentReports.mockResolvedValue([]);
             mockReportRepository.update.mockResolvedValue({
                 ...pendingReport,
@@ -191,10 +228,18 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should handle deduplication agent errors gracefully', async () => {
             // Given
-            const pendingReport = createTestReport('pending1', 'Test facts');
-            const existingReport = createTestReport('existing', 'Other facts');
+            const pendingReport = createTestReport(
+                'pending1',
+                'Test facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
+            const existingReport = createTestReport(
+                'existing',
+                'Other facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
 
-            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([pendingReport]);
+            mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
+                pendingReport,
+            ]);
             mockReportRepository.findRecentReports.mockResolvedValue([existingReport]);
             mockReportDeduplicationAgent.run.mockRejectedValue(new Error('Agent failed'));
             mockReportRepository.update.mockResolvedValue({
@@ -207,10 +252,13 @@ describe('DeduplicateReportsUseCase', () => {
 
             // Then
             expect(result).toHaveLength(1);
-            expect(mockLogger.warn).toHaveBeenCalledWith('Error processing report for deduplication', {
-                error: expect.any(Error),
-                reportId: pendingReport.id,
-            });
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                'Error processing report for deduplication',
+                {
+                    error: expect.any(Error),
+                    reportId: pendingReport.id,
+                },
+            );
             expect(mockReportRepository.update).toHaveBeenCalledWith(pendingReport.id, {
                 deduplicationState: new DeduplicationState('COMPLETE'),
             });
@@ -218,9 +266,18 @@ describe('DeduplicateReportsUseCase', () => {
 
         test('should log summary statistics correctly', async () => {
             // Given
-            const uniqueReport = createTestReport('unique1', 'Unique facts');
-            const duplicateReport = createTestReport('duplicate1', 'Duplicate facts');
-            const existingReport = createTestReport('existing', 'Existing facts');
+            const uniqueReport = createTestReport(
+                'unique1',
+                'Unique facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
+            const duplicateReport = createTestReport(
+                'duplicate1',
+                'Duplicate facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
+            const existingReport = createTestReport(
+                'existing',
+                'Existing facts that represent a comprehensive core story with sufficient detail for validation purposes in this test case',
+            );
 
             mockReportRepository.findReportsWithPendingDeduplication.mockResolvedValue([
                 uniqueReport,

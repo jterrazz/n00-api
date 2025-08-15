@@ -50,9 +50,9 @@ export class PublishReportsUseCase {
 
             // Find reports that are ready for publishing
             const reportsToProcess = await this.reportRepository.findReportsWithoutArticles({
-                classification: ['GENERAL', 'NICHE'],
                 country: country.toString(),
                 limit: 20, // Process in batches to avoid overwhelming the AI agent
+                tier: ['GENERAL', 'NICHE'],
             });
 
             if (reportsToProcess.length === 0) {

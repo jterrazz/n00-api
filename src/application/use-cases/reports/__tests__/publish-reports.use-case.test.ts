@@ -15,9 +15,11 @@ import { ArticleTraits } from '../../../../domain/value-objects/article-traits.v
 import { Categories } from '../../../../domain/value-objects/categories.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
-import { Classification } from '../../../../domain/value-objects/report/classification.vo.js';
-import { ClassificationState } from '../../../../domain/value-objects/report/classification-state.vo.js';
+import { Background } from '../../../../domain/value-objects/report/background.vo.js';
+import { Core } from '../../../../domain/value-objects/report/core.vo.js';
 import { DeduplicationState } from '../../../../domain/value-objects/report/deduplication-state.vo.js';
+import { Classification } from '../../../../domain/value-objects/report/tier.vo.js';
+import { ClassificationState } from '../../../../domain/value-objects/report/tier-state.vo.js';
 
 import {
     type ArticleCompositionAgentPort,
@@ -43,16 +45,21 @@ describe('PublishReportsUseCase', () => {
     const createEmptyReport = (_id: string): Report =>
         new Report({
             angles: [],
+            background: new Background(
+                'Test background context that provides supporting information for understanding the story.',
+            ),
             categories: new Categories(['WORLD']),
-            classification: new Classification('GENERAL'),
             classificationState: new ClassificationState('COMPLETE'),
+            core: new Core(
+                'Test core story that represents the main narrative being reported in this test case with comprehensive detail for validation purposes.',
+            ),
             country: new Country('US'),
             createdAt: new Date('2023-01-01'),
             dateline: new Date('2023-01-01'),
             deduplicationState: new DeduplicationState('COMPLETE'),
-            facts: 'Test facts',
             id: randomUUID(),
             sourceReferences: [],
+            tier: new Classification('GENERAL'),
             traits: new ArticleTraits(),
             updatedAt: new Date('2023-01-01'),
         });
@@ -102,8 +109,6 @@ describe('PublishReportsUseCase', () => {
         const testLanguage = new Language('EN');
         const testCountry = new Country('US');
 
-
-
         test('should publish articles from reports successfully', async () => {
             // Given
             const mockReport = createEmptyReport('test-report-id');
@@ -131,14 +136,16 @@ describe('PublishReportsUseCase', () => {
             expect(result).toHaveLength(1);
             expect(result[0]).toBeInstanceOf(Article);
             expect(result[0].headline.value).toBe('Test headline');
-            expect(result[0].body.value).toBe('This is a test body content that has at least thirty characters to pass validation requirements');
+            expect(result[0].body.value).toBe(
+                'This is a test body content that has at least thirty characters to pass validation requirements',
+            );
             expect(result[0].authenticity.status).toBe(AuthenticityStatusEnum.AUTHENTIC);
             expect(result[0].frames).toHaveLength(1);
 
             expect(mockReportRepository.findReportsWithoutArticles).toHaveBeenCalledWith({
-                classification: ['GENERAL', 'NICHE'],
                 country: 'US',
                 limit: 20,
+                tier: ['GENERAL', 'NICHE'],
             });
 
             expect(mockArticleCompositionAgent.run).toHaveBeenCalledWith({
@@ -188,7 +195,9 @@ describe('PublishReportsUseCase', () => {
             expect(result).toHaveLength(1);
             expect(result[0].authenticity.status).toBe(AuthenticityStatusEnum.FABRICATED);
             expect(result[0].headline.value).toBe('Fake headline');
-            expect(result[0].body.value).toBe('This is a fake body content that has at least thirty characters to pass validation requirements');
+            expect(result[0].body.value).toBe(
+                'This is a fake body content that has at least thirty characters to pass validation requirements',
+            );
 
             expect(mockArticleFabricationAgent.run).toHaveBeenCalledWith({
                 context: {

@@ -51,7 +51,7 @@ export class DeduplicateReportsUseCase {
             const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7); // 7 days ago
             const existingReports = await this.reportRepository.findRecentReports({
                 country: country?.toString(),
-                excludeIds: pendingReports.map(r => r.id),
+                excludeIds: pendingReports.map((r) => r.id),
                 limit: 1000,
                 since, // Get a good sample for comparison
             });
@@ -77,7 +77,11 @@ export class DeduplicateReportsUseCase {
                         };
 
                         const deduplicationResult = await this.reportDeduplicationAgent.run({
-                            existingReports,
+                            existingReports: existingReports.map((report) => ({
+                                background: report.background.value,
+                                core: report.core.value,
+                                id: report.id,
+                            })),
                             newReport: mockNewsReport,
                         });
 
@@ -95,9 +99,12 @@ export class DeduplicateReportsUseCase {
 
                     if (duplicateOfId) {
                         // Mark as duplicate and link to canonical report
-                        updatedReport = await this.reportRepository.markAsDuplicate(pendingReport.id, {
-                            duplicateOfId,
-                        });
+                        updatedReport = await this.reportRepository.markAsDuplicate(
+                            pendingReport.id,
+                            {
+                                duplicateOfId,
+                            },
+                        );
                         duplicatesFound++;
                         this.logger.info('Report marked as duplicate', {
                             duplicateOf: duplicateOfId,
@@ -122,9 +129,12 @@ export class DeduplicateReportsUseCase {
 
                     // Mark as complete even if there was an error to avoid infinite retries
                     try {
-                        const errorUpdatedReport = await this.reportRepository.update(pendingReport.id, {
-                            deduplicationState: new DeduplicationState('COMPLETE'),
-                        });
+                        const errorUpdatedReport = await this.reportRepository.update(
+                            pendingReport.id,
+                            {
+                                deduplicationState: new DeduplicationState('COMPLETE'),
+                            },
+                        );
                         processedReports.push(errorUpdatedReport);
                     } catch (updateError) {
                         this.logger.error('Failed to update report after deduplication error', {

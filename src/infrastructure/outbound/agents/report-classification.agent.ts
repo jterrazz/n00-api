@@ -16,7 +16,7 @@ import {
 } from '../../../application/ports/outbound/agents/report-classification.agent.js';
 
 import { ArticleTraits } from '../../../domain/value-objects/article-traits.vo.js';
-import { Classification as ClassificationVO } from '../../../domain/value-objects/report/classification.vo.js';
+import { Classification as ClassificationVO } from '../../../domain/value-objects/report/tier.vo.js';
 
 export class ReportClassificationAgent implements ReportClassificationAgentPort {
     static readonly SCHEMA = z.object({
@@ -50,10 +50,11 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
         const { report } = input;
         const reportData = {
             angles: report.angles?.map((angle) => ({
-                digest: angle.angleCorpus.value,
+                narrative: angle.narrative.value,
             })),
+            background: report.background.value,
             category: report.categories.primary().toString(),
-            facts: report.facts,
+            core: report.core.value,
         };
 
         return new UserPrompt(

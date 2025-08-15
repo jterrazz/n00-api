@@ -168,10 +168,10 @@ export class PrismaReportRepository implements ReportRepositoryPort {
 
     async findReportsWithoutArticles(criteria?: {
         category?: string;
-        classification?: Array<'GENERAL' | 'NICHE' | 'OFF_TOPIC'>;
         classificationState?: 'COMPLETE' | 'PENDING';
         country?: string;
         limit?: number;
+        tier?: Array<'GENERAL' | 'NICHE' | 'OFF_TOPIC'>;
     }): Promise<Report[]> {
         const where: Record<string, unknown> = { articles: { none: {} } };
         if (criteria?.category) {
@@ -180,8 +180,8 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         }
         if (criteria?.country) where.country = criteria.country;
         if (criteria?.classificationState) where.classificationState = criteria.classificationState;
-        if (criteria?.classification && criteria.classification.length > 0) {
-            where.classification = { in: criteria.classification };
+        if (criteria?.tier && criteria.tier.length > 0) {
+            where.tier = { in: criteria.tier };
         }
         const reports = await this.prisma.getPrismaClient().report.findMany({
             include: { angles: true, categories: true },
@@ -238,7 +238,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         const updateData: Record<string, unknown> = {};
         if (data.classificationState)
             updateData.classificationState = data.classificationState.toString();
-        if (data.classification) updateData.classification = data.classification.toString();
+        if (data.tier) updateData.tier = data.tier.toString();
         if (data.deduplicationState)
             updateData.deduplicationState = data.deduplicationState.toString();
         if (data.traits) {
