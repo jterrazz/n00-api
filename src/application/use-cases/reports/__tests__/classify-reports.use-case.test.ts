@@ -21,7 +21,7 @@ import {
     type ReportClassificationAgentPort,
     type ReportClassificationResult,
 } from '../../../ports/outbound/agents/report-classification.agent.js';
-import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report/report-repository.port.js';
 
 import { ClassifyReportsUseCase } from '../classify-reports.use-case.js';
 

@@ -9,7 +9,7 @@ import { type Language } from '../../../domain/value-objects/language.vo.js';
 
 // Ports
 import { type ArticleQuizGenerationAgentPort } from '../../ports/outbound/agents/article-quiz-generation.agent.js';
-import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
+import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article/article-repository.port.js';
 
 /**
  * Use case for generating quiz questions/challenges for articles that don't have them yet
@@ -45,7 +45,7 @@ export class GenerateArticleChallengesUseCase {
 
             // Filter to only articles that don't have quiz questions and are not fabricated
             const articlesToProcess = articlesWithoutQuizzes.filter(
-                (article) =>
+                (article: Article) =>
                     (!article.quizQuestions || article.quizQuestions.isEmpty()) &&
                     !article.authenticity.isFabricated(),
             );

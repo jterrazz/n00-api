@@ -20,7 +20,7 @@ import {
     type ReportIngestionAgentPort,
     type ReportIngestionResult,
 } from '../../../ports/outbound/agents/report-ingestion.agent.js';
-import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report/report-repository.port.js';
 import {
     type NewsProviderPort,
     type NewsReport,
@@ -113,7 +113,7 @@ describe('IngestReportsUseCase', () => {
         };
 
         mockReportIngestionAgent.run.mockResolvedValue(mockResult);
-        mockReportRepository.create.mockImplementation(async (report) => report);
+        mockReportRepository.create.mockImplementation(async (report: Report) => report);
 
         // Default happy path mocks
         mockNewsProvider.fetchNews.mockResolvedValue(MOCK_NEWS_STORIES);

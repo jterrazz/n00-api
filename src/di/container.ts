@@ -15,9 +15,10 @@ import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.
 // Application
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
 import type { TaskPort, WorkerPort } from '../application/ports/inbound/worker.port.js';
-import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article-repository.port.js';
-import { type ReportRepositoryPort } from '../application/ports/outbound/persistence/report-repository.port.js';
+import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article/article-repository.port.js';
+import { type ReportRepositoryPort } from '../application/ports/outbound/persistence/report/report-repository.port.js';
 import type { NewsProviderPort } from '../application/ports/outbound/providers/news.port.js';
+import { FabricateArticlesUseCase } from '../application/use-cases/articles/fabricate-articles.use-case.js';
 import { GenerateArticleChallengesUseCase } from '../application/use-cases/articles/generate-article-challenges.use-case.js';
 import { GetArticlesUseCase } from '../application/use-cases/articles/get-articles.use-case.js';
 import { ClassifyReportsUseCase } from '../application/use-cases/reports/classify-reports.use-case.js';
@@ -177,6 +178,16 @@ const getArticlesUseCaseFactory = Injectable(
     (articleRepository: ArticleRepositoryPort) => new GetArticlesUseCase(articleRepository),
 );
 
+const fabricateArticlesUseCaseFactory = Injectable(
+    'FabricateArticles',
+    ['Agents', 'ArticleRepository', 'Logger'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        articleRepository: ArticleRepositoryPort,
+        logger: LoggerPort,
+    ) => new FabricateArticlesUseCase(agents.articleFabrication, articleRepository, logger),
+);
+
 const ingestReportsUseCaseFactory = Injectable(
     'IngestReports',
     ['Agents', 'Logger', 'News', 'ReportRepository'] as const,
@@ -200,16 +211,17 @@ const deduplicateReportsUseCaseFactory = Injectable(
 
 const publishReportsUseCaseFactory = Injectable(
     'PublishReports',
-    ['Agents', 'Logger', 'ReportRepository', 'ArticleRepository'] as const,
+    ['Agents', 'FabricateArticles', 'Logger', 'ReportRepository', 'ArticleRepository'] as const,
     (
         agents: ReturnType<typeof agentFactory>,
+        fabricateArticles: FabricateArticlesUseCase,
         logger: LoggerPort,
         reportRepository: ReportRepositoryPort,
         articleRepository: ArticleRepositoryPort,
     ) =>
         new PublishReportsUseCase(
             agents.articleComposition,
-            agents.articleFabrication,
+            fabricateArticles,
             logger,
             reportRepository,
             articleRepository,
@@ -365,6 +377,7 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(reportRepositoryFactory)
         // Use cases
         .provides(getArticlesUseCaseFactory)
+        .provides(fabricateArticlesUseCaseFactory)
         .provides(ingestReportsUseCaseFactory)
         .provides(deduplicateReportsUseCaseFactory)
         .provides(publishReportsUseCaseFactory)

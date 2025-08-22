@@ -14,7 +14,7 @@ import { ClassificationState } from '../../../domain/value-objects/report/tier-s
 
 // Ports
 import { type ReportIngestionAgentPort } from '../../ports/outbound/agents/report-ingestion.agent.js';
-import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report/report-repository.port.js';
 import { type NewsProviderPort } from '../../ports/outbound/providers/news.port.js';
 
 /**

@@ -5,7 +5,7 @@ import { type Country } from '../../../domain/value-objects/country.vo.js';
 import { type Language } from '../../../domain/value-objects/language.vo.js';
 
 // Ports
-import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
+import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article/article-repository.port.js';
 
 /**
  * Input parameters for the GetArticles use case using domain value objects

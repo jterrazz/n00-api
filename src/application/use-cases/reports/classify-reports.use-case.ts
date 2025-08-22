@@ -5,7 +5,7 @@ import { ClassificationState } from '../../../domain/value-objects/report/tier-s
 
 // Ports
 import { type ReportClassificationAgentPort } from '../../ports/outbound/agents/report-classification.agent.js';
-import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report/report-repository.port.js';
 
 /**
  * Use case for classifying reports

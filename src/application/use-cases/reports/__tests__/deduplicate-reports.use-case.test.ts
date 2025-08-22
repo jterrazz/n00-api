@@ -19,7 +19,7 @@ import {
     type ReportDeduplicationAgentPort,
     type ReportDeduplicationResult,
 } from '../../../ports/outbound/agents/report-deduplication.agent.js';
-import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report/report-repository.port.js';
 
 import { DeduplicateReportsUseCase } from '../deduplicate-reports.use-case.js';
 

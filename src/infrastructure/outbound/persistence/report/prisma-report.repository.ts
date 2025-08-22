@@ -2,7 +2,7 @@ import { type LoggerPort } from '@jterrazz/logger';
 import { type Prisma } from '@prisma/client';
 
 // Application
-import { type ReportRepositoryPort } from '../../../../application/ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../../../application/ports/outbound/persistence/report/report-repository.port.js';
 
 // Domain
 import { type Report } from '../../../../domain/entities/report.entity.js';

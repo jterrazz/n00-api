@@ -1,9 +1,9 @@
 // Domain
-import { type Article } from '../../../../domain/entities/article.entity.js';
-import { type Categories } from '../../../../domain/value-objects/categories.vo.js';
-import { type Category } from '../../../../domain/value-objects/category.vo.js';
-import { type Country } from '../../../../domain/value-objects/country.vo.js';
-import { type Language } from '../../../../domain/value-objects/language.vo.js';
+import { type Article } from '../../../../../domain/entities/article.entity.js';
+import { type Categories } from '../../../../../domain/value-objects/categories.vo.js';
+import { type Category } from '../../../../../domain/value-objects/category.vo.js';
+import { type Country } from '../../../../../domain/value-objects/country.vo.js';
+import { type Language } from '../../../../../domain/value-objects/language.vo.js';
 
 /**
  * Article repository port - defines how articles can be persisted and retrieved

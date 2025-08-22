@@ -7,7 +7,7 @@ import { DeduplicationState } from '../../../domain/value-objects/report/dedupli
 
 // Ports
 import { type ReportDeduplicationAgentPort } from '../../ports/outbound/agents/report-deduplication.agent.js';
-import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
+import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report/report-repository.port.js';
 
 /**
  * Use case for detecting and resolving duplicate reports
@@ -53,7 +53,7 @@ export class DeduplicateReportsUseCase {
             const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7); // 7 days ago
             const existingReports = await this.reportRepository.findRecentReports({
                 country: country?.toString(),
-                excludeIds: pendingReports.map((r) => r.id),
+                excludeIds: pendingReports.map((r: Report) => r.id),
                 limit: 1000,
                 since, // Get a good sample for comparison
             });
@@ -79,7 +79,7 @@ export class DeduplicateReportsUseCase {
                         };
 
                         const deduplicationResult = await this.reportDeduplicationAgent.run({
-                            existingReports: existingReports.map((report) => ({
+                            existingReports: existingReports.map((report: Report) => ({
                                 background: report.background.value,
                                 core: report.core.value,
                                 id: report.id,

@@ -9,7 +9,7 @@ import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
 // Ports
-import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
+import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article/article-repository.port.js';
 
 import { type GetArticlesParams, GetArticlesUseCase } from '../get-articles.use-case.js';
 

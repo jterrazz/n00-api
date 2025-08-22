@@ -27,19 +27,16 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionResult,
 } from '../../../ports/outbound/agents/article-composition.agent.js';
-import {
-    type ArticleFabricationAgentPort,
-    type ArticleFabricationResult,
-} from '../../../ports/outbound/agents/article-fabrication.agent.js';
-import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
-import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report-repository.port.js';
+import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article/article-repository.port.js';
+import { type ReportRepositoryPort } from '../../../ports/outbound/persistence/report/report-repository.port.js';
 
+import { type FabricateArticlesUseCase } from '../../articles/fabricate-articles.use-case.js';
 import { PublishReportsUseCase } from '../publish-reports.use-case.js';
 
 describe('PublishReportsUseCase', () => {
     let useCase: PublishReportsUseCase;
     let mockArticleCompositionAgent: DeepMockProxy<ArticleCompositionAgentPort>;
-    let mockArticleFabricationAgent: DeepMockProxy<ArticleFabricationAgentPort>;
+    let mockFabricateArticlesUseCase: DeepMockProxy<FabricateArticlesUseCase>;
     let mockLogger: DeepMockProxy<LoggerPort>;
     let mockReportRepository: DeepMockProxy<ReportRepositoryPort>;
     let mockArticleRepository: DeepMockProxy<ArticleRepositoryPort>;
@@ -68,7 +65,7 @@ describe('PublishReportsUseCase', () => {
 
     beforeEach(() => {
         mockArticleCompositionAgent = mock<ArticleCompositionAgentPort>();
-        mockArticleFabricationAgent = mock<ArticleFabricationAgentPort>();
+        mockFabricateArticlesUseCase = mock<FabricateArticlesUseCase>();
         mockLogger = mock<LoggerPort>();
         mockReportRepository = mock<ReportRepositoryPort>();
         mockArticleRepository = mock<ArticleRepositoryPort>();
@@ -92,6 +89,9 @@ describe('PublishReportsUseCase', () => {
         mockArticleRepository.findMany.mockResolvedValue([]);
         mockArticleRepository.findManyByIds.mockResolvedValue([]);
 
+        // Default mock for fabricate articles use case
+        mockFabricateArticlesUseCase.execute.mockResolvedValue([]);
+
         // Properly mock the logger methods
         mockLogger.info.mockReturnValue();
         mockLogger.warn.mockReturnValue();
@@ -100,7 +100,7 @@ describe('PublishReportsUseCase', () => {
 
         useCase = new PublishReportsUseCase(
             mockArticleCompositionAgent,
-            mockArticleFabricationAgent,
+            mockFabricateArticlesUseCase,
             mockLogger,
             mockReportRepository,
             mockArticleRepository,
@@ -161,34 +161,22 @@ describe('PublishReportsUseCase', () => {
 
         test('should generate fake articles when conditions are met', async () => {
             // Given
-            const existingArticle = new Article({
-                authenticity: new Authenticity(AuthenticityStatusEnum.AUTHENTIC),
+            const fakeArticle = new Article({
+                authenticity: new Authenticity(AuthenticityStatusEnum.FABRICATED, 'This is fake'),
                 body: new Body(
-                    'This is a longer existing body content that meets the minimum length requirements for the article body validation',
+                    'This is a fake body content that has at least thirty characters to pass validation requirements',
                 ),
                 categories: new Categories(['WORLD']),
                 country: testCountry,
-                headline: new Headline('Existing headline'),
+                headline: new Headline('Fake headline'),
                 id: randomUUID(),
                 language: testLanguage,
                 publishedAt: new Date(),
                 traits: new ArticleTraits(),
             });
 
-            const mockFabricationResult: ArticleFabricationResult = {
-                body: 'This is a fake body content that has at least thirty characters to pass validation requirements',
-                categories: new Categories(['WORLD']),
-                clarification: 'This is fake',
-                headline: 'Fake headline',
-                insertAfterIndex: 0,
-                tone: 'satirical',
-            };
-
             mockReportRepository.findReportsWithoutArticles.mockResolvedValue([]);
-            mockArticleRepository.countMany.mockResolvedValue(15); // Above threshold
-            mockArticleRepository.findMany.mockResolvedValue([existingArticle]);
-            mockArticleFabricationAgent.run.mockResolvedValue(mockFabricationResult);
-            mockArticleRepository.createMany.mockResolvedValue();
+            mockFabricateArticlesUseCase.execute.mockResolvedValue([fakeArticle]);
 
             // When
             const result = await useCase.execute(testLanguage, testCountry);
@@ -201,21 +189,10 @@ describe('PublishReportsUseCase', () => {
                 'This is a fake body content that has at least thirty characters to pass validation requirements',
             );
 
-            expect(mockArticleFabricationAgent.run).toHaveBeenCalledWith({
-                context: {
-                    currentDate: expect.any(Date),
-                    recentArticles: [
-                        {
-                            body: 'This is a longer existing body content that meets the minimum length requirements for the article body validation',
-                            frames: [],
-                            headline: 'Existing headline',
-                            publishedAt: expect.any(String),
-                        },
-                    ],
-                },
-                targetCountry: testCountry,
-                targetLanguage: testLanguage,
-            });
+            expect(mockFabricateArticlesUseCase.execute).toHaveBeenCalledWith(
+                testLanguage,
+                testCountry,
+            );
         });
 
         test('should handle empty reports gracefully', async () => {

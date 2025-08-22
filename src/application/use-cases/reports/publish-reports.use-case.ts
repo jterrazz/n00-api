@@ -19,18 +19,19 @@ import {
     type ArticleCompositionAgentPort,
     type ArticleCompositionInput,
 } from '../../ports/outbound/agents/article-composition.agent.js';
-import { type ArticleFabricationAgentPort } from '../../ports/outbound/agents/article-fabrication.agent.js';
-import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article-repository.port.js';
-import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report-repository.port.js';
+import { type ArticleRepositoryPort } from '../../ports/outbound/persistence/article/article-repository.port.js';
+import { type ReportRepositoryPort } from '../../ports/outbound/persistence/report/report-repository.port.js';
+
+import { type FabricateArticlesUseCase } from '../articles/fabricate-articles.use-case.js';
 
 /**
  * Use case for publishing reports as user-facing articles
- * @description Transforms reports into articles using AI composition and manages fake content ratio
+ * @description Transforms reports into articles using AI composition
  */
 export class PublishReportsUseCase {
     constructor(
         private readonly articleCompositionAgent: ArticleCompositionAgentPort,
-        private readonly articleFabricationAgent: ArticleFabricationAgentPort,
+        private readonly fabricateArticlesUseCase: FabricateArticlesUseCase,
         private readonly logger: LoggerPort,
         private readonly reportRepository: ReportRepositoryPort,
         private readonly articleRepository: ArticleRepositoryPort,
@@ -140,20 +141,7 @@ export class PublishReportsUseCase {
             }
 
             // 2) Generate FAKE articles (may be needed even if no real reports)
-            const fakeArticles = await this.generateFakeArticles(language, country);
-
-            // Persist newly generated fake articles
-            if (fakeArticles.length > 0) {
-                try {
-                    await this.articleRepository.createMany(fakeArticles);
-                } catch (persistError) {
-                    this.logger.warn('Error persisting fake articles', {
-                        country: country.toString(),
-                        error: persistError,
-                        language: language.toString(),
-                    });
-                }
-            }
+            const fakeArticles = await this.fabricateArticlesUseCase.execute(language, country);
 
             // Combine for return and logging
             const allPublished = [...publishedArticles, ...fakeArticles];
@@ -176,186 +164,5 @@ export class PublishReportsUseCase {
             });
             throw error;
         }
-    }
-
-    /**
-     * Generate a limited number of fake articles for the game experience
-     * @param language - Target language for fake articles
-     * @param country - Target country for fake articles
-     * @returns Array of fake articles
-     */
-    private async generateFakeArticles(language: Language, country: Country): Promise<Article[]> {
-        const fakeArticles: Article[] = [];
-
-        try {
-            // Require a minimum baseline of existing articles for this locale before fabricating
-            const totalForLocale = await this.articleRepository.countMany({
-                country,
-                language,
-            });
-
-            if (totalForLocale < 10) {
-                this.logger.info('Skipping fake article generation', {
-                    country: country.toString(),
-                    language: language.toString(),
-                    reason: 'Insufficient baseline articles',
-                    totalForLocale,
-                });
-                return fakeArticles;
-            }
-
-            // Get recent articles to check if we need fake ones
-            const recentArticles = await this.articleRepository.findMany({
-                country,
-                language,
-                limit: 10,
-            });
-
-            const existingFakeCount = recentArticles.filter((a) => a.isFabricated()).length;
-
-            // Target ratio: ~10% of articles should be fake.
-            // We base this on the count of **real** articles to avoid skew from existing fakes.
-            const realArticleCount = recentArticles.length - existingFakeCount;
-            // To reach ~10% overall, we need roughly one fake for every nine real articles (nReal / 9).
-            const desiredFakeTotal = Math.ceil(realArticleCount / 9); // nReal /9 ≈ 10% overall
-            let generateCount = desiredFakeTotal - existingFakeCount;
-
-            // Clamp between 0 and 3 to avoid large batches
-            generateCount = Math.max(0, Math.min(generateCount, 3));
-
-            if (generateCount > 0) {
-                this.logger.info('Fake articles will be generated', {
-                    country: country.toString(),
-                    fakeCount: generateCount,
-                    language: language.toString(),
-                    recentArticlesCount: recentArticles.length,
-                });
-
-                // Create context from recent articles
-                const recentArticlesContext = recentArticles.map((article) => ({
-                    body: article.body.value,
-                    frames:
-                        article.frames?.map((frame) => ({
-                            body: frame.body.value,
-                            headline: frame.headline.value,
-                        })) || [],
-                    headline: article.headline.value,
-                    publishedAt: article.publishedAt.toISOString(),
-                }));
-
-                // Generate the fake articles
-                for (let i = 0; i < generateCount; i++) {
-                    try {
-                        // Let AI choose the category based on recent articles context
-                        const fakeResult = await this.articleFabricationAgent.run({
-                            context: {
-                                currentDate: new Date(),
-                                recentArticles: recentArticlesContext,
-                            },
-                            // No targetCategory specified - AI will choose based on context
-                            targetCountry: country,
-                            targetLanguage: language,
-                        });
-
-                        if (!fakeResult) {
-                            this.logger.warn('Fabrication agent returned no result', {
-                                country: country.toString(),
-                                language: language.toString(),
-                            });
-                            continue;
-                        }
-
-                        // Determine publication date so the fake article blends naturally
-                        let publishedAt: Date;
-
-                        if (
-                            recentArticles.length > 0 &&
-                            typeof fakeResult.insertAfterIndex === 'number'
-                        ) {
-                            const targetIdx = fakeResult.insertAfterIndex;
-
-                            // Clamp index to valid range ( -1 .. recentArticles.length - 1 )
-                            const safeIdx = Math.max(
-                                -1,
-                                Math.min(targetIdx, recentArticles.length - 1),
-                            );
-
-                            // Choose the base article after which we insert; if -1, place before first article
-                            const baseArticleDate =
-                                safeIdx === -1
-                                    ? recentArticles[0].publishedAt
-                                    : recentArticles[safeIdx].publishedAt;
-
-                            // Offset between 2 and 10 minutes to keep timeline realistic
-                            const offsetMinutes = 2 + Math.random() * 8;
-                            const offsetMs = offsetMinutes * 60 * 1000;
-
-                            publishedAt = new Date(baseArticleDate.getTime() + offsetMs);
-
-                            // Ensure we don't place articles in the future beyond now
-                            const now = new Date();
-                            if (publishedAt > now) {
-                                publishedAt = new Date(now.getTime() - 60 * 1000); // 1 minute before now
-                            }
-                        } else {
-                            // Fallback: Within last 24 hours
-                            publishedAt = new Date(
-                                Date.now() - Math.random() * 24 * 60 * 60 * 1000,
-                            );
-                        }
-
-                        // Create fake article entity
-                        const fakeArticle = new Article({
-                            // Empty attributes for fabricated content
-                            authenticity: new Authenticity(
-                                AuthenticityStatusEnum.FABRICATED,
-                                fakeResult.clarification,
-                            ),
-                            body: new Body(fakeResult.body),
-                            categories: fakeResult.categories,
-                            country,
-                            headline: new Headline(fakeResult.headline),
-                            id: randomUUID(),
-                            language,
-                            publishedAt,
-                            traits: new ArticleTraits(),
-                        });
-
-                        this.logger.info('Fake article composed', {
-                            articleId: fakeArticle.id,
-                            category: fakeResult.categories.primary().toString(),
-                            country: country.toString(),
-                            headline: fakeArticle.headline.value,
-                            language: language.toString(),
-                            tone: fakeResult.tone,
-                        });
-
-                        fakeArticles.push(fakeArticle);
-                    } catch (fakeError) {
-                        this.logger.warn('Error generating fake article', {
-                            country: country.toString(),
-                            error: fakeError,
-                            language: language.toString(),
-                        });
-                        // Continue even if fake article generation fails
-                    }
-                }
-            } else {
-                this.logger.info('Skipping fake article generation', {
-                    country: country.toString(),
-                    language: language.toString(),
-                    reason: 'Recent fake article ratio already satisfied',
-                });
-            }
-        } catch (error) {
-            this.logger.warn('Error checking fake article requirements', {
-                country: country.toString(),
-                error,
-                language: language.toString(),
-            });
-            // If we can't check, just skip fake generation
-        }
-
-        return fakeArticles;
     }
 }

@@ -6,7 +6,7 @@ import type {
     CountManyOptions,
     FindHeadlinesAndSummariesOptions,
     FindManyOptions,
-} from '../../../../application/ports/outbound/persistence/article-repository.port.js';
+} from '../../../../application/ports/outbound/persistence/article/article-repository.port.js';
 
 // Domain
 import type { Article } from '../../../../domain/entities/article.entity.js';
