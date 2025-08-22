@@ -47,12 +47,10 @@ export class IngestReportsUseCase {
             });
 
             // Step 2: Fetch news from external providers
-            let newsStories = await this.newsProvider.fetchNews({
+            const newsStories = await this.newsProvider.fetchNews({
                 country,
                 language,
             });
-
-            newsStories = newsStories.slice(0, 2);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news reports fetched', {
