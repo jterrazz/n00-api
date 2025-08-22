@@ -41,7 +41,7 @@ type ArticleMetadata = {
     language: Language;
     tier?: 'GENERAL' | 'NICHE' | 'OFF_TOPIC';
     traits: {
-        smart: boolean;
+        essential: boolean;
         positive: boolean;
     };
 };
@@ -126,7 +126,7 @@ export class GetArticlesResponsePresenter {
                 language: article.language.toString() as Language,
                 tier: article.tier?.toString() as 'GENERAL' | 'NICHE' | 'OFF_TOPIC' | undefined,
                 traits: {
-                    smart: article.traits.smart,
+                    essential: article.traits.essential,
                     positive: article.traits.positive,
                 },
             },

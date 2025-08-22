@@ -119,7 +119,8 @@ export class ArticleMapper {
             quizQuestions,
             reportIds: prisma.reports?.map((report) => report.id),
             traits: new ArticleTraits({
-                smart: (prisma as unknown as { traitsSmart?: boolean }).traitsSmart ?? false,
+                essential:
+                    (prisma as unknown as { traitsEssential?: boolean }).traitsEssential ?? false,
                 positive:
                     (prisma as unknown as { traitsPositive?: boolean }).traitsPositive ?? false,
             }),
@@ -163,7 +164,7 @@ export class ArticleMapper {
                   }
                 : undefined,
             // Removed JSON traits - using typed columns only
-            traitsSmart: domain.traits.smart,
+            traitsEssential: domain.traits.essential,
             traitsPositive: domain.traits.positive,
         } as unknown as Prisma.ArticleCreateInput;
     }

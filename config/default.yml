@@ -15,12 +15,12 @@ inbound:
 
 outbound:
   agents:
-    reportIngestion: 'anthropic/claude-3.5-sonnet'
-    reportDeduplication: 'deepseek/deepseek-chat-v3-0324'
-    reportClassification: 'openai/gpt-4o-mini'
-    articleComposition: 'anthropic/claude-3.5-haiku'
-    articleFabrication: 'openai/gpt-4o'
-    articleQuizGeneration: 'google/gemini-2.5-flash'
+    reportIngestion: 'deepseek/deepseek-chat-v3.1'
+    reportDeduplication: 'deepseek/deepseek-chat-v3.1'
+    reportClassification: 'deepseek/deepseek-chat-v3.1'
+    articleComposition: 'deepseek/deepseek-chat-v3.1'
+    articleFabrication: 'deepseek/deepseek-chat-v3.1'
+    articleQuizGeneration: 'deepseek/deepseek-chat-v3.1'
 
   worldNews:
     useCache: false

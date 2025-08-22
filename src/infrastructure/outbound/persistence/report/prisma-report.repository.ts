@@ -251,7 +251,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         if (data.deduplicationState)
             updateData.deduplicationState = data.deduplicationState.toString();
         if (data.traits) {
-            updateData.traitsSmart = data.traits.smart;
+            updateData.traitsEssential = data.traits.essential;
             updateData.traitsPositive = data.traits.positive;
         }
         const updatedReport = await this.prisma.getPrismaClient().report.update({

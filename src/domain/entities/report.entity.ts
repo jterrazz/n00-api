@@ -54,7 +54,7 @@ export const anglesSchema = z
 export const traitsSchema = z
     .instanceof(ArticleTraits)
     .optional()
-    .describe('Content traits such as smart and positive characteristics.');
+    .describe('Content traits such as essential and positive characteristics.');
 
 export const sourceReferencesSchema = z
     .array(z.string())

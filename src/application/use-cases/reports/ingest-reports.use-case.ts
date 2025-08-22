@@ -52,7 +52,7 @@ export class IngestReportsUseCase {
                 language,
             });
 
-            newsStories = newsStories.slice(0, 7);
+            newsStories = newsStories.slice(0, 2);
 
             if (newsStories.length === 0) {
                 this.logger.warn('No news reports fetched', {

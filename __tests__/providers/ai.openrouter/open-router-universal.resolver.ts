@@ -43,7 +43,7 @@ function handleIngestion(model: string) {
             categories: ['TECHNOLOGY'],
             core: 'The main story being reported - the primary development, subject, or narrative that this report is fundamentally about.',
             traits: {
-                smart: true,
+                essential: true,
                 positive: false,
             },
         }),
@@ -76,7 +76,7 @@ function handleClassification(model: string) {
             classification,
             reason: `Reason for ${classification.toLowerCase()} classification`,
             traits: {
-                smart: false,
+                essential: false,
                 positive: false,
             },
         }),

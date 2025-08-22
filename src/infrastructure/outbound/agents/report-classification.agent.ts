@@ -25,7 +25,7 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
         classification: classificationSchema,
         reason: z.string(),
         traits: z.object({
-            smart: z.boolean().default(false),
+            essential: z.boolean().default(false),
             positive: z.boolean().default(false),
         }),
     });
@@ -106,7 +106,7 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
             '- Balance editorial quality with audience interest',
             '',
             '**Step 4: Trait Evaluation**',
-            "- **smart**: Content that reveals underlying power structures, macro-economic forces, or deep political mechanisms that most people don't expect to encounter. NOT typical media noise, reactions, or diversions. Think: central banking policy shifts, geopolitical power realignments, institutional capture, regulatory capture, systemic financial risks. Set to FALSE for surface-level news, celebrity reactions, trending topics, or obvious mainstream narratives.",
+            "- **essential**: Content that reveals underlying power structures, macro-economic forces, or deep political mechanisms that most people don't expect to encounter. NOT typical media noise, reactions, or diversions. Think: central banking policy shifts, geopolitical power realignments, institutional capture, regulatory capture, systemic financial risks. Set to FALSE for surface-level news, celebrity reactions, trending topics, or obvious mainstream narratives.",
             "- **positive**: Content showcasing genuine progress, breakthrough solutions, or constructive developments that demonstrate tangible improvement in the world. NOT superficial feel-good stories or forced optimism. Think: scientific breakthroughs, successful policy implementations, community solutions that work, technological advances solving real problems, social progress with measurable impact. Counters the media's negativity bias with substantive positive reality.",
             '',
 
@@ -115,7 +115,7 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
             '',
             '• **classification** → Exactly one of: GENERAL | NICHE | OFF_TOPIC',
             '• **reason** → One clear, concise sentence explaining the decision',
-            '• **traits** → Boolean flags for app filtering modes (smart, positive)',
+            '• **traits** → Boolean flags for app filtering modes (essential, positive)',
             '',
 
             // Quality Standards

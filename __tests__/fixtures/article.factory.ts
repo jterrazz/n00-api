@@ -98,7 +98,7 @@ export class ArticleFactory {
                 dateline: article.publishedAt,
                 sources: [],
                 tier: 'GENERAL',
-                traitsSmart: article.traits.smart,
+                traitsEssential: article.traits.essential,
                 traitsPositive: article.traits.positive,
             },
         });
@@ -120,7 +120,7 @@ export class ArticleFactory {
                 reports: {
                     connect: { id: report.id },
                 },
-                traitsSmart: article.traits.smart,
+                traitsEssential: article.traits.essential,
                 traitsPositive: article.traits.positive,
             } as unknown as Prisma.ArticleCreateInput,
         });

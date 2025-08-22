@@ -1,7 +1,7 @@
 import { z } from 'zod/v4';
 
 export const articleTraitsSchema = z.object({
-    smart: z
+    essential: z
         .boolean()
         .default(false)
         .describe('Content that improves understanding and intellectual growth'),
@@ -14,12 +14,12 @@ export const articleTraitsSchema = z.object({
 export type ArticleTraitsProps = z.infer<typeof articleTraitsSchema>;
 
 export class ArticleTraits {
-    public readonly smart: boolean;
+    public readonly essential: boolean;
     public readonly positive: boolean;
 
     constructor(data: Partial<ArticleTraitsProps> = {}) {
         const validatedData = articleTraitsSchema.parse(data);
-        this.smart = validatedData.smart;
+        this.essential = validatedData.essential;
         this.positive = validatedData.positive;
     }
 
@@ -30,18 +30,18 @@ export class ArticleTraits {
         }
 
         return new ArticleTraits({
-            smart: Boolean(json.smart),
+            essential: Boolean(json.essential),
             positive: Boolean(json.positive),
         });
     }
 
     public hasAnyTrait(): boolean {
-        return this.smart || this.positive;
+        return this.essential || this.positive;
     }
 
     public toJSON(): ArticleTraitsProps {
         return {
-            smart: this.smart,
+            essential: this.essential,
             positive: this.positive,
         };
     }
