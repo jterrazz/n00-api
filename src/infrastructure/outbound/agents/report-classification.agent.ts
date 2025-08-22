@@ -60,54 +60,51 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
         };
 
         return new UserPrompt(
-            // Role & Mission
-            'You are a seasoned Senior Editor and content curator for a global digital news platform. Your mission: evaluate each report and classify it for optimal content strategy and audience targeting.',
-            '',
-            'Apply rigorous editorial judgment to distinguish broad mainstream appeal from niche-interest content, and filter out low-value material. Your classification keeps the main feed compelling for the widest audience while surfacing specialized content to appropriate readers.',
+            // Core Mission
+            'Classify news reports for optimal content strategy and audience targeting. Apply rigorous editorial judgment to distinguish broad mainstream appeal from specialized content.',
             '',
 
             // Language & Style Requirements
             PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
             '',
 
-            // Classification Framework
+            // Three-Tier Classification System
             '=== CLASSIFICATION SYSTEM ===',
             '',
-            '**GENERAL** → Broad public interest with national/international relevance',
-            '- Would be covered on prime-time television news broadcasts',
-            '- Appeals to diverse demographics and regions',
+            '**GENERAL** - Broad public interest:',
+            '• National/international relevance, prime-time TV worthy',
+            '• Appeals across diverse demographics and regions',
             '',
-            '**NICHE** → Relevant primarily to specific subgroups or regions',
-            '- Industry-specific, hobby-focused, or demographically targeted',
-            '- Limited mainstream crossover but valuable to its audience',
+            '**NICHE** - Specialized audience value:',
+            '• Industry-specific, hobby-focused, or demographically targeted',
+            '• Limited mainstream crossover but valuable to its audience',
             '',
-            '**OFF_TOPIC** → Lacks substantive news value or factual basis',
-            '- Auxiliary content, lifestyle advice, entertainment without news angle',
-            '- Pseudoscientific predictions, horoscopes, astrology',
-            '- Promotional material, listicles, opinion without factual foundation',
+            '**OFF_TOPIC** - Lacks news substance:',
+            '• Lifestyle advice, entertainment without news angle',
+            '• Pseudoscience, horoscopes, promotional material',
+            '• Opinion without factual foundation or listicles',
             '',
 
-            // Analysis Process
-            '=== ANALYSIS PROCESS ===',
+            // Smart Evaluation Process
+            '=== EVALUATION PROCESS ===',
             '',
-            '**Step 1: Content Assessment**',
-            '- Identify core topic and primary audience',
-            '- Evaluate factual substance vs. opinion/entertainment',
-            '- Assess real-world news value and timeliness',
+            '**Content Assessment**: Core topic, factual substance, news value',
+            '**Audience Mapping**: Breadth of relevance and appeal scope',
+            '**Editorial Test**: "Would this be interesting in my main feed?"',
             '',
-            '**Step 2: Audience Mapping**',
-            '- Determine breadth of relevance (general public vs. specific groups)',
-            '- Consider geographic and demographic scope',
-            '- Evaluate mainstream vs. specialized appeal',
+
+            // Special Content Traits
+            '=== CONTENT TRAITS ===',
             '',
-            '**Step 3: Editorial Judgment**',
-            '- Ask yourself: "Would it be interesting to have this story in my main feed?"',
-            "- Consider user engagement and content value from a reader's perspective",
-            '- Balance editorial quality with audience interest',
+            '**Essential** - Reveals deeper systems and structures:',
+            "• Power structures, macro-economic forces, political mechanisms most people don't see",
+            '• Central banking shifts, geopolitical realignments, institutional/regulatory capture',
+            '• NOT surface news, celebrity reactions, trending topics, or obvious narratives',
             '',
-            '**Step 4: Trait Evaluation**',
-            "- **essential**: Content that reveals underlying power structures, macro-economic forces, or deep political mechanisms that most people don't expect to encounter. NOT typical media noise, reactions, or diversions. Think: central banking policy shifts, geopolitical power realignments, institutional capture, regulatory capture, systemic financial risks. Set to FALSE for surface-level news, celebrity reactions, trending topics, or obvious mainstream narratives.",
-            "- **positive**: Content showcasing genuine progress, breakthrough solutions, or constructive developments that demonstrate tangible improvement in the world. NOT superficial feel-good stories or forced optimism. Think: scientific breakthroughs, successful policy implementations, community solutions that work, technological advances solving real problems, social progress with measurable impact. Counters the media's negativity bias with substantive positive reality.",
+            '**Positive** - Demonstrates genuine progress:',
+            '• Breakthrough solutions, constructive developments with tangible improvement',
+            '• Scientific breakthroughs, successful policies, working community solutions',
+            '• NOT superficial feel-good stories or forced optimism',
             '',
 
             // Output Requirements

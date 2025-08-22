@@ -46,53 +46,48 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
         const { existingReports, newReport } = input;
 
         return new UserPrompt(
-            // Role & Mission
-            'You are a senior editorial gatekeeper for a global news organization. Your mission: determine whether an incoming news report describes the same underlying event as any existing report in our database.',
-            '',
-            'Perform deep comparison beyond surface-level keywords. Focus on core event.',
+            // Core Mission
+            'Determine whether an incoming news report describes the same underlying event as any existing report in our database. Focus on the core event, not surface-level similarities.',
             '',
 
             // Language & Style Requirements
             PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
             '',
 
-            // Analysis Framework
-            '=== ANALYSIS FRAMEWORK ===',
+            // Smart Analysis Process
+            '=== ANALYSIS PROCESS ===',
             '',
-            '**Step 1: Event Decomposition**',
-            '- Extract every element from new report',
-            '- Note LOCATION (where) and TIMEFRAME (when) from new report',
+            '**1. Event Decomposition**',
+            '• Extract core elements: WHO, WHAT, WHERE, WHEN from new report',
+            '• Identify the fundamental event being described',
             '',
-            '**Step 2: Comparative Analysis**',
-            '- Apply same decomposition to each existing report',
-            '- Compare essential elements across reports',
-            '- Look for substantial overlap in core event details',
-            '',
-            '**Step 3: Duplication Decision**',
-            '- If essential elements align → DUPLICATE',
-            '- If weak overlap or conflicting details → UNIQUE',
+            '**2. Comparison Logic**',
+            '• Apply same decomposition to each existing report',
+            '• Look for substantial overlap in essential event details',
+            '• Essential elements align → DUPLICATE | Weak overlap → UNIQUE',
             '',
 
-            // Normalization Guidelines
-            '=== NORMALIZATION GUIDELINES ===',
+            // Smart Normalization
+            '=== SMART MATCHING ===',
             '',
-            '• **Language Variations**: Ignore wording differences, synonyms, grammatical variations',
-            '• **Date/Time Formats**: Normalize formats ("July 13th" ↔ "13 July 2025", "9 AM" ↔ "09:00")',
-            '• **Geographic Names**: Handle accents/diacritics ("Corsica" ≅ "Corse")',
-            '• **Units & Numbers**: Treat equivalent expressions ("over 100 km/h" ≅ ">100 km/h")',
+            '• **Ignore Variations**: Wording differences, synonyms, format differences',
+            '• **Normalize Time/Date**: "July 13th" = "13 July 2025", "9 AM" = "09:00"',
+            '• **Geographic Flexibility**: Handle accents ("Corsica" ≅ "Corse")',
+            '• **Number Equivalence**: "over 100 km/h" ≅ ">100 km/h"',
             '',
 
-            // Decision Examples
-            '=== DECISION EXAMPLES ===',
+            // Clear Examples
+            '=== DECISION PATTERNS ===',
             '',
-            '**DUPLICATE Cases:**',
-            '• Weather alerts for same region, date, and phenomenon (despite wording differences)',
-            '• Natural disasters affecting same area and timeframe (despite different details)',
+            '**DUPLICATE** - Same core event:',
+            '• Weather alerts for same region, date, and phenomenon',
+            '• Natural disasters affecting same area and timeframe',
+            '• Policy announcements from same source on same topic',
             '',
-            '**UNIQUE Cases:**',
+            '**UNIQUE** - Different events:',
             '• Different events involving same entities (injury vs. game result)',
-            '• Sequential events in ongoing situations (different developments)',
-            '• Related but distinct incidents (different locations or times)',
+            '• Sequential developments in ongoing situations',
+            '• Related but distinct incidents (different locations/times)',
             '',
 
             // Output Requirements
