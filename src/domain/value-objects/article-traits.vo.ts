@@ -23,15 +23,15 @@ export class ArticleTraits {
         this.positive = validatedData.positive;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static fromJSON(json: any): ArticleTraits {
+    public static fromJSON(json: unknown): ArticleTraits {
         if (!json || typeof json !== 'object') {
             return new ArticleTraits();
         }
 
+        const jsonObj = json as Record<string, unknown>;
         return new ArticleTraits({
-            essential: Boolean(json.essential),
-            positive: Boolean(json.positive),
+            essential: Boolean(jsonObj.essential),
+            positive: Boolean(jsonObj.positive),
         });
     }
 

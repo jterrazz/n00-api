@@ -153,8 +153,8 @@ describe('WorldNews', () => {
         await second;
 
         // Then - it should use the correct date for each country
-        expect(requestedDates['US']).toBe('2024-01-14');
-        expect(requestedDates['FR']).toBe('2024-01-15');
+        expect(requestedDates.US).toBe('2024-01-14');
+        expect(requestedDates.FR).toBe('2024-01-15');
 
         mockOfDate.reset();
     });

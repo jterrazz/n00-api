@@ -1,6 +1,6 @@
 import { type LoggerPort } from '@jterrazz/logger';
 import { beforeEach, describe, expect, test } from '@jterrazz/test';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
 // Domain

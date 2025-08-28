@@ -78,7 +78,7 @@ export class Categories {
         const categorySet = new Set<CategoryEnum>(categories);
 
         // For each category, check if it's a subcategory and add its main category
-        categories.forEach((category) => {
+        for (const category of categories) {
             if (category.includes('_')) {
                 const mainCategory = category.split('_')[0] as CategoryEnum;
 
@@ -87,7 +87,7 @@ export class Categories {
                     categorySet.add(mainCategory);
                 }
             }
-        });
+        }
 
         return Array.from(categorySet);
     }

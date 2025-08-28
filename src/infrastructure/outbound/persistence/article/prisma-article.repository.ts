@@ -77,7 +77,7 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
 
         return articles.map((article) => ({
             headline: article.headline,
-            summary: article.body.substring(0, 200) + '...',
+            summary: `${article.body.substring(0, 200)}...`,
         }));
     }
 
@@ -167,7 +167,11 @@ export class PrismaArticleRepository implements ArticleRepositoryPort {
 
         const mapped = items.map((item) => this.mapper.toDomain(item));
         const orderMap = new Map(ids.map((id, index) => [id, index] as const));
-        mapped.sort((a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!);
+        mapped.sort((a, b) => {
+            const aIndex = orderMap.get(a.id) ?? 0;
+            const bIndex = orderMap.get(b.id) ?? 0;
+            return aIndex - bIndex;
+        });
         return mapped;
     }
 

@@ -65,7 +65,7 @@ const cursorParamSchema = z
             try {
                 const decodedString = Buffer.from(cursor, 'base64').toString();
                 const timestamp = Number(decodedString);
-                return !isNaN(timestamp);
+                return !Number.isNaN(timestamp);
             } catch {
                 return false;
             }
@@ -147,7 +147,7 @@ export class GetArticlesRequestHandler {
             Array.isArray((data as { ids?: unknown }).ids) &&
             (data.ids as unknown[]).length === 0
         ) {
-            delete (data as { ids?: unknown }).ids;
+            (data as { ids?: unknown }).ids = undefined;
         }
         return data as GetArticlesHttpParams;
     }

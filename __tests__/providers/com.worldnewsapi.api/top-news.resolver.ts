@@ -20,16 +20,18 @@ export const worldNewsResolver = http.get(
         if (validationError) return validationError;
 
         // Format the publish date in the correct timezone for the source country
+        const sourceCountry = params.sourceCountry ?? 'US';
+        const language = params.language ?? 'EN';
         const publishDate = formatTZDateForCountry(
-            createTZDateForCountry(new Date(`${params.date}T12:00:00Z`), params.sourceCountry!),
-            params.sourceCountry!,
+            createTZDateForCountry(new Date(`${params.date}T12:00:00Z`), sourceCountry),
+            sourceCountry,
             "yyyy-MM-dd'T'HH:mm:ssXXX",
         );
 
         const response = {
-            country: params.sourceCountry!,
-            language: params.language!,
-            top_news: buildTopNewsPayload(params.sourceCountry!, params.language!, publishDate),
+            country: sourceCountry,
+            language: language,
+            top_news: buildTopNewsPayload(sourceCountry, language, publishDate),
         };
 
         return HttpResponse.json(response);

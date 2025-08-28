@@ -1,5 +1,5 @@
 import { type LoggerPort } from '@jterrazz/logger';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 // Domain
 import { Article } from '../../../domain/entities/article.entity.js';

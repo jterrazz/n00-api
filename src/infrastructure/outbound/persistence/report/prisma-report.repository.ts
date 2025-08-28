@@ -225,8 +225,7 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             where: country ? { country: this.mapper.mapCountryToPrisma(country) } : undefined,
         });
         const allSourceReferences = reports
-            .map((report) => report.sources as string[])
-            .flat()
+            .flatMap((report) => report.sources as string[])
             .filter((ref, index, arr) => arr.indexOf(ref) === index);
         return allSourceReferences;
     }

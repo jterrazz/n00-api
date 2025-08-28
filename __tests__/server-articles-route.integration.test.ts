@@ -1,6 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
 
-import { ArticleFactory, ArticleTestScenarios } from './fixtures/article.factory.js';
+import {
+    ArticleFactory,
+    createFabricatedInventedEventArticle,
+    createMixedArticles,
+} from './fixtures/article.factory.js';
 import {
     createIntegrationContext,
     executeRequest,
@@ -24,7 +28,7 @@ describe('Server /articles route – integration', () => {
     describe('Fetch by IDs', () => {
         it('returns only requested articles in the same order as ids', async () => {
             // Given – seed articles
-            await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
+            await createMixedArticles(integrationContext.prisma);
 
             const all = await integrationContext.prisma.article.findMany({
                 orderBy: { createdAt: 'asc' },
@@ -85,10 +89,8 @@ describe('Server /articles route – integration', () => {
 
         it('returns full structured JSON response for mixed US articles', async () => {
             // Given – a mixed set of US articles including fabricated and authentic ones
-            await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
-            await ArticleTestScenarios.createFabricatedInventedEventArticle(
-                integrationContext.prisma,
-            );
+            await createMixedArticles(integrationContext.prisma);
+            await createFabricatedInventedEventArticle(integrationContext.prisma);
 
             // When – request all articles
             const res = await executeRequest(integrationContext, '/articles?limit=10');
@@ -183,10 +185,8 @@ describe('Server /articles route – integration', () => {
 
         it('returns the same structured JSON response when paginated', async () => {
             // Given – the same mixed set of articles in the database
-            await ArticleTestScenarios.createMixedArticles(integrationContext.prisma);
-            await ArticleTestScenarios.createFabricatedInventedEventArticle(
-                integrationContext.prisma,
-            );
+            await createMixedArticles(integrationContext.prisma);
+            await createFabricatedInventedEventArticle(integrationContext.prisma);
             // Ensure there are strictly more than 2 US articles so we always have a next page
             await new ArticleFactory()
                 .withCountry('US')

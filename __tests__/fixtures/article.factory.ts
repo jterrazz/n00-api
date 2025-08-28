@@ -162,56 +162,51 @@ export class ArticleFactory {
 }
 
 /**
- * Common test scenarios for articles with predefined configurations
- * Provides ready-to-use article combinations for testing
+ * Seeds a single fabricated US article for the "Invented Event Shocks World" case.
+ * Meant to be called in addition to {@link createMixedArticles} for modularity.
  */
-export class ArticleTestScenarios {
-    /**
-     * Seeds a single fabricated US article for the “Invented Event Shocks World” case.
-     * Meant to be called in addition to {@link createMixedArticles} for modularity.
-     */
-    static async createFabricatedInventedEventArticle(prisma: PrismaClient): Promise<void> {
-        const bodyWithMarkers =
-            'Breaking %%[(FABRICATED)]( sensational )%% news about an invented event.';
+export async function createFabricatedInventedEventArticle(prisma: PrismaClient): Promise<void> {
+    const bodyWithMarkers =
+        'Breaking %%[(FABRICATED)]( sensational )%% news about an invented event.';
 
-        await new ArticleFactory()
-            .withHeadline('Invented Event Shocks World')
-            .withBody(bodyWithMarkers)
+    await new ArticleFactory()
+        .withHeadline('Invented Event Shocks World')
+        .withBody(bodyWithMarkers)
+        .withCountry('US')
+        .withLanguage('EN')
+        .withPublishedAt(new Date('2024-03-03T12:00:00.000Z'))
+        .asFabricated('Fabricated story')
+        .createInDatabase(prisma);
+}
+
+/**
+ * Seeds the DB with a small set of authentic articles in
+ * different languages/countries to exercise pagination & grouping logic.
+ */
+export async function createMixedArticles(prisma: PrismaClient): Promise<void> {
+    const baseDate = new Date('2024-03-01T12:00:00.000Z');
+
+    await Promise.all([
+        // US articles (authentic)
+        new ArticleFactory()
             .withCountry('US')
             .withLanguage('EN')
-            .withPublishedAt(new Date('2024-03-03T12:00:00.000Z'))
-            .asFabricated('Fabricated story')
-            .createInDatabase(prisma);
-    }
+            .withId('11111111-1111-4111-8111-111111111111')
+            .withPublishedAt(subDays(baseDate, 1))
+            .createInDatabase(prisma),
+        new ArticleFactory()
+            .withCountry('US')
+            .withLanguage('EN')
+            .withId('22222222-2222-4222-8222-222222222222')
+            .withPublishedAt(baseDate)
+            .createInDatabase(prisma),
 
-    /** Seeds the DB with a small set of authentic articles in
-     * different languages/countries to exercise pagination & grouping logic.
-     */
-    static async createMixedArticles(prisma: PrismaClient): Promise<void> {
-        const baseDate = new Date('2024-03-01T12:00:00.000Z');
-
-        await Promise.all([
-            // US articles (authentic)
-            new ArticleFactory()
-                .withCountry('US')
-                .withLanguage('EN')
-                .withId('11111111-1111-4111-8111-111111111111')
-                .withPublishedAt(subDays(baseDate, 1))
-                .createInDatabase(prisma),
-            new ArticleFactory()
-                .withCountry('US')
-                .withLanguage('EN')
-                .withId('22222222-2222-4222-8222-222222222222')
-                .withPublishedAt(baseDate)
-                .createInDatabase(prisma),
-
-            // French article (authentic)
-            new ArticleFactory()
-                .withCountry('FR')
-                .withLanguage('FR')
-                .withId('33333333-3333-4333-8333-333333333333')
-                .withPublishedAt(addDays(baseDate, 1))
-                .createInDatabase(prisma),
-        ]);
-    }
+        // French article (authentic)
+        new ArticleFactory()
+            .withCountry('FR')
+            .withLanguage('FR')
+            .withId('33333333-3333-4333-8333-333333333333')
+            .withPublishedAt(addDays(baseDate, 1))
+            .createInDatabase(prisma),
+    ]);
 }

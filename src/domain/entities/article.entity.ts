@@ -85,7 +85,7 @@ export class Article {
         // Show for 20% of authentic articles based on ID hash
         // Remove dashes and take last 2 characters for consistent hashing
         const idHash = this.id.replace(/-/g, '').slice(-2);
-        const numericValue = parseInt(idHash, 16);
+        const numericValue = Number.parseInt(idHash, 16);
 
         // 20% chance: modulo 5 equals 0 (1 in 5 articles)
         return numericValue % 5 === 0;

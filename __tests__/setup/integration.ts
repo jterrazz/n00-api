@@ -1,11 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { execSync } from 'child_process';
-import { randomUUID } from 'crypto';
-import { unlinkSync } from 'fs';
 import type { RequestHandler } from 'msw';
 import { setupServer, type SetupServerApi } from 'msw/node';
-import os from 'os';
-import { resolve } from 'path';
+import { execSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { unlinkSync } from 'node:fs';
+import os from 'node:os';
+import { resolve } from 'node:path';
 
 // Application
 import { type ServerPort } from '../../src/application/ports/inbound/server.port.js';
