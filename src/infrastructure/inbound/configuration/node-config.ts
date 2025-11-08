@@ -70,8 +70,25 @@ export class NodeConfig implements ConfigurationPort {
     private readonly configuration: Configuration;
 
     constructor(configurationInput: unknown, overrides?: { databaseUrl?: string }) {
+        // Temporary debug log
+        // eslint-disable-next-line no-console
+        console.log(
+            '[DEBUG] Raw configuration input:',
+            JSON.stringify(configurationInput, null, 2),
+        );
+
         // Parse and validate first
         const parsed = configurationSchema.parse(configurationInput);
+
+        // Temporary debug log - show what was loaded
+        // eslint-disable-next-line no-console
+        console.log('[DEBUG] Configuration loaded:', {
+            environment: parsed.inbound.env,
+            reportPipelineTasks: parsed.inbound.tasks.reportPipeline.map((task) => ({
+                country: task.country,
+                language: task.language,
+            })),
+        });
 
         // Apply override after parsing
         if (overrides?.databaseUrl) {
