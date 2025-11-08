@@ -1,7 +1,11 @@
 import { type LoggerLevel } from '@jterrazz/logger';
 
+// Domain
+import { type CountryEnum } from '../../../domain/value-objects/country.vo.js';
+import { type LanguageEnum } from '../../../domain/value-objects/language.vo.js';
+
 /**
- * Configuration port - defines how the application can be configured
+ * Configuration port providing access to application settings
  */
 export interface ConfigurationPort {
     /**
@@ -16,7 +20,7 @@ export interface ConfigurationPort {
 }
 
 /**
- * Inbound configuration
+ * Inbound configuration (defined by the user)
  */
 export interface InboundConfigurationPort {
     env: 'development' | 'production' | 'test';
@@ -28,19 +32,29 @@ export interface InboundConfigurationPort {
         level: LoggerLevel;
         prettyPrint: boolean;
     };
+    tasks: {
+        reportPipeline: ReportPipelineTaskConfig[];
+    };
 }
 
 /**
- * Outbound configuration
+ * Outbound configuration (defined by external services)
  */
 export interface OutboundConfigurationPort {
+    agents: {
+        reportIngestion: string;
+        reportDeduplication: string;
+        reportClassification: string;
+        articleComposition: string;
+        articleFabrication: string;
+        articleQuizGeneration: string;
+    };
     newRelic: {
         enabled: boolean;
         licenseKey?: string;
     };
     openRouter: {
         apiKey: string;
-        budget: 'free' | 'paid';
     };
     prisma: {
         databaseUrl: string;
@@ -49,4 +63,19 @@ export interface OutboundConfigurationPort {
         apiKey: string;
         useCache: boolean;
     };
+}
+
+/**
+ * Report pipeline task configuration
+ */
+export interface ReportPipelineTaskConfig {
+    country: CountryEnum;
+    language: LanguageEnum;
+}
+
+/**
+ * Tasks configuration
+ */
+export interface TasksConfigurationPort {
+    reportPipeline: ReportPipelineTaskConfig[];
 }

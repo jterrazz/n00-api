@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it } from '@jterrazz/test';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
-import { mockArticles } from '../../../../domain/entities/__mocks__/mock-of-articles.js';
+// Domain
+import { mockArticles } from '../../../../domain/entities/__mocks__/articles.mock.js';
 import { type Article } from '../../../../domain/entities/article.entity.js';
 import { Category } from '../../../../domain/value-objects/category.vo.js';
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 import { Language } from '../../../../domain/value-objects/language.vo.js';
 
-import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article-repository.port.js';
+// Ports
+import { type ArticleRepositoryPort } from '../../../ports/outbound/persistence/article/article-repository.port.js';
 
 import { type GetArticlesParams, GetArticlesUseCase } from '../get-articles.use-case.js';
 
@@ -26,7 +28,7 @@ describe('GetArticlesUseCase', () => {
     beforeEach(() => {
         mockArticleRepository = mock<ArticleRepositoryPort>();
         useCase = new GetArticlesUseCase(mockArticleRepository);
-        testArticles = mockArticles(TEST_ARTICLES_COUNT, DEFAULT_COUNTRY, DEFAULT_LANGUAGE);
+        testArticles = mockArticles(TEST_ARTICLES_COUNT);
 
         // Default mock responses
         mockArticleRepository.findMany.mockResolvedValue(testArticles);
@@ -56,8 +58,9 @@ describe('GetArticlesUseCase', () => {
                 category: undefined,
                 country: DEFAULT_COUNTRY,
                 cursor: undefined,
+                excludeArchived: true,
                 language: DEFAULT_LANGUAGE,
-                limit: DEFAULT_LIMIT,
+                limit: DEFAULT_LIMIT + 1,
             });
 
             expect(mockArticleRepository.countMany).toHaveBeenCalledWith({
@@ -68,7 +71,7 @@ describe('GetArticlesUseCase', () => {
 
             // And return correct paginated response
             expect(result).toEqual({
-                items: testArticles.slice(0, DEFAULT_LIMIT),
+                articles: testArticles.slice(0, DEFAULT_LIMIT),
                 lastItemDate: expect.any(Date),
                 total: TEST_ARTICLES_COUNT,
             });
@@ -84,9 +87,9 @@ describe('GetArticlesUseCase', () => {
 
             // Then - it should respect the custom limit
             expect(mockArticleRepository.findMany).toHaveBeenCalledWith(
-                expect.objectContaining({ limit: customLimit }),
+                expect.objectContaining({ limit: customLimit + 1 }),
             );
-            expect(result.items).toHaveLength(customLimit);
+            expect(result.articles).toHaveLength(customLimit);
         });
 
         it('should handle category filter', async () => {
@@ -167,7 +170,7 @@ describe('GetArticlesUseCase', () => {
 
             // Then - it should indicate no more pages
             expect(result.lastItemDate).toBeNull();
-            expect(result.items).toHaveLength(5);
+            expect(result.articles).toHaveLength(5);
         });
     });
 });

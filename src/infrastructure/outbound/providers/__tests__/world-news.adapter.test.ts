@@ -16,12 +16,13 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { ZodError } from 'zod/v4';
 
+// Domain
 import { Country } from '../../../../domain/value-objects/country.vo.js';
 
 import { createTZDateForCountry } from '../../../../shared/date/timezone.js';
-import { WorldNewsAdapter, type WorldNewsAdapterConfiguration } from '../world-news.adapter.js';
+import { WorldNews, type WorldNewsConfiguration } from '../world-news.provider.js';
 
-const mockConfiguration: WorldNewsAdapterConfiguration = {
+const mockConfiguration: WorldNewsConfiguration = {
     apiKey: 'test-world-news-key',
 };
 const mockLogger = mockOf<LoggerPort>();
@@ -52,6 +53,7 @@ const server = setupServer(
                 {
                     news: [
                         {
+                            id: 224767206,
                             publish_date: '2024-03-10T12:00:00Z',
                             summary: 'Test summary',
                             text: 'short',
@@ -59,6 +61,7 @@ const server = setupServer(
                             url: 'https://example.com/article1',
                         },
                         {
+                            id: 224839780,
                             publish_date: '2024-03-11T12:00:00Z',
                             summary: 'Test summary',
                             text: 'a bit longer',
@@ -66,6 +69,7 @@ const server = setupServer(
                             url: 'https://example.com/article2',
                         },
                         {
+                            id: 224936214,
                             publish_date: '2024-03-12T12:00:00Z',
                             summary: 'Test summary',
                             text: 'this is the longest article text',
@@ -81,16 +85,16 @@ const server = setupServer(
     }),
 );
 
-let adapter: WorldNewsAdapter;
+let provider: WorldNews;
 
 beforeAll(() => {
     server.listen();
     vitest.useFakeTimers();
 });
 beforeEach(() => {
-    const newRelicAdapter = mockOf<MonitoringPort>();
-    newRelicAdapter.monitorSegment.mockImplementation(async (_name, cb) => cb());
-    adapter = new WorldNewsAdapter(mockConfiguration, mockLogger, newRelicAdapter);
+    const newRelic = mockOf<MonitoringPort>();
+    newRelic.monitorSegment.mockImplementation(async (_name, cb) => cb());
+    provider = new WorldNews(mockConfiguration as WorldNewsConfiguration, mockLogger, newRelic);
     requestedDates = {};
 });
 afterEach(() => {
@@ -101,20 +105,34 @@ afterAll(() => {
     vitest.useRealTimers();
 });
 
-describe('WorldNewsAdapter', () => {
+describe('WorldNews', () => {
     it('should fetch news successfully', async () => {
         // Given - a valid API key and a response with multiple articles
 
-        // When - fetching news from the adapter
-        const result = await adapter.fetchNews();
+        // When - fetching news from the provider
+        const result = await provider.fetchNews();
 
-        // Then - it should return only the median-length article
+        // Then - it should return a report with all articles
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
-            body: 'a bit longer',
-            coverage: 3,
-            headline: 'Medium',
-            publishedAt: new Date('2024-03-11T12:00:00Z'),
+            articles: [
+                {
+                    body: 'short',
+                    headline: 'Short',
+                    id: 'worldnewsapi:224767206',
+                },
+                {
+                    body: 'a bit longer',
+                    headline: 'Medium',
+                    id: 'worldnewsapi:224839780',
+                },
+                {
+                    body: 'this is the longest article text',
+                    headline: 'Long',
+                    id: 'worldnewsapi:224936214',
+                },
+            ],
+            publishedAt: new Date('2024-03-11T12:00:00Z'), // Average of article dates
         });
     });
 
@@ -125,18 +143,18 @@ describe('WorldNewsAdapter', () => {
         mockOfDate.set(utcTimestamp);
 
         // When - fetching news for different countries
-        const first = adapter.fetchNews();
+        const first = provider.fetchNews();
         vitest.runAllTimers();
         await first;
 
         vitest.advanceTimersByTime(1500);
-        const second = adapter.fetchNews({ country: new Country('fr') });
+        const second = provider.fetchNews({ country: new Country('FR') });
         vitest.runAllTimers();
         await second;
 
         // Then - it should use the correct date for each country
-        expect(requestedDates['us']).toBe('2024-01-14');
-        expect(requestedDates['fr']).toBe('2024-01-15');
+        expect(requestedDates.US).toBe('2024-01-14');
+        expect(requestedDates.FR).toBe('2024-01-15');
 
         mockOfDate.reset();
     });
@@ -150,14 +168,19 @@ describe('WorldNewsAdapter', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('API request failed:', {
+        expect(mockLogger.error).toHaveBeenCalledWith('WorldNews API returned an error response', {
             status: 500,
             statusText: 'Internal Server Error',
             url: expect.stringContaining('https://api.worldnewsapi.com/top-news'),
+        });
+        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch news from WorldNews API', {
+            country: 'US',
+            error: expect.any(Error),
+            language: 'EN',
         });
     });
 
@@ -170,14 +193,19 @@ describe('WorldNewsAdapter', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('API request failed:', {
+        expect(mockLogger.error).toHaveBeenCalledWith('WorldNews API returned an error response', {
             status: 401,
             statusText: 'Unauthorized',
             url: expect.stringContaining('https://api.worldnewsapi.com/top-news'),
+        });
+        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch news from WorldNews API', {
+            country: 'US',
+            error: expect.any(Error),
+            language: 'EN',
         });
     });
 
@@ -190,25 +218,25 @@ describe('WorldNewsAdapter', () => {
         );
 
         // When - fetching news
-        const result = await adapter.fetchNews();
+        const result = await provider.fetchNews();
 
         // Then - it should return an empty array and log the error
         expect(result).toEqual([]);
-        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch en news:', {
-            country: 'us',
+        expect(mockLogger.error).toHaveBeenCalledWith('Failed to fetch news from WorldNews API', {
+            country: 'US',
             error: expect.any(ZodError),
-            language: 'en',
+            language: 'EN',
         });
     });
 
     it('should respect rate limiting between requests', async () => {
         // Given - two consecutive requests
         // When - making the requests
-        const first = adapter.fetchNews();
+        const first = provider.fetchNews();
         vitest.runAllTimers();
         const firstResult = await first;
         vitest.advanceTimersByTime(1500);
-        const second = adapter.fetchNews();
+        const second = provider.fetchNews();
         vitest.runAllTimers();
         const secondResult = await second;
 
@@ -218,10 +246,10 @@ describe('WorldNewsAdapter', () => {
     });
 });
 
-describe('WorldNewsAdapter.transformResponse', () => {
-    it('should select the article with the median text length from each section', () => {
+describe('WorldNews.transformResponse', () => {
+    it('should return a report with all articles from each section', () => {
         // Given
-        const adapter = new WorldNewsAdapter(
+        const provider = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),
@@ -233,16 +261,19 @@ describe('WorldNewsAdapter.transformResponse', () => {
                 {
                     news: [
                         {
+                            id: 100001,
                             publish_date: '2024-01-01T00:00:00Z',
                             text: 'short',
                             title: 'Short',
                         },
                         {
+                            id: 100002,
                             publish_date: '2024-01-02T00:00:00Z',
                             text: 'a bit longer',
                             title: 'Medium',
                         },
                         {
+                            id: 100003,
                             publish_date: '2024-01-03T00:00:00Z',
                             text: 'this is the longest article text',
                             title: 'Long',
@@ -253,22 +284,36 @@ describe('WorldNewsAdapter.transformResponse', () => {
         };
 
         // When
-        // @ts-expect-error: testing private method
-        const result = adapter.transformResponse(response);
+        // @ts-expect-error - testing private method
+        const result = provider.transformResponse(response);
 
         // Then
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
-            body: 'a bit longer',
-            coverage: 3,
-            headline: 'Medium',
-            publishedAt: new Date('2024-01-02T00:00:00Z'),
+            articles: [
+                {
+                    body: 'short',
+                    headline: 'Short',
+                    id: 'worldnewsapi:100001',
+                },
+                {
+                    body: 'a bit longer',
+                    headline: 'Medium',
+                    id: 'worldnewsapi:100002',
+                },
+                {
+                    body: 'this is the longest article text',
+                    headline: 'Long',
+                    id: 'worldnewsapi:100003',
+                },
+            ],
+            publishedAt: new Date('2024-01-02T00:00:00Z'), // Average of article dates
         });
     });
 
-    it('should select the lower median if even number of articles', () => {
+    it('should handle multiple sections correctly', () => {
         // Given
-        const adapter = new WorldNewsAdapter(
+        const provider = new WorldNews(
             { apiKey: 'irrelevant' },
             mockLogger,
             mockOf<MonitoringPort>(),
@@ -280,24 +325,26 @@ describe('WorldNewsAdapter.transformResponse', () => {
                 {
                     news: [
                         {
+                            id: 200001,
                             publish_date: '2024-01-01T00:00:00Z',
-                            text: 'a',
-                            title: 'A',
+                            text: 'first report article 1',
+                            title: 'Report 1 - Article 1',
                         },
                         {
+                            id: 200002,
                             publish_date: '2024-01-02T00:00:00Z',
-                            text: 'bb',
-                            title: 'BB',
+                            text: 'first report article 2',
+                            title: 'Report 1 - Article 2',
                         },
+                    ],
+                },
+                {
+                    news: [
                         {
+                            id: 200003,
                             publish_date: '2024-01-03T00:00:00Z',
-                            text: 'ccc',
-                            title: 'CCC',
-                        },
-                        {
-                            publish_date: '2024-01-04T00:00:00Z',
-                            text: 'dddd',
-                            title: 'DDDD',
+                            text: 'second report article 1',
+                            title: 'Report 2 - Article 1',
                         },
                     ],
                 },
@@ -305,17 +352,12 @@ describe('WorldNewsAdapter.transformResponse', () => {
         };
 
         // When
-        // @ts-expect-error: testing private method
-        const result = adapter.transformResponse(response);
+        // @ts-expect-error - testing private method
+        const result = provider.transformResponse(response);
 
         // Then
-        // Sorted by text length: a (1), bb (2), ccc (3), dddd (4) => medianIndex = 1 (bb)
-        expect(result).toHaveLength(1);
-        expect(result[0]).toEqual({
-            body: 'bb',
-            coverage: 4,
-            headline: 'BB',
-            publishedAt: new Date('2024-01-02T00:00:00Z'),
-        });
+        expect(result).toHaveLength(2);
+        expect(result[0].articles).toHaveLength(2);
+        expect(result[1].articles).toHaveLength(1);
     });
 });

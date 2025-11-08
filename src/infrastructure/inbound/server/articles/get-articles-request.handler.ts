@@ -1,6 +1,7 @@
 import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod/v4';
 
+// Domain
 import { Category, categorySchema } from '../../../../domain/value-objects/category.vo.js';
 import { Country, countrySchema } from '../../../../domain/value-objects/country.vo.js';
 import { Language, languageSchema } from '../../../../domain/value-objects/language.vo.js';
@@ -15,6 +16,7 @@ export interface GetArticlesHttpQuery {
     category?: string;
     country?: string;
     cursor?: string;
+    ids?: string | string[];
     language?: string;
     limit?: string;
 }
@@ -25,7 +27,7 @@ export interface GetArticlesHttpQuery {
 const categoryParamSchema = z
     .string()
     .optional()
-    .transform((val) => val?.toLowerCase())
+    .transform((val) => val?.toUpperCase())
     .pipe(categorySchema.optional())
     .transform((val) => (val ? new Category(val) : undefined));
 
@@ -36,7 +38,7 @@ const categoryParamSchema = z
 const countryParamSchema = z
     .string()
     .optional()
-    .transform((val) => val?.toLowerCase() || 'us') // Default to 'us' if not provided
+    .transform((val) => val?.toUpperCase() || 'US') // Default to 'US' if not provided
     .pipe(countrySchema)
     .transform((val) => new Country(val));
 
@@ -46,7 +48,7 @@ const countryParamSchema = z
 const languageParamSchema = z
     .string()
     .optional()
-    .transform((val) => val?.toLowerCase())
+    .transform((val) => val?.toUpperCase())
     .pipe(languageSchema.optional())
     .transform((val) => (val ? new Language(val) : undefined));
 
@@ -63,7 +65,7 @@ const cursorParamSchema = z
             try {
                 const decodedString = Buffer.from(cursor, 'base64').toString();
                 const timestamp = Number(decodedString);
-                return !isNaN(timestamp);
+                return !Number.isNaN(timestamp);
             } catch {
                 return false;
             }
@@ -100,6 +102,17 @@ const getArticlesParamsSchema = z.object({
     category: categoryParamSchema,
     country: countryParamSchema,
     cursor: cursorParamSchema,
+    ids: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((v) => (v === undefined ? undefined : Array.isArray(v) ? v : v.split(',')))
+        .transform((arr) => arr?.map((id) => id.trim()).filter((id) => id.length > 0))
+        .refine((arr) => (arr ? arr.length <= 50 : true), {
+            message: 'Too many ids (max 50 allowed)',
+        })
+        .refine((arr) => (arr ? arr.every((id) => /^[0-9a-fA-F-]{36}$/.test(id)) : true), {
+            message: 'All ids must be UUIDs',
+        }),
     language: languageParamSchema,
     limit: limitParamSchema,
 });
@@ -128,6 +141,14 @@ export class GetArticlesRequestHandler {
             });
         }
 
-        return validatedParams.data;
+        const data = validatedParams.data as unknown as Record<string, unknown>;
+        // Normalise: treat empty ids array as absent
+        if (
+            Array.isArray((data as { ids?: unknown }).ids) &&
+            (data.ids as unknown[]).length === 0
+        ) {
+            (data as { ids?: unknown }).ids = undefined;
+        }
+        return data as GetArticlesHttpParams;
     }
 }

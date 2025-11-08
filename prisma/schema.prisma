@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// =============================================================================
+// Prisma Schema
+// =============================================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -13,40 +11,349 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =============================================================================
+// Enumerations — Core
+// =============================================================================
+
 enum Country {
-  us
-  fr
+  US
+  FR
 }
 
 enum Language {
-  en
-  fr
+  EN
+  FR
 }
 
 enum Category {
-  POLITICS
-  TECHNOLOGY
-  SCIENCE
-  HEALTH
-  ENTERTAINMENT
-  SPORTS
-  BUSINESS
+  // World
   WORLD
+  WORLD_INTERNATIONAL_AFFAIRS
+  WORLD_GLOBAL_ECONOMY
+  WORLD_CONFLICTS_WARS
+  WORLD_DIPLOMACY
+  WORLD_HUMAN_RIGHTS
+  WORLD_MIGRATION_REFUGEES
+  WORLD_CLIMATE_CHANGE_GLOBAL
+  WORLD_PANDEMICS_GLOBAL_HEALTH
+
+  // Politics
+  POLITICS
+  POLITICS_ELECTIONS_CAMPAIGNS
+  POLITICS_GOVERNMENT_POLICIES
+  POLITICS_POLITICAL_SCANDALS
+  POLITICS_LEGISLATION_LAWS
+  POLITICS_INTERNATIONAL_RELATIONS
+  POLITICS_POLITICAL_PARTIES
+  POLITICS_ACTIVISM_PROTESTS
+  POLITICS_CORRUPTION
+  POLITICS_LEADERSHIP_CHANGES
+
+  // Business
+  BUSINESS
+  BUSINESS_MARKETS_STOCKS
+  BUSINESS_CORPORATE_NEWS
+  BUSINESS_ECONOMY_FINANCE
+  BUSINESS_STARTUPS_ENTREPRENEURSHIP
+  BUSINESS_MERGERS_ACQUISITIONS
+  BUSINESS_REAL_ESTATE
+  BUSINESS_COMMODITIES
+  BUSINESS_TRADE_TARIFFS
+  BUSINESS_LABOR_EMPLOYMENT
+  BUSINESS_CRYPTOCURRENCY_BLOCKCHAIN
+
+  // Technology
+  TECHNOLOGY
+  TECHNOLOGY_GADGETS_DEVICES
+  TECHNOLOGY_SOFTWARE_APPS
+  TECHNOLOGY_AI_MACHINE_LEARNING
+  TECHNOLOGY_CYBERSECURITY
+  TECHNOLOGY_INTERNET_SOCIAL_MEDIA
+  TECHNOLOGY_INNOVATION_RESEARCH
+  TECHNOLOGY_BIG_TECH_COMPANIES
+  TECHNOLOGY_DATA_PRIVACY
+  TECHNOLOGY_EMERGING_TECH
+  TECHNOLOGY_TELECOM_NETWORKS
+
+  // Science
+  SCIENCE
+  SCIENCE_SPACE_EXPLORATION
+  SCIENCE_ENVIRONMENT_ECOLOGY
+  SCIENCE_BIOLOGY_GENETICS
+  SCIENCE_PHYSICS_ASTRONOMY
+  SCIENCE_CHEMISTRY_MATERIALS
+  SCIENCE_EARTH_SCIENCES
+  SCIENCE_MEDICAL_RESEARCH
+  SCIENCE_CLIMATE_SCIENCE
+  SCIENCE_ARCHAEOLOGY_PALEONTOLOGY
+  SCIENCE_ENERGY_RENEWABLES
+
+  // Health
+  HEALTH
+  HEALTH_WELLNESS_FITNESS
+  HEALTH_MENTAL_HEALTH
+  HEALTH_NUTRITION_DIET
+  HEALTH_DISEASES_CONDITIONS
+  HEALTH_HEALTHCARE_SYSTEMS
+  HEALTH_VACCINES_IMMUNOLOGY
+  HEALTH_PUBLIC_HEALTH
+  HEALTH_AGING_LONGEVITY
+  HEALTH_ALTERNATIVE_MEDICINE
+  HEALTH_PANDEMICS_OUTBREAKS
+
+  // Entertainment
+  ENTERTAINMENT
+  ENTERTAINMENT_MOVIES_TV
+  ENTERTAINMENT_MUSIC
+  ENTERTAINMENT_CELEBRITIES
+  ENTERTAINMENT_BOOKS_LITERATURE
+  ENTERTAINMENT_GAMING
+  ENTERTAINMENT_ARTS_THEATER
+  ENTERTAINMENT_FASHION
+  ENTERTAINMENT_AWARDS_EVENTS
+  ENTERTAINMENT_STREAMING_SERVICES
+  ENTERTAINMENT_POP_CULTURE
+
+  // Sports
+  SPORTS
+  SPORTS_FOOTBALL_SOCCER
+  SPORTS_AMERICAN_FOOTBALL
+  SPORTS_BASKETBALL
+  SPORTS_TENNIS
+  SPORTS_CRICKET
+  SPORTS_GOLF
+  SPORTS_OLYMPICS_PARALYMPICS
+  SPORTS_MOTORSPORTS
+  SPORTS_ATHLETICS_TRACK
+  SPORTS_ESPORTS
+  SPORTS_EXTREME_SPORTS
+  SPORTS_TEAM_SPORTS_GENERAL
+  SPORTS_INDIVIDUAL_SPORTS_GENERAL
+
+  // Lifestyle
+  LIFESTYLE
+  LIFESTYLE_TRAVEL_TOURISM
+  LIFESTYLE_FOOD_RECIPES
+  LIFESTYLE_HOME_GARDENING
+  LIFESTYLE_RELATIONSHIPS_FAMILY
+  LIFESTYLE_PERSONAL_FINANCE
+  LIFESTYLE_EDUCATION
+  LIFESTYLE_CAREER_WORK
+  LIFESTYLE_HOBBIES_LEISURE
+  LIFESTYLE_SUSTAINABILITY_LIVING
+  LIFESTYLE_PETS_ANIMALS
+
+  // Opinion
+  OPINION
+  OPINION_EDITORIALS
+  OPINION_COLUMNS
+  OPINION_OP_EDS
+  OPINION_ANALYSIS
+  OPINION_COMMENTARIES
+  OPINION_LETTERS_TO_EDITOR
+
+  // Environment
+  ENVIRONMENT
+  ENVIRONMENT_CLIMATE_CHANGE
+  ENVIRONMENT_CONSERVATION
+  ENVIRONMENT_WILDLIFE
+  ENVIRONMENT_POLLUTION
+  ENVIRONMENT_NATURAL_DISASTERS
+  ENVIRONMENT_SUSTAINABLE_PRACTICES
+  ENVIRONMENT_GREEN_ENERGY
+  ENVIRONMENT_BIODIVERSITY
+  ENVIRONMENT_OCEAN_MARINE_LIFE
+
+  // Fallback
   OTHER
 }
 
-model Article {
-  id         String    @id @default(uuid())
-  headline   String
-  article    String
-  summary    String
-  category   Category
-  isFake     Boolean
-  fakeReason String?
-  country    Country
-  language   Language
-  createdAt  DateTime  @default(now())
+// =============================================================================
+// Enumerations — Workflow
+// =============================================================================
 
+enum ClassificationState {
+  PENDING
+  COMPLETE
+}
+
+enum Classification {
+  GENERAL
+  NICHE
+  OFF_TOPIC
+}
+
+enum DeduplicationState {
+  PENDING
+  COMPLETE
+}
+
+// =============================================================================
+// Models — Domain
+// =============================================================================
+
+model Report {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  core       String
+  background String
+  angles     ReportAngle[]
+
+  // Context & sources
+  country    Country
+  dateline   DateTime
+  categories ReportCategory[]
+
+  // Workflow — Classification
+  classificationState ClassificationState @default(PENDING)
+  tier                Classification?
+  traitsEssential     Boolean             @default(false)
+  traitsPositive      Boolean             @default(false)
+
+  // Workflow — Deduplication
+  deduplicationState DeduplicationState @default(PENDING)
+  duplicateOfId      String?
+  duplicateOf        Report?            @relation("ReportDuplicateOf", fields: [duplicateOfId], references: [id])
+  duplicates         Report[]           @relation("ReportDuplicateOf")
+
+  // Relations
+  articles Article[] @relation("ReportArticles")
+
+  // Metadata
+  sources   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexes
+  @@index([classificationState])
+  @@index([deduplicationState])
+  @@index([duplicateOfId])
+  @@index([country])
+  @@index([dateline])
+  @@index([createdAt])
+}
+
+model ReportAngle {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  narrative String
+
+  // Relations
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexes
+  @@index([reportId])
+}
+
+model Article {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  headline String
+  body     String
+  frames   ArticleFrame[]
+
+  // Context
+  country  Country
+  language Language
+
+  // Classification
+  categories       ArticleCategory[]
+  traitsEssential  Boolean           @default(false)
+  traitsPositive   Boolean           @default(false)
+
+  // Fabrication
+  fabricated       Boolean @default(false)
+  fabricatedReason String?
+
+  // Metadata
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+
+  // Interactions
+  quizQuestions ArticleQuiz[]
+
+  // Relations
+  reports Report[] @relation("ReportArticles")
+
+  // Indexes
   @@index([language, country])
   @@index([createdAt])
+  @@index([publishedAt])
+}
+
+model ArticleFrame {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  headline String // Frame headline from this viewpoint
+  body     String // Viewpoint-specific content explaining this side of the report
+
+  // Relations
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  // Indexes
+  @@index([articleId])
+}
+
+model ArticleQuiz {
+  // Identity
+  id String @id @default(uuid())
+
+  // Content
+  question           String // The quiz question text
+  answers            Json // Array of possible answers ["Answer 1", "Answer 2", "Answer 3", "Answer 4"]
+  correctAnswerIndex Int // Index (0-based) of the correct answer in the answers array
+
+  // Relations
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  // Indexes & mapping
+  @@index([articleId])
+  @@map("ArticleQuizQuestion")
+}
+
+// =============================================================================
+// Models — Join Tables
+// =============================================================================
+
+// Article ↔ Category
+model ArticleCategory {
+  articleId String
+  category  Category
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, category])
+  @@index([category])
+}
+
+// Report ↔ Category
+model ReportCategory {
+  reportId String
+  category Category
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@id([reportId, category])
+  @@index([category])
 }

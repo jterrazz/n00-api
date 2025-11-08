@@ -7,11 +7,13 @@ export const createArticlesRouter = (getArticlesController: GetArticlesControlle
 
     app.get('/', async (c) => {
         const query = c.req.query();
+        const queries = c.req.queries();
 
         const response = await getArticlesController.getArticles({
             category: query.category,
             country: query.country,
             cursor: query.cursor,
+            ids: (queries as unknown as Record<string, string[] | undefined>).ids,
             language: query.language,
             limit: query.limit,
         });

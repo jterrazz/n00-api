@@ -6,10 +6,22 @@ inbound:
   logger:
     level: info
     prettyPrint: false
+  tasks:
+    reportPipeline:
+      - country: FR
+        language: FR
+      - country: US
+        language: EN
 
 outbound:
-  openRouter:
-    budget: paid
+  agents:
+    reportIngestion: 'x-ai/grok-4-fast'
+    reportDeduplication: 'x-ai/grok-4-fast'
+    reportClassification: 'x-ai/grok-4-fast'
+    articleComposition: 'google/gemini-2.5-flash'
+    articleFabrication: 'google/gemini-2.5-flash'
+    articleQuizGeneration: 'google/gemini-2.5-flash'
+
   worldNews:
     useCache: false
   newRelic:

@@ -1,3 +1,4 @@
+import { OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
 import { type LoggerPort, PinoLoggerAdapter } from '@jterrazz/logger';
 import {
     type MonitoringPort,
@@ -7,29 +8,43 @@ import {
 import { Container, Injectable } from '@snap/ts-inject';
 import { default as nodeConfiguration } from 'config';
 
+// Configuration
 import type { ConfigurationPort } from '../application/ports/inbound/configuration.port.js';
+import { NodeConfig } from '../infrastructure/inbound/configuration/node-config.js';
 
-import type { ExecutorPort } from '../application/ports/inbound/executor.port.js';
-import { type TaskPort } from '../application/ports/inbound/executor.port.js';
+// Application
 import type { ServerPort } from '../application/ports/inbound/server.port.js';
-import { type ArticleGeneratorPort } from '../application/ports/outbound/ai/article-generator.port.js';
-import { type AIProviderPort } from '../application/ports/outbound/ai/provider.port.js';
-import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article-repository.port.js';
+import type { TaskPort, WorkerPort } from '../application/ports/inbound/worker.port.js';
+import type { ArticleRepositoryPort } from '../application/ports/outbound/persistence/article/article-repository.port.js';
+import { type ReportRepositoryPort } from '../application/ports/outbound/persistence/report/report-repository.port.js';
 import type { NewsProviderPort } from '../application/ports/outbound/providers/news.port.js';
-import { GenerateArticlesUseCase } from '../application/use-cases/articles/generate-articles.use-case.js';
+import { FabricateArticlesUseCase } from '../application/use-cases/articles/fabricate-articles.use-case.js';
+import { GenerateArticleChallengesUseCase } from '../application/use-cases/articles/generate-article-challenges.use-case.js';
 import { GetArticlesUseCase } from '../application/use-cases/articles/get-articles.use-case.js';
+import { ClassifyReportsUseCase } from '../application/use-cases/reports/classify-reports.use-case.js';
+import { DeduplicateReportsUseCase } from '../application/use-cases/reports/deduplicate-reports.use-case.js';
+import { IngestReportsUseCase } from '../application/use-cases/reports/ingest-reports.use-case.js';
+import { PublishReportsUseCase } from '../application/use-cases/reports/publish-reports.use-case.js';
 
-import { NodeConfigAdapter } from '../infrastructure/inbound/configuration/node-config.adapter.js';
-import { ArticleGenerationTask } from '../infrastructure/inbound/executor/articles/article-generation.task.js';
-import { NodeCronAdapter } from '../infrastructure/inbound/executor/node-cron.adapter.js';
+// Infrastructure
 import { GetArticlesController } from '../infrastructure/inbound/server/articles/get-articles.controller.js';
-import { HonoServerAdapter } from '../infrastructure/inbound/server/hono.adapter.js';
-import { AIArticleGenerator } from '../infrastructure/outbound/ai/article-generator.adapter.js';
-import { OpenRouterAdapter } from '../infrastructure/outbound/ai/providers/open-router.adapter.js';
-import { PrismaAdapter } from '../infrastructure/outbound/persistence/prisma.adapter.js';
-import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/prisma-article.adapter.js';
-import { CachedNewsAdapter } from '../infrastructure/outbound/providers/cached-news.adapter.js';
-import { WorldNewsAdapter } from '../infrastructure/outbound/providers/world-news.adapter.js';
+import { HonoServer } from '../infrastructure/inbound/server/hono.server.js';
+import { NodeCron } from '../infrastructure/inbound/worker/node-cron.worker.js';
+import { ReportPipelineTask } from '../infrastructure/inbound/worker/reports/report-pipeline.task.js';
+import { ArticleCompositionAgent } from '../infrastructure/outbound/agents/article-composition.agent.js';
+import { ArticleFabricationAgent } from '../infrastructure/outbound/agents/article-fabrication.agent.js';
+import { ArticleQuizGenerationAgent } from '../infrastructure/outbound/agents/article-quiz-generation.agent.js';
+import { ReportClassificationAgent } from '../infrastructure/outbound/agents/report-classification.agent.js';
+import { ReportDeduplicationAgent } from '../infrastructure/outbound/agents/report-deduplication.agent.js';
+import { ReportIngestionAgent } from '../infrastructure/outbound/agents/report-ingestion.agent.js';
+import { PrismaArticleRepository } from '../infrastructure/outbound/persistence/article/prisma-article.repository.js';
+import { PrismaDatabase } from '../infrastructure/outbound/persistence/prisma.database.js';
+import { PrismaReportRepository } from '../infrastructure/outbound/persistence/report/prisma-report.repository.js';
+import { CachedNews } from '../infrastructure/outbound/providers/cached-news.provider.js';
+import {
+    WorldNews,
+    type WorldNewsConfiguration,
+} from '../infrastructure/outbound/providers/world-news.provider.js';
 
 /**
  * Outbound adapters
@@ -38,7 +53,7 @@ const databaseFactory = Injectable(
     'Database',
     ['Logger', 'Configuration'] as const,
     (logger: LoggerPort, config: ConfigurationPort) =>
-        new PrismaAdapter(logger, config.getOutboundConfiguration().prisma.databaseUrl),
+        new PrismaDatabase(logger, config.getOutboundConfiguration().prisma.databaseUrl),
 );
 
 const loggerFactory = Injectable(
@@ -55,45 +70,79 @@ const newsFactory = Injectable(
     'News',
     ['Configuration', 'Logger', 'NewRelic'] as const,
     (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
-        logger.info('Initializing WorldNews adapter');
-        const newsAdapter = new WorldNewsAdapter(
+        logger.info('Initializing WorldNews provider', { provider: 'WorldNews' });
+        const newsAdapter = new WorldNews(
             {
                 apiKey: config.getOutboundConfiguration().worldNews.apiKey,
-            },
+            } as WorldNewsConfiguration,
             logger,
             monitoring,
         );
         const useCache = config.getOutboundConfiguration().worldNews.useCache;
 
         if (useCache) {
-            logger.info('Initializing CachedNews adapter');
-            const cachedNewsAdapter = new CachedNewsAdapter(
+            const cachedNewsProvider = new CachedNews(
                 newsAdapter,
                 logger,
                 config.getInboundConfiguration().env,
             );
-            return cachedNewsAdapter;
+            return cachedNewsProvider;
         }
 
         return newsAdapter;
     },
 );
 
-const aiProviderFactory = Injectable(
-    'AIProvider',
-    ['Configuration', 'Logger', 'NewRelic'] as const,
-    (config: ConfigurationPort, logger: LoggerPort, monitoring: MonitoringPort) => {
-        return new OpenRouterAdapter(logger, monitoring, {
+const providerFactory = Injectable(
+    'Provider',
+    ['Configuration'] as const,
+    (config: ConfigurationPort): ProviderPort =>
+        new OpenRouterProvider({
             apiKey: config.getOutboundConfiguration().openRouter.apiKey,
-            budget: config.getOutboundConfiguration().openRouter.budget,
-        });
-    },
+            metadata: {
+                application: 'news-ai',
+            },
+        }),
 );
 
-const articleGeneratorFactory = Injectable(
-    'ArticleGenerator',
-    ['AIProvider', 'Logger'] as const,
-    (aiProvider: AIProviderPort, logger: LoggerPort) => new AIArticleGenerator(aiProvider, logger),
+/**
+ * Agent factories
+ */
+const agentFactory = Injectable(
+    'Agents',
+    ['Provider', 'Configuration', 'Logger'] as const,
+    (provider: ProviderPort, config: ConfigurationPort, logger: LoggerPort) => {
+        const agentConfig = config.getOutboundConfiguration().agents;
+
+        const getModel = (modelName: string) => provider.getModel(modelName);
+
+        return {
+            reportIngestion: new ReportIngestionAgent(
+                getModel(agentConfig.reportIngestion),
+                logger,
+            ),
+            reportDeduplication: new ReportDeduplicationAgent(
+                getModel(agentConfig.reportDeduplication),
+                logger,
+            ),
+            reportClassification: new ReportClassificationAgent(
+                getModel(agentConfig.reportClassification),
+                logger,
+            ),
+            articleComposition: new ArticleCompositionAgent(
+                getModel(agentConfig.articleComposition),
+                logger,
+            ),
+            articleFabrication: new ArticleFabricationAgent(
+                getModel(agentConfig.articleFabrication),
+                logger,
+            ),
+            articleQuizGeneration: new ArticleQuizGenerationAgent(
+                getModel(agentConfig.articleQuizGeneration),
+                logger,
+            ),
+        };
+    },
 );
 
 /**
@@ -102,40 +151,116 @@ const articleGeneratorFactory = Injectable(
 const articleRepositoryFactory = Injectable(
     'ArticleRepository',
     ['Database', 'Logger'] as const,
-    (db: PrismaAdapter, logger: LoggerPort) => {
-        logger.info('Initializing Prisma article repository');
+    (db: PrismaDatabase, logger: LoggerPort) => {
+        logger.info('Initializing Article repository', { repository: 'PrismaArticle' });
         const articleRepository = new PrismaArticleRepository(db);
         return articleRepository;
+    },
+);
+
+const reportRepositoryFactory = Injectable(
+    'ReportRepository',
+    ['Database', 'Logger'] as const,
+    (db: PrismaDatabase, logger: LoggerPort) => {
+        logger.info('Initializing Report repository', { repository: 'PrismaReport' });
+        const reportRepository = new PrismaReportRepository(db, logger);
+        return reportRepository;
     },
 );
 
 /**
  * Use case factories
  */
-const generateArticlesUseCaseFactory = Injectable(
-    'GenerateArticles',
-    ['ArticleRepository', 'Logger', 'News', 'ArticleGenerator'] as const,
-    (
-        articleRepository: ArticleRepositoryPort,
-        logger: LoggerPort,
-        newsService: NewsProviderPort,
-        articleGenerator: ArticleGeneratorPort,
-    ) => new GenerateArticlesUseCase(articleGenerator, articleRepository, logger, newsService),
-);
-
 const getArticlesUseCaseFactory = Injectable(
     'GetArticles',
     ['ArticleRepository'] as const,
     (articleRepository: ArticleRepositoryPort) => new GetArticlesUseCase(articleRepository),
 );
 
+const fabricateArticlesUseCaseFactory = Injectable(
+    'FabricateArticles',
+    ['Agents', 'ArticleRepository', 'Logger'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        articleRepository: ArticleRepositoryPort,
+        logger: LoggerPort,
+    ) => new FabricateArticlesUseCase(agents.articleFabrication, articleRepository, logger),
+);
+
+const ingestReportsUseCaseFactory = Injectable(
+    'IngestReports',
+    ['Agents', 'Logger', 'News', 'ReportRepository'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        logger: LoggerPort,
+        newsService: NewsProviderPort,
+        reportRepository: ReportRepositoryPort,
+    ) => new IngestReportsUseCase(agents.reportIngestion, logger, newsService, reportRepository),
+);
+
+const deduplicateReportsUseCaseFactory = Injectable(
+    'DeduplicateReports',
+    ['Agents', 'Logger', 'ReportRepository'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        logger: LoggerPort,
+        reportRepository: ReportRepositoryPort,
+    ) => new DeduplicateReportsUseCase(agents.reportDeduplication, logger, reportRepository),
+);
+
+const publishReportsUseCaseFactory = Injectable(
+    'PublishReports',
+    ['Agents', 'FabricateArticles', 'Logger', 'ReportRepository', 'ArticleRepository'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        fabricateArticles: FabricateArticlesUseCase,
+        logger: LoggerPort,
+        reportRepository: ReportRepositoryPort,
+        articleRepository: ArticleRepositoryPort,
+    ) =>
+        new PublishReportsUseCase(
+            agents.articleComposition,
+            fabricateArticles,
+            logger,
+            reportRepository,
+            articleRepository,
+        ),
+);
+
+const classifyReportsUseCaseFactory = Injectable(
+    'ClassifyReports',
+    ['Agents', 'Logger', 'ReportRepository'] as const,
+    (
+        agents: ReturnType<typeof agentFactory>,
+        logger: LoggerPort,
+        reportRepository: ReportRepositoryPort,
+    ) => new ClassifyReportsUseCase(agents.reportClassification, logger, reportRepository),
+);
+
+const generateArticleChallengesUseCaseFactory = Injectable(
+    'GenerateArticleChallenges',
+    ['ArticleRepository', 'Agents', 'Logger'] as const,
+    (
+        articleRepository: ArticleRepositoryPort,
+        agents: ReturnType<typeof agentFactory>,
+        logger: LoggerPort,
+    ) =>
+        new GenerateArticleChallengesUseCase(
+            articleRepository,
+            agents.articleQuizGeneration,
+            logger,
+        ),
+);
+
 /**
  * Controller factories
  */
-const getArticlesControllerFactory = Injectable(
-    'GetArticlesController',
+const controllersFactory = Injectable(
+    'Controllers',
     ['GetArticles'] as const,
-    (getArticles: GetArticlesUseCase) => new GetArticlesController(getArticles),
+    (getArticles: GetArticlesUseCase) => ({
+        getArticles: new GetArticlesController(getArticles),
+    }),
 );
 
 /**
@@ -143,9 +268,41 @@ const getArticlesControllerFactory = Injectable(
  */
 const tasksFactory = Injectable(
     'Tasks',
-    ['GenerateArticles', 'Logger'] as const,
-    (generateArticles: GenerateArticlesUseCase, logger: LoggerPort): TaskPort[] => {
-        return [new ArticleGenerationTask(generateArticles, logger)];
+    [
+        'IngestReports',
+        'DeduplicateReports',
+        'PublishReports',
+        'GenerateArticleChallenges',
+        'ClassifyReports',
+        'Configuration',
+        'Logger',
+    ] as const,
+    (
+        ingestReports: IngestReportsUseCase,
+        deduplicateReports: DeduplicateReportsUseCase,
+        publishReports: PublishReportsUseCase,
+        generateArticleChallenges: GenerateArticleChallengesUseCase,
+        classifyReports: ClassifyReportsUseCase,
+        configuration: ConfigurationPort,
+        logger: LoggerPort,
+    ): TaskPort[] => {
+        const tasks: TaskPort[] = [];
+
+        // Report pipeline task
+        const reportPipelineConfigs = configuration.getInboundConfiguration().tasks.reportPipeline;
+        tasks.push(
+            new ReportPipelineTask(
+                ingestReports,
+                deduplicateReports,
+                publishReports,
+                generateArticleChallenges,
+                classifyReports,
+                reportPipelineConfigs,
+                logger,
+            ),
+        );
+
+        return tasks;
     },
 );
 
@@ -162,7 +319,7 @@ const newRelicFactory = Injectable(
             return new NoopMonitoringAdapter(logger);
         }
 
-        logger.info('Initializing NewRelic adapter');
+        logger.info('Initializing NewRelic monitoring', { provider: 'NewRelic' });
         return new NewRelicMonitoringAdapter({
             environment: config.getInboundConfiguration().env,
             licenseKey: outboundConfig.newRelic.licenseKey,
@@ -175,25 +332,25 @@ const newRelicFactory = Injectable(
  * Inbound adapters
  */
 const configurationFactory = (overrides?: ContainerOverrides) =>
-    Injectable('Configuration', () => new NodeConfigAdapter(nodeConfiguration, overrides));
+    Injectable('Configuration', () => new NodeConfig(nodeConfiguration, overrides));
 
 const serverFactory = Injectable(
     'Server',
-    ['Logger', 'GetArticlesController'] as const,
-    (logger: LoggerPort, getArticlesController: GetArticlesController): ServerPort => {
-        logger.info('Initializing Hono server');
-        const server = new HonoServerAdapter(logger, getArticlesController);
+    ['Logger', 'Controllers'] as const,
+    (logger: LoggerPort, controllers: { getArticles: GetArticlesController }): ServerPort => {
+        logger.info('Initializing Server', { implementation: 'Hono' });
+        const server = new HonoServer(logger, controllers.getArticles);
         return server;
     },
 );
 
-const executorFactory = Injectable(
-    'Executor',
+const workerFactory = Injectable(
+    'Worker',
     ['Logger', 'Tasks'] as const,
-    (logger: LoggerPort, tasks: TaskPort[]): ExecutorPort => {
-        logger.info('Initializing NodeCron executor');
-        const executor = new NodeCronAdapter(logger, tasks);
-        return executor;
+    (logger: LoggerPort, tasks: TaskPort[]): WorkerPort => {
+        logger.info('Initializing Worker', { implementation: 'NodeCron' });
+        const worker = new NodeCron(logger, tasks);
+        return worker;
     },
 );
 
@@ -212,16 +369,22 @@ export const createContainer = (overrides?: ContainerOverrides) =>
         .provides(newRelicFactory)
         .provides(databaseFactory)
         .provides(newsFactory)
-        .provides(aiProviderFactory)
-        .provides(articleGeneratorFactory)
+        .provides(providerFactory)
+        .provides(agentFactory)
         // Repositories
         .provides(articleRepositoryFactory)
+        .provides(reportRepositoryFactory)
         // Use cases
-        .provides(generateArticlesUseCaseFactory)
         .provides(getArticlesUseCaseFactory)
+        .provides(fabricateArticlesUseCaseFactory)
+        .provides(ingestReportsUseCaseFactory)
+        .provides(deduplicateReportsUseCaseFactory)
+        .provides(publishReportsUseCaseFactory)
+        .provides(generateArticleChallengesUseCaseFactory)
+        .provides(classifyReportsUseCaseFactory)
         // Controllers and tasks
-        .provides(getArticlesControllerFactory)
+        .provides(controllersFactory)
         .provides(tasksFactory)
         // Inbound adapters
         .provides(serverFactory)
-        .provides(executorFactory);
+        .provides(workerFactory);

@@ -6,23 +6,23 @@ const start = async () => {
     const config = container.get('Configuration');
     const newRelic = container.get('NewRelic');
     const server = container.get('Server');
-    const executor = container.get('Executor');
+    const worker = container.get('Worker');
 
     try {
-        logger.info('Starting application');
+        logger.info('Application starting', { environment: config.getInboundConfiguration().env });
 
         const { host, port } = config.getInboundConfiguration().http;
 
         await newRelic.initialize();
-        await executor.initialize();
+        await worker.initialize();
         await server.start({
             host,
             port,
         });
 
-        logger.info('Application started successfully ✓');
+        logger.info('Application ready', { host, port });
     } catch (error) {
-        logger.error('Failed to start application ✗', { error });
+        logger.error('Application encountered an error', { error });
         process.exit(1);
     }
 };

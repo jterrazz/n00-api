@@ -23,8 +23,8 @@ describe('Timezone Utilities', () => {
 
     describe('createCurrentTZDateForCountry', () => {
         it.each([
-            { country: 'fr', expectedHour: 13 }, // UTC+1 for Paris
-            { country: 'us', expectedHour: 7 }, // UTC-5 for New York
+            { country: 'FR', expectedHour: 13 }, // UTC+1 for Paris
+            { country: 'US', expectedHour: 7 }, // UTC-5 for New York
         ])('should return correct hour for $country', ({ country, expectedHour }) => {
             // Given - a country code and a fixed original date
             // When - creating a TZDate for the country using createCurrentTZDateForCountry
@@ -33,7 +33,7 @@ describe('Timezone Utilities', () => {
             // Then - it should return the correct hour and timezone for the country
             expect(tzDate.getHours()).toBe(expectedHour);
             expect(tzDate).toBeInstanceOf(TZDate);
-            expect(tzDate.timeZone).toBe(COUNTRY_TIMEZONE_MAP[country]);
+            expect(tzDate.timeZone).toBe(COUNTRY_TIMEZONE_MAP[country.toLowerCase()]);
             expect(tzDate.getTime()).toBe(originalDate.getTime());
         });
 
@@ -59,8 +59,8 @@ describe('Timezone Utilities', () => {
 
     describe('createTZDateForCountry', () => {
         it.each([
-            { country: 'fr', timezone: 'Europe/Paris' },
-            { country: 'us', timezone: 'America/New_York' },
+            { country: 'FR', timezone: 'Europe/Paris' },
+            { country: 'US', timezone: 'America/New_York' },
         ])('should create TZDate with correct timezone for $country', ({ country, timezone }) => {
             // Given - a date and a country code
             const date = new Date('2024-01-01T12:30:00Z');
@@ -80,8 +80,8 @@ describe('Timezone Utilities', () => {
             const timestamp = date.getTime();
 
             // When - creating TZDate for both inputs using createTZDateForCountry
-            const tzDateFromDate = createTZDateForCountry(date, 'fr');
-            const tzDateFromTimestamp = createTZDateForCountry(timestamp, 'fr');
+            const tzDateFromDate = createTZDateForCountry(date, 'FR');
+            const tzDateFromTimestamp = createTZDateForCountry(timestamp, 'FR');
 
             // Then - it should return TZDates with the same time and timezone
             expect(tzDateFromDate.getTime()).toBe(tzDateFromTimestamp.getTime());
@@ -100,9 +100,9 @@ describe('Timezone Utilities', () => {
 
     describe('formatTZDateInCountry', () => {
         it.each([
-            { expected: '06:30', fromCountry: 'fr', toCountry: 'us' }, // Paris -> New York (UTC+1 -> UTC-5)
-            { expected: '18:30', fromCountry: 'us', toCountry: 'fr' }, // New York -> Paris (UTC-5 -> UTC+1)
-            { expected: '12:30', fromCountry: 'fr', toCountry: 'fr' }, // Paris -> Paris (no change)
+            { expected: '06:30', fromCountry: 'FR', toCountry: 'US' }, // Paris -> New York (UTC+1 -> UTC-5)
+            { expected: '18:30', fromCountry: 'US', toCountry: 'FR' }, // New York -> Paris (UTC-5 -> UTC+1)
+            { expected: '12:30', fromCountry: 'FR', toCountry: 'FR' }, // Paris -> Paris (no change)
         ])(
             'should format time from $fromCountry timezone to $toCountry timezone',
             ({ expected, fromCountry, toCountry }) => {
@@ -115,7 +115,7 @@ describe('Timezone Utilities', () => {
                     30,
                     0,
                     0,
-                    COUNTRY_TIMEZONE_MAP[fromCountry],
+                    COUNTRY_TIMEZONE_MAP[fromCountry.toLowerCase()],
                 );
 
                 // When - formatting the TZDate to the toCountry's timezone using formatTZDateInCountry

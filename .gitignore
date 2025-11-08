@@ -22,3 +22,6 @@ dist
 
 # New Relic
 newrelic_agent*
+
+# Debug files
+debug/
