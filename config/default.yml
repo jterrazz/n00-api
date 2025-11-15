@@ -15,12 +15,12 @@ inbound:
 
 outbound:
   agents:
-    reportIngestion: 'moonshotai/kimi-k2-thinking'
-    reportDeduplication: 'moonshotai/kimi-k2-thinking'
-    reportClassification: 'moonshotai/kimi-k2-thinking'
-    articleComposition: 'google/gemini-2.5-flash'
-    articleFabrication: 'google/gemini-2.5-flash'
-    articleQuizGeneration: 'moonshotai/kimi-k2-thinking'
+    reportIngestion: 'google/gemini-2.5-flash-lite'
+    reportDeduplication: 'google/gemini-2.5-flash-lite'
+    reportClassification: 'google/gemini-2.5-flash-lite'
+    articleComposition: 'google/gemini-2.5-flash-lite'
+    articleFabrication: 'google/gemini-2.5-flash-lite'
+    articleQuizGeneration: 'google/gemini-2.5-flash-lite'
 
   worldNews:
     useCache: false
