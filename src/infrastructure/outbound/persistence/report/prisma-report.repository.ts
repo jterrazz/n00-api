@@ -43,6 +43,15 @@ export class PrismaReportRepository implements ReportRepositoryPort {
         });
     }
 
+    async countByDateRange(country: Country, from: Date, to: Date): Promise<number> {
+        return await this.prisma.getPrismaClient().report.count({
+            where: {
+                country: this.mapper.mapCountryToPrisma(country),
+                createdAt: { gte: from, lte: to },
+            },
+        });
+    }
+
     async create(report: Report): Promise<Report> {
         const prismaClient = this.prisma.getPrismaClient();
 
@@ -228,15 +237,6 @@ export class PrismaReportRepository implements ReportRepositoryPort {
             .flatMap((report) => report.sources as string[])
             .filter((ref, index, arr) => arr.indexOf(ref) === index);
         return allSourceReferences;
-    }
-
-    async countByDateRange(country: Country, from: Date, to: Date): Promise<number> {
-        return await this.prisma.getPrismaClient().report.count({
-            where: {
-                country: this.mapper.mapCountryToPrisma(country),
-                createdAt: { gte: from, lte: to },
-            },
-        });
     }
 
     async markAsDuplicate(reportId: string, options: { duplicateOfId: string }): Promise<Report> {
