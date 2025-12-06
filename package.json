@@ -20,21 +20,21 @@
     "@jterrazz/test": "3.0.0",
     "@jterrazz/typescript": "3.0.0",
     "@types/config": "^3.3.5",
-    "@types/node": "^22.13.4"
+    "@types/node": "^22.15.30"
   },
   "dependencies": {
-    "@date-fns/tz": "^1.2.0",
-    "@hono/node-server": "^1.13.7",
+    "@date-fns/tz": "^1.4.1",
+    "@hono/node-server": "^1.19.6",
     "@jterrazz/intelligence": "^2.0.0",
-    "@jterrazz/logger": "^1.4.2",
+    "@jterrazz/logger": "^1.5.0",
     "@jterrazz/monitoring": "^1.0.0",
-    "@prisma/client": "^6.10.1",
+    "@prisma/client": "^6.16.0",
     "@snap/ts-inject": "^0.3.2",
     "config": "^3.3.12",
     "date-fns": "^4.1.0",
-    "hono": "^4.6.16",
-    "node-cron": "^4.1.1",
-    "prisma": "^6.3.1",
-    "zod": "^3.25.28"
+    "hono": "^4.10.7",
+    "node-cron": "^4.2.1",
+    "prisma": "^6.16.0",
+    "zod": "^3.25.67"
   }
 }
