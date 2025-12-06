@@ -10,11 +10,12 @@ export interface TopNewsQueryParams {
 }
 
 /**
- * Deterministically builds a top-news payload with 5 x 5 = 25 articles whose IDs are consistent across runs.
+ * Deterministically builds a top-news payload with 5 x 10 = 50 articles whose IDs are consistent across runs.
+ * Each news item has 10 articles to meet the minimum threshold of 8 articles per report.
  */
 export function buildTopNewsPayload(country: string, language: string, publishDate: string) {
     return new Array(5).fill(null).map((_, idx) => ({
-        news: new Array(5).fill(null).map((__, newsIdx) => ({
+        news: new Array(10).fill(null).map((__, newsIdx) => ({
             id: (idx + 1) * 1000 + (newsIdx + 1),
             publish_date: publishDate,
             text: `Test article text ${idx}-${newsIdx} for ${country} in ${language}`,

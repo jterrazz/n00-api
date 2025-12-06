@@ -81,7 +81,11 @@ export async function startIntegrationContext(context: IntegrationContext): Prom
 
     // Push prisma schema to the temporary database, ensuring fresh state
     execSync('npx prisma db push --force-reset --skip-generate', {
-        env: { ...process.env, DATABASE_URL: context._internal.databaseUrl },
+        env: {
+            ...process.env,
+            DATABASE_URL: context._internal.databaseUrl,
+            PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: 'yes',
+        },
         stdio: context._internal.logLevel === 'silent' ? 'ignore' : 'inherit',
     });
 

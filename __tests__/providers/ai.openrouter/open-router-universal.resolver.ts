@@ -176,21 +176,21 @@ export const openRouterUniversalResolver = http.post(
 
         if (
             userPrompt.includes('You are a senior news analyst') ||
-            userPrompt.includes('transform multiple news articles covering the SAME event')
+            userPrompt.includes('Transform multiple news articles covering the SAME event')
         ) {
             return handleIngestion(model);
         }
 
         if (
-            userPrompt.includes('You are a seasoned Senior Editor') ||
+            userPrompt.includes('Classify news reports for optimal content strategy') ||
             userPrompt.includes('evaluate each report and classify it')
         ) {
             return handleClassification(model);
         }
 
         if (
-            userPrompt.startsWith(
-                'Your primary mission is to perform a sophisticated semantic comparison',
+            userPrompt.includes(
+                'Determine whether an incoming news report describes the same underlying event',
             ) ||
             userPrompt.startsWith('Perform a deep semantic comparison')
         ) {
