@@ -8,9 +8,9 @@
   },
   "scripts": {
     "build": "prisma generate && ts-build",
-    "start": "NODE_ENV=production OTEL_TRACES_EXPORTER=otlp OTEL_EXPORTER_OTLP_ENDPOINT=https://signoz-http.jterrazz.com OTEL_SERVICE_NAME=n00-api OTEL_NODE_RESOURCE_DETECTORS=env,host,os . scripts/env.sh && prisma migrate deploy && node --enable-source-maps --require @opentelemetry/auto-instrumentations-node/register dist/index.js",
-    "dev": ". scripts/env.sh && prisma db push && NODE_ENV=development ts-dev",
-    "studio": ". scripts/env.sh && prisma studio",
+    "start": "NODE_ENV=production OTEL_TRACES_EXPORTER=otlp OTEL_EXPORTER_OTLP_ENDPOINT=https://signoz-http.jterrazz.com OTEL_SERVICE_NAME=n00-api OTEL_NODE_RESOURCE_DETECTORS=env,host,os prisma migrate deploy && node --enable-source-maps --require @opentelemetry/auto-instrumentations-node/register dist/index.js",
+    "dev": "prisma db push && NODE_ENV=development ts-dev",
+    "studio": "prisma studio",
     "test": "vitest --run",
     "lint": "quality",
     "lint:fix": "quality-fix"

@@ -14,6 +14,9 @@ inbound:
         language: EN
 
 outbound:
+  prisma:
+    databaseUrl: file:./database/main.sqlite
+
   agents:
     reportIngestion: 'deepseek/deepseek-v3.2'
     reportDeduplication: 'deepseek/deepseek-v3.2'
