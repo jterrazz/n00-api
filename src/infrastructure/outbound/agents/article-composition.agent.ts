@@ -1,11 +1,7 @@
-import {
-    ChatAgent,
-    type ModelPort,
-    PROMPTS,
-    SystemPrompt,
-    UserPrompt,
-} from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -31,28 +27,17 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
         headline: headlineSchema,
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ArticleCompositionAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleCompositionAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ArticleCompositionAgent.SCHEMA,
-            systemPrompt: ArticleCompositionAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
-    static readonly USER_PROMPT = (input: ArticleCompositionInput) => {
+    static readonly USER_PROMPT = (input: ArticleCompositionInput): string => {
         const expectedFrameCount = input.report.angles.length;
 
-        return new UserPrompt(
+        return [
             // Role & Mission
             'You are a senior editorial writer and narrative composer for a global news application. Your mission: convert structured report data into compelling news packages for mobile readers.',
             '',
@@ -62,7 +47,7 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
             '',
 
             // Language & Style Requirements
-            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            'Base your response solely on the information provided. Do not infer, assume, or add external knowledge.',
             '',
 
             // Content Structure
@@ -140,7 +125,7 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
                 null,
                 2,
             ),
-        );
+        ].join('\n');
     };
 
     async run(input: ArticleCompositionInput): Promise<ArticleCompositionResult | null> {
@@ -154,12 +139,13 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
                 },
             );
 
-            const result = await this.agent.run(ArticleCompositionAgent.USER_PROMPT(input));
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ArticleCompositionAgent.USER_PROMPT(input),
+                system: createSchemaPrompt(ArticleCompositionAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Article composition agent returned no result');
-                return null;
-            }
+            const result = parseObject(text, ArticleCompositionAgent.SCHEMA);
 
             // Validate that we have the correct number of frames
             if (result.frames.length !== input.report.angles.length) {
@@ -178,7 +164,7 @@ export class ArticleCompositionAgent implements ArticleCompositionAgentPort {
 
             const compositionResult: ArticleCompositionResult = {
                 body: result.body,
-                frames: result.frames.map((frame) => ({
+                frames: result.frames.map((frame: { body: string; headline: string }) => ({
                     body: frame.body,
                     headline: frame.headline,
                 })),

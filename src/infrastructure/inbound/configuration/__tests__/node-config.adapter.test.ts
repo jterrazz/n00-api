@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jterrazz/test';
+import { describe, expect, test } from 'vitest';
 import { ZodError } from 'zod/v4';
 
 import { NodeConfig } from '../node-config.js';

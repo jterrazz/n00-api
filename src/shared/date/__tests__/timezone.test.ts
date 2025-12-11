@@ -1,5 +1,6 @@
 import { TZDate } from '@date-fns/tz';
-import { afterEach, beforeEach, describe, expect, it, mockOfDate } from '@jterrazz/test';
+import { mockOfDate } from '@jterrazz/test';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
     COUNTRY_TIMEZONE_MAP,
@@ -103,28 +104,29 @@ describe('Timezone Utilities', () => {
             { expected: '06:30', fromCountry: 'FR', toCountry: 'US' }, // Paris -> New York (UTC+1 -> UTC-5)
             { expected: '18:30', fromCountry: 'US', toCountry: 'FR' }, // New York -> Paris (UTC-5 -> UTC+1)
             { expected: '12:30', fromCountry: 'FR', toCountry: 'FR' }, // Paris -> Paris (no change)
-        ])(
-            'should format time from $fromCountry timezone to $toCountry timezone',
-            ({ expected, fromCountry, toCountry }) => {
-                // Given - a TZDate in the fromCountry's timezone
-                const tzDate = new TZDate(
-                    2024,
-                    0,
-                    1,
-                    12,
-                    30,
-                    0,
-                    0,
-                    COUNTRY_TIMEZONE_MAP[fromCountry.toLowerCase()],
-                );
+        ])('should format time from $fromCountry timezone to $toCountry timezone', ({
+            expected,
+            fromCountry,
+            toCountry,
+        }) => {
+            // Given - a TZDate in the fromCountry's timezone
+            const tzDate = new TZDate(
+                2024,
+                0,
+                1,
+                12,
+                30,
+                0,
+                0,
+                COUNTRY_TIMEZONE_MAP[fromCountry.toLowerCase()],
+            );
 
-                // When - formatting the TZDate to the toCountry's timezone using formatTZDateInCountry
-                const formatted = formatTZDateForCountry(tzDate, toCountry, 'HH:mm');
+            // When - formatting the TZDate to the toCountry's timezone using formatTZDateInCountry
+            const formatted = formatTZDateForCountry(tzDate, toCountry, 'HH:mm');
 
-                // Then - it should return the expected formatted time string
-                expect(formatted).toBe(expected);
-            },
-        );
+            // Then - it should return the expected formatted time string
+            expect(formatted).toBe(expected);
+        });
 
         it('should handle uppercase country codes', () => {
             // Given - a TZDate in Paris timezone and an uppercase country code

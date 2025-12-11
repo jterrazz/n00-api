@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import type { RequestHandler } from 'msw';
 import { setupServer, type SetupServerApi } from 'msw/node';
 import { execSync } from 'node:child_process';
@@ -11,7 +10,11 @@ import { resolve } from 'node:path';
 import { type ServerPort } from '../../src/application/ports/inbound/server.port.js';
 import { type TaskPort, type WorkerPort } from '../../src/application/ports/inbound/worker.port.js';
 
+// Infrastructure
+import type { PrismaDatabase } from '../../src/infrastructure/outbound/persistence/prisma.database.js';
+
 import { createContainer } from '../../src/di/container.js';
+import type { PrismaClient } from '../../src/generated/prisma/client.js';
 
 export type IntegrationContext = {
     _internal: { databasePath: string; databaseUrl: string; logLevel: string; started: boolean };
@@ -30,14 +33,27 @@ export async function createIntegrationContext(
     const databaseFile = `test-${randomUUID()}.sqlite`;
     const databasePath = resolve(os.tmpdir(), databaseFile);
     const databaseUrl = `file:${databasePath}`;
+
+    // Create the database schema BEFORE container initialization
+    // This ensures the better-sqlite3 adapter opens an existing file in read/write mode
+    execSync('npx prisma db push --force-reset', {
+        env: {
+            ...process.env,
+            DATABASE_URL: databaseUrl,
+            PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: 'yes',
+        },
+        stdio: 'ignore',
+    });
+
     const testContainer = createContainer({ databaseUrl });
     const { level } = testContainer.get('Configuration').getInboundConfiguration().logger;
 
     const server = testContainer.get('Server');
     const worker = testContainer.get('Worker');
     const tasks = testContainer.get('Tasks');
+    const database = testContainer.get('Database') as PrismaDatabase;
     const msw = setupServer(...handlers);
-    const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+    const prisma = database.getPrismaClient();
 
     return {
         _internal: { databasePath, databaseUrl, logLevel: level, started: false },
@@ -79,16 +95,6 @@ export async function startIntegrationContext(context: IntegrationContext): Prom
         throw new Error('Integration context already started.');
     }
 
-    // Push prisma schema to the temporary database, ensuring fresh state
-    execSync('npx prisma db push --force-reset --skip-generate', {
-        env: {
-            ...process.env,
-            DATABASE_URL: context._internal.databaseUrl,
-            PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: 'yes',
-        },
-        stdio: context._internal.logLevel === 'silent' ? 'ignore' : 'inherit',
-    });
-
     context.msw.listen({ onUnhandledRequest: 'warn' });
 
     // Clean database – order matters due to FK constraints
@@ -106,15 +112,19 @@ export async function stopIntegrationContext(context: IntegrationContext): Promi
     // Stop components started in startIntegrationContext
     await context.gateways.worker.stop();
 
-    // Disconnect Prisma and MSW & remove temporary DB
-    await context.prisma.$disconnect();
+    // Close MSW (database file cleanup is done in afterAll, not here)
     context.msw.close();
 
+    context._internal.started = false;
+}
+
+/**
+ * Clean up temporary database file. Should be called in afterAll.
+ */
+export async function cleanupIntegrationContext(context: IntegrationContext): Promise<void> {
     try {
         unlinkSync(context._internal.databasePath);
     } catch (err) {
         console.debug('Could not delete SQLite file:', err);
     }
-
-    context._internal.started = false;
 }

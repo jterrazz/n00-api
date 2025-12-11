@@ -3,12 +3,12 @@
 // =============================================================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 // =============================================================================
@@ -268,9 +268,9 @@ model Article {
   language Language
 
   // Classification
-  categories       ArticleCategory[]
-  traitsEssential  Boolean           @default(false)
-  traitsPositive   Boolean           @default(false)
+  categories      ArticleCategory[]
+  traitsEssential Boolean           @default(false)
+  traitsPositive  Boolean           @default(false)
 
   // Fabrication
   fabricated       Boolean @default(false)

@@ -1,11 +1,7 @@
-import {
-    ChatAgent,
-    type ModelPort,
-    PROMPTS,
-    SystemPrompt,
-    UserPrompt,
-} from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -30,25 +26,14 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
         }),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ReportClassificationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportClassificationAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ReportClassificationAgent.SCHEMA,
-            systemPrompt: ReportClassificationAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
-    static readonly USER_PROMPT = (input: ReportClassificationInput) => {
+    static readonly USER_PROMPT = (input: ReportClassificationInput): string => {
         const { report } = input;
         const reportData = {
             angles: report.angles?.map((angle) => ({
@@ -59,13 +44,13 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
             core: report.core.value,
         };
 
-        return new UserPrompt(
+        return [
             // Core Mission
             'Classify news reports for optimal content strategy and audience targeting. Apply rigorous editorial judgment to distinguish broad mainstream appeal from specialized content.',
             '',
 
             // Language & Style Requirements
-            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            'Base your response solely on the information provided. Do not infer, assume, or add external knowledge.',
             '',
 
             // Three-Tier Classification System
@@ -128,7 +113,7 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
             '=== REPORT TO ANALYZE ===',
             '',
             JSON.stringify(reportData, null, 2),
-        );
+        ].join('\n');
     };
 
     async run(input: ReportClassificationInput): Promise<null | ReportClassificationResult> {
@@ -137,14 +122,13 @@ export class ReportClassificationAgent implements ReportClassificationAgentPort 
                 reportId: input.report.id,
             });
 
-            const result = await this.agent.run(ReportClassificationAgent.USER_PROMPT(input));
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ReportClassificationAgent.USER_PROMPT(input),
+                system: createSchemaPrompt(ReportClassificationAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Classification agent returned no result', {
-                    reportId: input.report.id,
-                });
-                return null;
-            }
+            const result = parseObject(text, ReportClassificationAgent.SCHEMA);
 
             this.logger.info('Report classified successfully', {
                 classification: result.classification,

@@ -1,9 +1,10 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { openRouterUniversalResolver } from './providers/ai.openrouter/open-router-universal.resolver.js';
 import { worldNewsEmptyResolver } from './providers/com.worldnewsapi.api/top-news-empty.resolver.js';
 import { worldNewsResolver } from './providers/com.worldnewsapi.api/top-news.resolver.js';
 import {
+    cleanupIntegrationContext,
     createIntegrationContext,
     executeTask,
     type IntegrationContext,
@@ -23,6 +24,10 @@ describe('Worker – report-pipeline task (empty news) – integration', () => {
 
     beforeAll(async () => {
         integrationContext = await createIntegrationContext([worldNewsEmptyResolver]);
+    });
+
+    afterAll(async () => {
+        await cleanupIntegrationContext(integrationContext);
     });
 
     beforeEach(async () => {
@@ -57,6 +62,10 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
             worldNewsResolver,
             openRouterUniversalResolver,
         ]);
+    });
+
+    afterAll(async () => {
+        await cleanupIntegrationContext(integrationContext);
     });
 
     beforeEach(async () => {
@@ -200,7 +209,7 @@ describe('Worker – report-pipeline task (happy path) – integration', () => {
                 body: 'Seed body content for baseline article',
                 country: 'US',
                 headline: `Seed Headline ${i}`,
-                id: `seed-us-en-${i}`,
+                id: crypto.randomUUID(),
                 language: 'EN',
                 publishedAt: new Date(now - i * 60_000),
             })),

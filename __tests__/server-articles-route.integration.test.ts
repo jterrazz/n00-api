@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
     ArticleFactory,
@@ -6,6 +6,7 @@ import {
     createMixedArticles,
 } from './fixtures/article.factory.js';
 import {
+    cleanupIntegrationContext,
     createIntegrationContext,
     executeRequest,
     type IntegrationContext,
@@ -23,6 +24,10 @@ describe('Server /articles route – integration', () => {
 
     beforeAll(async () => {
         integrationContext = await createIntegrationContext();
+    });
+
+    afterAll(async () => {
+        await cleanupIntegrationContext(integrationContext);
     });
 
     describe('Fetch by IDs', () => {
@@ -179,7 +184,7 @@ describe('Server /articles route – integration', () => {
                     },
                 ],
                 nextCursor: null,
-                total: 2,
+                total: 3,
             });
         });
 

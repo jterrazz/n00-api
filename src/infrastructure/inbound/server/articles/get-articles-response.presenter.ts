@@ -1,4 +1,4 @@
-import { type Category, type Country, type Language } from '@prisma/client';
+import { type Category, type Country, type Language } from '../../../../generated/prisma/client.js';
 
 // Application
 import { type GetArticlesResult } from '../../../../application/use-cases/articles/get-articles.use-case.js';

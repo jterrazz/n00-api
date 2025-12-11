@@ -1,6 +1,7 @@
 import { type LoggerPort } from '@jterrazz/logger';
-import { beforeEach, describe, expect, mockOf, test } from '@jterrazz/test';
+import { mockOf } from '@jterrazz/test';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { vi } from 'vitest';
 import { type Mock } from 'vitest';
 

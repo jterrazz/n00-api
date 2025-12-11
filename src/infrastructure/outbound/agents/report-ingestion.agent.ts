@@ -1,11 +1,7 @@
-import {
-    ChatAgent,
-    type ModelPort,
-    PROMPTS,
-    SystemPrompt,
-    UserPrompt,
-} from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -33,26 +29,15 @@ export class ReportIngestionAgent implements ReportIngestionAgentPort {
         core: coreSchema,
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ReportIngestionAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportIngestionAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ReportIngestionAgent.SCHEMA,
-            systemPrompt: ReportIngestionAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
-    static readonly USER_PROMPT = (newsReport: NewsReport) =>
-        new UserPrompt(
+    static readonly USER_PROMPT = (newsReport: NewsReport): string =>
+        [
             // Core Mission
             'Transform multiple news articles covering the SAME event into a comprehensive intelligence report. Extract ALL verified facts and distinct viewpoints—complete information preservation, not summarization.',
             '',
@@ -60,10 +45,10 @@ export class ReportIngestionAgent implements ReportIngestionAgentPort {
             '',
 
             // Language & Style Requirements
-            PROMPTS.LANGUAGES.ENGLISH_NATIVE,
-            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
-            PROMPTS.TONES.NEUTRAL,
-            PROMPTS.VERBOSITY.DETAILED,
+            'Write in fluent, native-level English suitable for global audiences.',
+            'Base your response solely on the information provided. Do not infer, assume, or add external knowledge.',
+            'Use a neutral, balanced, and factual tone. Avoid bias, sensationalism, or emotional language.',
+            'Provide detailed and thorough coverage with comprehensive explanations.',
             '',
 
             // Extract Four Key Components
@@ -139,20 +124,19 @@ export class ReportIngestionAgent implements ReportIngestionAgentPort {
                 null,
                 2,
             ),
-        );
+        ].join('\n');
 
     async run(params: { newsReport: NewsReport }): Promise<null | ReportIngestionResult> {
         try {
             this.logger.info(`Ingesting report with ${params.newsReport.articles.length} articles`);
 
-            const result = await this.agent.run(
-                ReportIngestionAgent.USER_PROMPT(params.newsReport),
-            );
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ReportIngestionAgent.USER_PROMPT(params.newsReport),
+                system: createSchemaPrompt(ReportIngestionAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Ingestion agent returned no result');
-                return null;
-            }
+            const result = parseObject(text, ReportIngestionAgent.SCHEMA);
 
             // Log successful parsing for debugging
             this.logger.info(
@@ -166,7 +150,7 @@ export class ReportIngestionAgent implements ReportIngestionAgentPort {
             const categories = new Categories(result.categories);
 
             // Create angle data from AI response (without creating full ReportAngle entities)
-            const angles = result.angles.map((angleData) => ({
+            const angles = result.angles.map((angleData: { narrative: string }) => ({
                 narrative: angleData.narrative,
             }));
 

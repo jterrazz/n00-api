@@ -5,7 +5,7 @@ import {
     type ArticleQuiz as PrismaArticleQuiz,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
-} from '@prisma/client';
+} from '../../../../generated/prisma/client.js';
 
 // Domain
 import { Article } from '../../../../domain/entities/article.entity.js';

@@ -1,11 +1,7 @@
-import {
-    ChatAgent,
-    type ModelPort,
-    PROMPTS,
-    SystemPrompt,
-    UserPrompt,
-} from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -31,29 +27,18 @@ export class ArticleFabricationAgent implements ArticleFabricationAgentPort {
         tone: z.enum(['satirical']),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ArticleFabricationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleFabricationAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ArticleFabricationAgent.SCHEMA,
-            systemPrompt: ArticleFabricationAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
-    static readonly USER_PROMPT = (input: ArticleFabricationInput) => {
+    static readonly USER_PROMPT = (input: ArticleFabricationInput): string => {
         const currentDate = input.context?.currentDate || new Date();
         const recentArticles = input.context?.recentArticles || [];
 
-        return new UserPrompt(
+        return [
             // Role & Mission
             'You are a senior editorial simulator specializing in crafting convincing but completely fabricated news articles for an educational fake-news-detection game.',
             '',
@@ -63,7 +48,7 @@ export class ArticleFabricationAgent implements ArticleFabricationAgentPort {
             '',
 
             // Language & Style Requirements
-            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            'Base your response solely on the information provided. Do not infer, assume, or add external knowledge.',
             '',
 
             // Content Strategy
@@ -141,7 +126,7 @@ export class ArticleFabricationAgent implements ArticleFabricationAgentPort {
                       '**Timeline Instruction**: Analyze timestamps and provide insertAfterIndex for natural chronological flow',
                   ]
                 : ['**No Recent Articles**: Use default sizing guidelines']),
-        );
+        ].join('\n');
     };
 
     async run(input: ArticleFabricationInput): Promise<ArticleFabricationResult | null> {
@@ -151,12 +136,13 @@ export class ArticleFabricationAgent implements ArticleFabricationAgentPort {
                 language: input.targetLanguage.toString(),
             });
 
-            const result = await this.agent.run(ArticleFabricationAgent.USER_PROMPT(input));
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ArticleFabricationAgent.USER_PROMPT(input),
+                system: createSchemaPrompt(ArticleFabricationAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Fabrication agent returned no result');
-                return null;
-            }
+            const result = parseObject(text, ArticleFabricationAgent.SCHEMA);
 
             // Log successful generation for debugging
             this.logger.info('Fake article generated successfully', {

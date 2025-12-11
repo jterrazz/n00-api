@@ -1,18 +1,8 @@
 import { type LoggerPort } from '@jterrazz/logger';
-import {
-    afterAll,
-    afterEach,
-    beforeAll,
-    beforeEach,
-    describe,
-    expect,
-    it,
-    mockOf,
-    mockOfDate,
-    vitest,
-} from '@jterrazz/test';
+import { mockOf, mockOfDate } from '@jterrazz/test';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ZodError } from 'zod/v4';
 
 // Domain
@@ -90,7 +80,7 @@ let provider: WorldNews;
 
 beforeAll(() => {
     server.listen();
-    vitest.useFakeTimers();
+    vi.useFakeTimers();
 });
 beforeEach(() => {
     const telemetry = mockOf<TelemetryPort>();
@@ -103,7 +93,7 @@ afterEach(() => {
 });
 afterAll(() => {
     server.close();
-    vitest.useRealTimers();
+    vi.useRealTimers();
 });
 
 describe('WorldNews', () => {
@@ -145,12 +135,12 @@ describe('WorldNews', () => {
 
         // When - fetching news for different countries
         const first = provider.fetchNews();
-        vitest.runAllTimers();
+        vi.runAllTimers();
         await first;
 
-        vitest.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(1500);
         const second = provider.fetchNews({ country: new Country('FR') });
-        vitest.runAllTimers();
+        vi.runAllTimers();
         await second;
 
         // Then - it should use the correct date for each country
@@ -234,11 +224,11 @@ describe('WorldNews', () => {
         // Given - two consecutive requests
         // When - making the requests
         const first = provider.fetchNews();
-        vitest.runAllTimers();
+        vi.runAllTimers();
         const firstResult = await first;
-        vitest.advanceTimersByTime(1500);
+        vi.advanceTimersByTime(1500);
         const second = provider.fetchNews();
-        vitest.runAllTimers();
+        vi.runAllTimers();
         const secondResult = await second;
 
         // Then - both should return arrays (possibly empty)

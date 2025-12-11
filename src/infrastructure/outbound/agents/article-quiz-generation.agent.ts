@@ -1,5 +1,7 @@
-import { ChatAgent, type ModelPort, SystemPrompt, UserPrompt } from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -19,37 +21,28 @@ export class ArticleQuizGenerationAgent implements ArticleQuizGenerationAgentPor
         ),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ArticleQuizGenerationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ArticleQuizGenerationAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ArticleQuizGenerationAgent.SCHEMA,
-            systemPrompt: ArticleQuizGenerationAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
-    static readonly USER_PROMPT = (input: ArticleQuizGenerationInput) => {
-        return new UserPrompt(
+    static readonly USER_PROMPT = (input: ArticleQuizGenerationInput): string => {
+        const essentialAlert = input.traits.essential
+            ? [
+                  '**ESSENTIAL CONTENT ALERT**: This article is marked as "essential" - it reveals important patterns, systems, or implications that readers must understand. Your questions MUST capture the key insights that make this content essential, regardless of category.',
+                  '',
+              ]
+            : [];
+
+        return [
             // Core Mission
             'Create engaging quiz questions that make readers think and learn from this news article.',
             '',
             `Generate 2-4 multiple choice questions in ${input.targetLanguage.toString().toUpperCase()}. Focus on the most INTERESTING and thought-provoking aspects—if the content lacks compelling elements, create fewer questions (even just 1-2) rather than forcing boring ones.`,
             '',
-            ...(input.traits.essential
-                ? [
-                      '**ESSENTIAL CONTENT ALERT**: This article is marked as "essential" - it reveals important patterns, systems, or implications that readers must understand. Your questions MUST capture the key insights that make this content essential, regardless of category.',
-                      '',
-                  ]
-                : []),
+            ...essentialAlert,
 
             // Key Rules
             '=== ESSENTIAL RULES ===',
@@ -86,35 +79,36 @@ export class ArticleQuizGenerationAgent implements ArticleQuizGenerationAgentPor
             '=== ARTICLE TO ANALYZE ===',
             '',
             input.articleContent,
-        );
+        ].join('\n');
     };
 
     public async run(
         input: ArticleQuizGenerationInput,
     ): Promise<ArticleQuizGenerationResult | null> {
         try {
-            const result = await this.agent.run(ArticleQuizGenerationAgent.USER_PROMPT(input));
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ArticleQuizGenerationAgent.USER_PROMPT(input),
+                system: createSchemaPrompt(ArticleQuizGenerationAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Quiz generation failed', {
-                    agent: 'ArticleQuizGenerationAgent',
-                });
-                return null;
-            }
+            const result = parseObject(text, ArticleQuizGenerationAgent.SCHEMA);
 
             // Add correct answer index (always 0 initially) and randomize order
-            const processedQuestions = result.questions.map((q) => {
-                // Shuffle answers while tracking correct answer position
-                const correctAnswer = q.answers[0];
-                const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
-                const correctAnswerIndex = shuffledAnswers.indexOf(correctAnswer);
+            const processedQuestions = result.questions.map(
+                (q: { answers: string[]; question: string }) => {
+                    // Shuffle answers while tracking correct answer position
+                    const correctAnswer = q.answers[0];
+                    const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
+                    const correctAnswerIndex = shuffledAnswers.indexOf(correctAnswer);
 
-                return {
-                    answers: shuffledAnswers,
-                    correctAnswerIndex,
-                    question: q.question,
-                };
-            });
+                    return {
+                        answers: shuffledAnswers,
+                        correctAnswerIndex,
+                        question: q.question,
+                    };
+                },
+            );
 
             if (processedQuestions.length === 0) {
                 this.logger.warn('No quiz questions generated', {

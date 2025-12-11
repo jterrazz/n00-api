@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jterrazz/test';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { type DeepMockProxy, mock } from 'vitest-mock-extended';
 
 // Domain

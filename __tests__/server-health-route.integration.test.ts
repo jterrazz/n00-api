@@ -1,6 +1,7 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from '@jterrazz/test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+    cleanupIntegrationContext,
     createIntegrationContext,
     executeRequest,
     type IntegrationContext,
@@ -17,6 +18,10 @@ describe('Server /health route – integration', () => {
 
     beforeAll(async () => {
         integrationContext = await createIntegrationContext();
+    });
+
+    afterAll(async () => {
+        await cleanupIntegrationContext(integrationContext);
     });
 
     beforeEach(async () => {

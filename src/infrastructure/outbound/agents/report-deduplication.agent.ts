@@ -1,11 +1,7 @@
-import {
-    ChatAgent,
-    type ModelPort,
-    PROMPTS,
-    SystemPrompt,
-    UserPrompt,
-} from '@jterrazz/intelligence';
+import { createSchemaPrompt, parseObject } from '@jterrazz/intelligence';
 import { type LoggerPort } from '@jterrazz/logger';
+import type { LanguageModel } from 'ai';
+import { generateText } from 'ai';
 import { z } from 'zod/v4';
 
 // Application
@@ -21,37 +17,26 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
         reason: z.string(),
     });
 
-    static readonly SYSTEM_PROMPT = new SystemPrompt();
-
     public readonly name = 'ReportDeduplicationAgent';
 
-    private readonly agent: ChatAgent<z.infer<typeof ReportDeduplicationAgent.SCHEMA>>;
-
     constructor(
-        private readonly model: ModelPort,
+        private readonly model: LanguageModel,
         private readonly logger: LoggerPort,
-    ) {
-        this.agent = new ChatAgent(this.name, {
-            logger: this.logger,
-            model: this.model,
-            schema: ReportDeduplicationAgent.SCHEMA,
-            systemPrompt: ReportDeduplicationAgent.SYSTEM_PROMPT,
-        });
-    }
+    ) {}
 
     static readonly USER_PROMPT = (input: {
         existingReports: Array<{ background: string; core: string; id: string }>;
         newReport: NewsReport;
-    }) => {
+    }): string => {
         const { existingReports, newReport } = input;
 
-        return new UserPrompt(
+        return [
             // Core Mission
             'Determine whether an incoming news report describes the same underlying event as any existing report in our database. Focus on the core event, not surface-level similarities.',
             '',
 
             // Language & Style Requirements
-            PROMPTS.FOUNDATIONS.CONTEXTUAL_ONLY,
+            'Base your response solely on the information provided. Do not infer, assume, or add external knowledge.',
             '',
 
             // Smart Analysis Process
@@ -114,7 +99,7 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
             '',
             '**NEW INCOMING REPORT:**',
             JSON.stringify(newReport, null, 2),
-        );
+        ].join('\n');
     };
 
     async run(params: {
@@ -126,14 +111,13 @@ export class ReportDeduplicationAgent implements ReportDeduplicationAgentPort {
                 headline: params.newReport.articles[0]?.headline,
             });
 
-            const result = await this.agent.run(ReportDeduplicationAgent.USER_PROMPT(params));
+            const { text } = await generateText({
+                model: this.model,
+                prompt: ReportDeduplicationAgent.USER_PROMPT(params),
+                system: createSchemaPrompt(ReportDeduplicationAgent.SCHEMA),
+            });
 
-            if (!result) {
-                this.logger.warn('Deduplication check failed: AI model returned no result', {
-                    headline: params.newReport.articles[0]?.headline,
-                });
-                return null;
-            }
+            const result = parseObject(text, ReportDeduplicationAgent.SCHEMA);
 
             this.logger.info('Deduplication check complete', {
                 duplicateOfReportId: result.duplicateOfReportId,

@@ -1,5 +1,5 @@
 import { type LoggerPort } from '@jterrazz/logger';
-import { type Prisma } from '@prisma/client';
+import { type Prisma } from '../../../../generated/prisma/client.js';
 
 // Application
 import { type ReportRepositoryPort } from '../../../../application/ports/outbound/persistence/report/report-repository.port.js';

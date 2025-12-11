@@ -1,6 +1,7 @@
-import { OpenRouterProvider, type ProviderPort } from '@jterrazz/intelligence';
+import { createOpenRouterProvider, type OpenRouterProvider } from '@jterrazz/intelligence';
 import { type LoggerPort, PinoLoggerAdapter } from '@jterrazz/logger';
 import { Container, Injectable } from '@snap/ts-inject';
+// @ts-expect-error - config package has no types, but NodeConfig accepts unknown
 import { default as nodeConfiguration } from 'config';
 
 // Configuration
@@ -98,8 +99,8 @@ const newsFactory = Injectable(
 const providerFactory = Injectable(
     'Provider',
     ['Configuration'] as const,
-    (config: ConfigurationPort): ProviderPort =>
-        new OpenRouterProvider({
+    (config: ConfigurationPort): OpenRouterProvider =>
+        createOpenRouterProvider({
             apiKey: config.getOutboundConfiguration().openRouter.apiKey,
             metadata: {
                 application: 'news-ai',
@@ -113,10 +114,10 @@ const providerFactory = Injectable(
 const agentFactory = Injectable(
     'Agents',
     ['Provider', 'Configuration', 'Logger'] as const,
-    (provider: ProviderPort, config: ConfigurationPort, logger: LoggerPort) => {
+    (provider: OpenRouterProvider, config: ConfigurationPort, logger: LoggerPort) => {
         const agentConfig = config.getOutboundConfiguration().agents;
 
-        const getModel = (modelName: string) => provider.getModel(modelName);
+        const getModel = (modelName: string) => provider.model(modelName);
 
         return {
             reportIngestion: new ReportIngestionAgent(

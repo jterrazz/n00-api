@@ -3,7 +3,7 @@ import {
     type PrismaClient,
     type Country as PrismaCountry,
     type Language as PrismaLanguage,
-} from '@prisma/client';
+} from '../../src/generated/prisma/client.js';
 import { addDays, subDays } from 'date-fns';
 
 // Domain

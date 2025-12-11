@@ -3,7 +3,7 @@ import {
     type Country as PrismaCountry,
     type Report as PrismaReport,
     type ReportAngle as PrismaReportAngle,
-} from '@prisma/client';
+} from '../../../../generated/prisma/client.js';
 
 // Domain
 import { Report } from '../../../../domain/entities/report.entity.js';
